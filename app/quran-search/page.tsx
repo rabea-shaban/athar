@@ -408,13 +408,13 @@ export default function QuranSearchPage() {
 
             {/* Verses List */}
             <div className="space-y-4">
-              {paginatedMatches.map((match) => {
+              {paginatedMatches.map((match, idx) => {
                 const surahNameClean = match.surah.name.replace(/^سُ?و?رَ?ةُ?\s*/, "").trim();
                 const isCopied = copiedAyah === match.number;
 
                 return (
                   <div
-                    key={match.number}
+                    key={`qmatch-${match.surah?.number || 0}-${match.numberInSurah || match.number}-${idx}`}
                     className="group rounded-2xl border border-border/70 bg-card p-5 md:p-6 transition-all duration-200 hover:border-[var(--athar-green)]/40 hover:shadow-md relative overflow-hidden"
                   >
                     {/* Top Decorative accent line */}

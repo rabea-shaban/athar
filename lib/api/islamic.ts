@@ -102,8 +102,18 @@ export async function getQuranAudio(reciterId: number) {
 }
 
 export async function searchQuran(query: string) {
-  const res = await fetch(`${QURAN_API}/search/${encodeURIComponent(query)}/all/ar`);
+  const res = await fetch(`${QURAN_API}/search/${encodeURIComponent(query)}/all/quran-simple`);
   const data = await res.json();
+  if (data?.data?.matches && Array.isArray(data.data.matches)) {
+    const seen = new Set<string>();
+    data.data.matches = data.data.matches.filter((m: { surah?: { number?: number }; numberInSurah?: number; number?: number }) => {
+      const key = `${m.surah?.number ?? 0}:${m.numberInSurah ?? m.number}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    data.data.count = data.data.matches.length;
+  }
   return data.data as QuranSearchResult;
 }
 
