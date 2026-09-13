@@ -8,14 +8,31 @@ import GlobalAudioPlayer from "@/components/audio/GlobalAudioPlayer";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://athaer.vercel.app"),
   title: "أَثَر | ATHAR — منصة المعرفة الإسلامية",
   description: "منصة إسلامية تجمع القرآن الكريم والتفسير والأذكار والحديث والمكتبة الإسلامية في مكان واحد. نحفظ العلم، وننشر أثره.",
   keywords: ["قرآن", "إسلام", "أذكار", "حديث", "تفسير", "مكتبة إسلامية"],
+  icons: {
+    icon: [
+      { url: "/logo.png", sizes: "any" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "أَثَر | منصة المعرفة الإسلامية",
     description: "نحفظ العلم، وننشر أثره.",
     locale: "ar_EG",
     type: "website",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "شعار منصة أَثَر",
+      },
+    ],
   },
 };
 
