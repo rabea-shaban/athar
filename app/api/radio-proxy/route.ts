@@ -10,7 +10,6 @@ export async function GET(req: NextRequest) {
     return new Response("Missing url param", { status: 400 });
   }
 
-  // Only allow qurango.net streams
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -18,25 +17,36 @@ export async function GET(req: NextRequest) {
     return new Response("Invalid url", { status: 400 });
   }
 
-  if (!parsed.hostname.endsWith("qurango.net")) {
-    return new Response("Forbidden", { status: 403 });
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return new Response("Forbidden protocol", { status: 403 });
   }
 
-  const upstream = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-      "Icy-MetaData": "1",
-    },
-  });
+  try {
+    const upstream = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      },
+    });
 
-  const contentType = upstream.headers.get("content-type") ?? "audio/mpeg";
+    if (!upstream.ok || !upstream.body) {
+      return new Response(`Upstream error: ${upstream.status}`, {
+        status: upstream.status || 502,
+      });
+    }
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: {
-      "Content-Type": contentType,
-      "Cache-Control": "no-cache",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+    const contentType = upstream.headers.get("content-type") || "audio/mpeg";
+
+    return new Response(upstream.body, {
+      status: 200,
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err: any) {
+    console.error("Radio proxy fetch error:", err);
+    return new Response("Failed to fetch audio stream", { status: 502 });
+  }
 }
+

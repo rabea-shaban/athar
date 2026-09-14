@@ -7,14 +7,25 @@ import { notFound } from "next/navigation";
 import {
   Copy, Share2, Bookmark, Play, Pause, ChevronRight, ChevronLeft,
   BookOpen, AlignJustify, BookMarked, Minus, Plus, Volume2, BookmarkCheck,
+  Headphones, ChevronDown, User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getSurah, getSurahList, getTafsir, type SurahDetail, type TafsirAyah } from "@/lib/api/islamic";
+import {
+  getSurah,
+  getSurahList,
+  getTafsir,
+  getAyahAudioUrl,
+  QURAN_RECITERS,
+  type QuranReciter,
+  type SurahDetail,
+  type TafsirAyah,
+} from "@/lib/api/islamic";
 import { useAudioStore } from "@/store/audioStore";
 import { useReadingStore } from "@/store/readingStore";
 import QuranPageView, { type PageChangeInfo } from "@/components/quran/QuranPageView";
 import QuranTextRenderer from "@/components/quran/QuranTextRenderer";
+import ReciterSelectorModal from "@/components/quran/ReciterSelectorModal";
 import Container from "@/components/layout/Container";
 import { cn, toArabicNumber } from "@/lib/utils";
 
@@ -41,6 +52,8 @@ export default function SurahPage() {
     notFound();
   }
 
+  const [selectedReciter, setSelectedReciter] = useState<QuranReciter>(QURAN_RECITERS[0]);
+  const [isReciterModalOpen, setIsReciterModalOpen] = useState(false);
   const [surah, setSurah] = useState<SurahDetail | null>(null);
   const [prevSurah, setPrevSurah] = useState<{ name: string } | null>(null);
   const [nextSurah, setNextSurah] = useState<{ name: string } | null>(null);
@@ -48,6 +61,17 @@ export default function SurahPage() {
   const [openTafsir, setOpenTafsir] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePageInfo, setActivePageInfo] = useState<PageChangeInfo | null>(null);
+
+  // Load preferred reciter from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("athar_preferred_reciter_identifier");
+      if (saved) {
+        const found = QURAN_RECITERS.find((r) => r.identifier === saved);
+        if (found) setSelectedReciter(found);
+      }
+    }
+  }, []);
 
   const {
     setAudio,
@@ -98,9 +122,9 @@ export default function SurahPage() {
     setTafsir([]);
     setActivePageInfo(null);
     Promise.all([
-      getSurah(surahNum),
-      surahNum > 1 ? getSurah(surahNum - 1) : Promise.resolve(null),
-      surahNum < 114 ? getSurah(surahNum + 1) : Promise.resolve(null),
+      getSurah(surahNum, selectedReciter.identifier),
+      surahNum > 1 ? getSurah(surahNum - 1, selectedReciter.identifier) : Promise.resolve(null),
+      surahNum < 114 ? getSurah(surahNum + 1, selectedReciter.identifier) : Promise.resolve(null),
     ])
       .then(([data, prev, next]) => {
         setSurah(data);
@@ -115,7 +139,25 @@ export default function SurahPage() {
         });
       })
       .finally(() => setLoading(false));
-  }, [surahNum, setProgress]);
+  }, [surahNum, selectedReciter.identifier, setProgress]);
+
+  function handleSelectReciter(reciter: QuranReciter) {
+    setSelectedReciter(reciter);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("athar_preferred_reciter_identifier", reciter.identifier);
+    }
+    // If currently playing, seamlessly switch audio to the new reciter
+    if (surah && currentPlayingSurah === surah.number && isPlaying && currentPlayingAyah) {
+      const currentAyahObj = surah.ayahs.find((a) => a.numberInSurah === currentPlayingAyah);
+      if (currentAyahObj) {
+        const newAudioUrl = getAyahAudioUrl(currentAyahObj.number, reciter.identifier);
+        setAudio(newAudioUrl, surah.name, `آية ${currentPlayingAyah} (${reciter.name})`, "surah", {
+          surahNumber: surah.number,
+          ayahNumber: currentPlayingAyah,
+        });
+      }
+    }
+  }
 
   // Setup auto-progression when an ayah finishes
   useEffect(() => {
@@ -131,7 +173,8 @@ export default function SurahPage() {
         (a) => a.numberInSurah === currentAyah + 1
       );
       if (nextAyah && nextAyah.audio) {
-        setAudio(nextAyah.audio, surah.name, `آية ${nextAyah.numberInSurah}`, "surah", {
+        const audioUrl = getAyahAudioUrl(nextAyah.number, selectedReciter.identifier);
+        setAudio(audioUrl, surah.name, `آية ${nextAyah.numberInSurah} (${selectedReciter.name})`, "surah", {
           surahNumber: surah.number,
           ayahNumber: nextAyah.numberInSurah,
         });
@@ -147,7 +190,7 @@ export default function SurahPage() {
     return () => {
       setOnEnded(null);
     };
-  }, [surah, setAudio, setOnEnded]);
+  }, [surah, selectedReciter, setAudio, setOnEnded]);
 
   // Auto-scroll to hash or saved readingMarker on load
   useEffect(() => {
@@ -323,6 +366,19 @@ export default function SurahPage() {
             )}
           </Button>
 
+          {/* Sheikh / Reciter Selection Button */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsReciterModalOpen(true)}
+            className="h-8 gap-1.5 text-xs rounded-lg border-border/80 hover:border-[var(--athar-green)] text-foreground bg-background shadow-2xs"
+            title="تغيير القارئ"
+          >
+            <Headphones className="h-3.5 w-3.5 text-[var(--athar-green)]" />
+            <span className="font-arabic">القارئ: {selectedReciter.name}</span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </Button>
+
           <Link href={`/tafsir?surah=${surahNum}`}>
             <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs rounded-lg">
               <BookOpen className="h-3.5 w-3.5 text-[var(--athar-green)]" />
@@ -423,6 +479,7 @@ export default function SurahPage() {
           key={`${surahNum}-${surahStartPage}`}
           initialPage={surahStartPage}
           fontSize={fontSize}
+          selectedReciter={selectedReciter}
           onPageChange={handlePageChange}
         />
       ) : (
@@ -825,6 +882,14 @@ export default function SurahPage() {
         </div>
       </>
     )}
+
+    {/* Reciter Selection Modal */}
+    <ReciterSelectorModal
+      isOpen={isReciterModalOpen}
+      onClose={() => setIsReciterModalOpen(false)}
+      selectedReciter={selectedReciter}
+      onSelectReciter={handleSelectReciter}
+    />
   </Container>
 );
 }

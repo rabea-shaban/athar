@@ -22,11 +22,102 @@ import { useAudioStore } from "@/store/audioStore";
 import { cn, toArabicNumber } from "@/lib/utils";
 import Container from "@/components/layout/Container";
 
-// Stable replacements for token-based URLs
+// Stable replacements for token-based or HTTP URLs
 const STABLE_URLS: Record<number, string> = {
-  19: "http://live.mp3quran.net:9976/", // إذاعة القرآن الكريم من القاهرة
-  20: "http://live.mp3quran.net:9972/", // إذاعة السنة النبوية
+  7: "https://backup.qurango.net/radio/abdulbasit_abdulsamad", // عبدالباسط عبدالصمد
+  19: "https://stream.radiojar.com/8s5u5tpdtwzuv", // إذاعة القرآن الكريم من القاهرة
+  20: "/api/radio-proxy?url=" + encodeURIComponent("http://live.mp3quran.net:9972/"), // إذاعة السنة النبوية
 };
+
+// Ensure any direct http:// stream or token URL is resolved safely to prevent browser mixed content issues
+function resolveAudioUrl(stationId: number, url: string): string {
+  if (STABLE_URLS[stationId]) return STABLE_URLS[stationId];
+  if (!url) return "";
+  if (url.includes("8s5u5tpdtwzuv")) {
+    return "https://stream.radiojar.com/8s5u5tpdtwzuv";
+  }
+  if (url.includes("x0vs2vzy6k0uv")) {
+    return "/api/radio-proxy?url=" + encodeURIComponent("http://live.mp3quran.net:9972/");
+  }
+  if (url.startsWith("http://")) {
+    return "/api/radio-proxy?url=" + encodeURIComponent(url);
+  }
+  return url;
+}
+
+const EXTRA_STATIONS: RadioStation[] = [
+  {
+    id: 101,
+    name: "إذاعة القرآن الكريم - السعودية (مكة المكرمة)",
+    url: "https://stream.radiojar.com/0tpy1h0kxtzuv",
+    img: "https://i.pinimg.com/564x/55/16/ab/5516abd3744c3d0b0a7b28bedd5474c0.jpg",
+  },
+  {
+    id: 102,
+    name: "إذاعة سورة البقرة (بأصوات كبار القراء)",
+    url: "https://backup.qurango.net/radio/albaqarah",
+  },
+  {
+    id: 103,
+    name: "إذاعة الفتاوى العامة",
+    url: "https://backup.qurango.net/radio/fatwa",
+  },
+  {
+    id: 104,
+    name: "إذاعة صحيح البخاري",
+    url: "https://backup.qurango.net/radio/saheh-bokharee",
+  },
+  {
+    id: 105,
+    name: "إذاعة صحيح مسلم",
+    url: "https://backup.qurango.net/radio/saheh-muslim",
+  },
+  {
+    id: 106,
+    name: "إذاعة في ظلال السيرة النبوية",
+    url: "https://backup.qurango.net/radio/fi_zilal_alsiyra",
+  },
+  {
+    id: 107,
+    name: "إذاعة قصص الأنبياء",
+    url: "https://backup.qurango.net/radio/alanbiya",
+  },
+  {
+    id: 108,
+    name: "إذاعة الشمائل المحمدية",
+    url: "https://backup.qurango.net/radio/shmaeel",
+  },
+  {
+    id: 109,
+    name: "إذاعة أذكار الصباح والمساء",
+    url: "https://backup.qurango.net/radio/athkar_sabah",
+  },
+  {
+    id: 110,
+    name: "إذاعة الشيخ أحمد العجمي",
+    url: "https://backup.qurango.net/radio/ahmad_alajmy",
+  },
+  {
+    id: 111,
+    name: "إذاعة الشيخ سعد الغامدي",
+    url: "https://backup.qurango.net/radio/saad_alghamdi",
+  },
+  {
+    id: 112,
+    name: "إذاعة الشيخ عبد الرحمن السديس",
+    url: "https://backup.qurango.net/radio/abdulrahman_alsudaes",
+  },
+  {
+    id: 113,
+    name: "إذاعة الشيخ سعود الشريم",
+    url: "https://backup.qurango.net/radio/saud_alshuraim",
+  },
+  {
+    id: 114,
+    name: "إذاعة الشيخ علي جابر",
+    url: "https://backup.qurango.net/radio/ali_jaber",
+  },
+];
 
 function AudioEqualizer({ isPlaying }: { isPlaying: boolean }) {
   return (
@@ -65,13 +156,20 @@ export default function RadioPage() {
   useEffect(() => {
     getRadioStations()
       .then((data) => {
-        // Replace expired token URLs with stable ones
-        const fixed = data.map((s) =>
-          STABLE_URLS[s.id] ? { ...s, url: STABLE_URLS[s.id] } : s
-        );
-        setStations(fixed);
+        // Resolve stream URLs and remove duplicates
+        const existingIds = new Set(data.map((s) => s.id));
+        const normalized = data.map((s) => ({
+          ...s,
+          url: resolveAudioUrl(s.id, s.url),
+        }));
+
+        // Add extra stations if not present
+        const extras = EXTRA_STATIONS.filter((e) => !existingIds.has(e.id));
+        setStations([...normalized, ...extras]);
       })
-      .catch(() => {})
+      .catch(() => {
+        setStations(EXTRA_STATIONS);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -92,7 +190,17 @@ export default function RadioPage() {
         s.name.includes("الفتاوى") ||
         s.name.includes("تفسير") ||
         s.name.includes("السعودية") ||
-        s.name.includes("مكة");
+        s.name.includes("مكة") ||
+        s.name.includes("البخاري") ||
+        s.name.includes("مسلم") ||
+        s.name.includes("السيرة") ||
+        s.name.includes("الأنبياء") ||
+        s.name.includes("الشمائل") ||
+        s.name.includes("أذكار") ||
+        s.name.includes("تلاوات") ||
+        s.name.includes("الرقية") ||
+        s.name.includes("البقرة") ||
+        s.name.includes("العيد");
       return {
         ...s,
         category: isGeneral ? ("GENERAL" as const) : ("RECITERS" as const),

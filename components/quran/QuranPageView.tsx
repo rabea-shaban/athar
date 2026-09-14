@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import {
   getQuranPage,
   getTafsir,
+  getAyahAudioUrl,
   type QuranPageAyah,
+  type QuranReciter,
   type Surah,
   type TafsirAyah,
 } from "@/lib/api/islamic";
@@ -83,6 +85,7 @@ export interface PageChangeInfo {
 interface Props {
   initialPage?: number;
   fontSize: number;
+  selectedReciter?: QuranReciter;
   onPageChange?: (info: PageChangeInfo) => void;
 }
 
@@ -92,7 +95,12 @@ interface ContextMenuData {
   ayah: QuranPageAyah;
 }
 
-export default function QuranPageView({ initialPage = 1, fontSize, onPageChange }: Props) {
+export default function QuranPageView({
+  initialPage = 1,
+  fontSize,
+  selectedReciter,
+  onPageChange,
+}: Props) {
   const {
     setProgress,
     readingMarker,
@@ -265,11 +273,25 @@ export default function QuranPageView({ initialPage = 1, fontSize, onPageChange 
       togglePlay();
       return;
     }
-    const audioUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.number}.mp3`;
-    setAudio(audioUrl, ayah.surah.name, `آية ${ayah.numberInSurah}`, "surah", {
-      surahNumber: ayah.surah.number,
-      ayahNumber: ayah.numberInSurah,
-    });
+    const reciterId =
+      selectedReciter?.identifier ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("athar_preferred_reciter_identifier")
+        : null) ||
+      "ar.alafasy";
+    const reciterName = selectedReciter?.name || "مشاري راشد العفاسي";
+    const audioUrl = getAyahAudioUrl(ayah.number, reciterId);
+
+    setAudio(
+      audioUrl,
+      ayah.surah.name,
+      `آية ${ayah.numberInSurah} (${reciterName})`,
+      "surah",
+      {
+        surahNumber: ayah.surah.number,
+        ayahNumber: ayah.numberInSurah,
+      }
+    );
   };
 
   const handleFetchTafsir = async (ayah: QuranPageAyah) => {
