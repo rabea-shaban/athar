@@ -10,8 +10,11 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   metadataBase: new URL("https://athaer.vercel.app"),
   title: "أَثَر | ATHAR — منصة المعرفة الإسلامية",
-  description: "منصة إسلامية تجمع القرآن الكريم والتفسير والأذكار والحديث والمكتبة الإسلامية في مكان واحد. نحفظ العلم، وننشر أثره.",
-  keywords: ["قرآن", "إسلام", "أذكار", "حديث", "تفسير", "مكتبة إسلامية"],
+  description: "منصة إسلامية شاملة تجمع القرآن الكريم والتفسير والأذكار والحديث الشريف والمكتبة الإسلامية في مكان واحد. نحفظ العلم، وننشر أثره.",
+  keywords: ["قرآن", "إسلام", "أذكار", "حديث", "تفسير", "مكتبة إسلامية", "أثر", "Athar"],
+  authors: [{ name: "Rabea Shaban", url: "https://www.rabea-shaban.com" }],
+  creator: "Rabea Shaban",
+  publisher: "أَثَر",
   icons: {
     icon: [
       { url: "/logo.png", sizes: "any" },
@@ -22,7 +25,9 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "أَثَر | منصة المعرفة الإسلامية",
-    description: "نحفظ العلم، وننشر أثره.",
+    description: "منصة إسلامية شاملة لحفظ ونشر العلم الشرعي والتراث الإسلامي الأصيل — نحفظ العلم، وننشر أثره.",
+    url: "https://athaer.vercel.app",
+    siteName: "أَثَر — ATHAR",
     locale: "ar_EG",
     type: "website",
     images: [
@@ -30,9 +35,16 @@ export const metadata: Metadata = {
         url: "/logo.png",
         width: 512,
         height: 512,
-        alt: "شعار منصة أَثَر",
+        alt: "شعار منصة أَثَر الإسلامية",
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "أَثَر | منصة المعرفة الإسلامية",
+    description: "منصة إسلامية شاملة لحفظ ونشر العلم الشرعي والتراث الإسلامي الأصيل — نحفظ العلم، وننشر أثره.",
+    images: ["/logo.png"],
+    creator: "@rabeashaban",
   },
 };
 
