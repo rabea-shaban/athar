@@ -49,8 +49,20 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="border-t border-border/60 pt-4 text-center text-xs text-muted-foreground">
+        <div className="border-t border-border/60 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} أَثَر — جميع الحقوق محفوظة</p>
+          <a
+            href="https://www.rabea-shaban.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            dir="ltr"
+            className="group inline-flex items-center gap-1.5 transition-colors duration-200 hover:text-foreground text-muted-foreground"
+          >
+            <span>Designed &amp; Built by</span>
+            <span className="font-semibold text-foreground/90 group-hover:text-primary transition-colors duration-200">
+              Rabea Shaban
+            </span>
+          </a>
         </div>
       </Container>
     </footer>
