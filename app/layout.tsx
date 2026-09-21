@@ -8,7 +8,7 @@ import GlobalAudioPlayer from "@/components/audio/GlobalAudioPlayer";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://athaer.vercel.app"),
+  metadataBase: new URL("https://athar-library.vercel.app"),
   title: "أَثَر | ATHAR — منصة المعرفة الإسلامية",
   description: "منصة إسلامية شاملة تجمع القرآن الكريم والتفسير والأذكار والحديث الشريف والمكتبة الإسلامية في مكان واحد. نحفظ العلم، وننشر أثره.",
   keywords: ["قرآن", "إسلام", "أذكار", "حديث", "تفسير", "مكتبة إسلامية", "أثر", "Athar"],
@@ -26,16 +26,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: "أَثَر | منصة المعرفة الإسلامية",
     description: "منصة إسلامية شاملة لحفظ ونشر العلم الشرعي والتراث الإسلامي الأصيل — نحفظ العلم، وننشر أثره.",
-    url: "https://athaer.vercel.app",
+    url: "https://athar-library.vercel.app",
     siteName: "أَثَر — ATHAR",
     locale: "ar_EG",
     type: "website",
     images: [
       {
-        url: "/logo.png",
-        width: 512,
-        height: 512,
-        alt: "شعار منصة أَثَر الإسلامية",
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "منصة أَثَر الإسلامية",
       },
     ],
   },
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "أَثَر | منصة المعرفة الإسلامية",
     description: "منصة إسلامية شاملة لحفظ ونشر العلم الشرعي والتراث الإسلامي الأصيل — نحفظ العلم، وننشر أثره.",
-    images: ["/logo.png"],
+    images: ["/og-image.png"],
     creator: "@rabeashaban",
   },
 };

@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { BOOKS } from "@/data/books";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://athar.app";
+  const baseUrl = "https://athar-library.vercel.app";
 
   // Base pages
   const staticRoutes: MetadataRoute.Sitemap = [
