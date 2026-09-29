@@ -24,6 +24,7 @@ import { BookDetailScreen } from "../screens/BookDetailScreen";
 import { QuranSearchScreen } from "../screens/QuranSearchScreen";
 import { NotificationSettingsScreen } from "../screens/NotificationSettingsScreen";
 import { PrayerTimesScreen } from "../screens/PrayerTimesScreen";
+import { ListenScreen } from "../screens/ListenScreen";
 
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -157,6 +158,7 @@ export function AppNavigator() {
           component={NotificationSettingsScreen}
         />
         <Stack.Screen name="PrayerTimes" component={PrayerTimesScreen} />
+        <Stack.Screen name="Listen" component={ListenScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

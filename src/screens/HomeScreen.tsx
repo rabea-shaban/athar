@@ -19,6 +19,7 @@ import {
   Bookmark,
   Volume2,
   GraduationCap,
+  Headphones,
 } from "lucide-react-native";
 import { Header } from "../components/Header";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -54,6 +55,14 @@ export const HomeScreen: React.FC = () => {
       icon: BookOpen,
       color: theme.primary,
       onPress: () => navigation.navigate("QuranTab"),
+    },
+    {
+      id: "listen",
+      title: "الاستماع للقرآن",
+      subtitle: "تلاوات كبار القراء",
+      icon: Headphones,
+      color: "#059669",
+      onPress: () => navigation.navigate("Listen"),
     },
     {
       id: "radio",

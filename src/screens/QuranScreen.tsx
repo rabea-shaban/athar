@@ -16,12 +16,13 @@ import {
   Star,
   Sparkles,
   ChevronLeft,
+  Headphones,
 } from "lucide-react-native";
 import { Header } from "../components/Header";
 import { ReciterModal } from "../components/ReciterModal";
 import { getSurahList, Surah, QURAN_RECITERS } from "../api/islamic";
 import { usePreferencesStore } from "../store/preferencesStore";
-import { lightTheme, darkTheme } from "../constants/theme";
+import { lightTheme, darkTheme, FONTS } from "../constants/theme";
 import { toArabicNumber } from "../utils/arabic";
 
 export const QuranScreen: React.FC = () => {
@@ -81,39 +82,42 @@ export const QuranScreen: React.FC = () => {
         onSearchPress={() => navigation.navigate("QuranSearch")}
       />
 
-      {/* Reciter Selector Bar */}
+      {/* Reciter Selector & Listen Audio Mode Bar */}
       <View style={styles.reciterBar}>
         <TouchableOpacity
           style={[
-            styles.reciterBtn,
-            { backgroundColor: theme.card, borderColor: theme.border },
+            styles.listenLinkBtn,
+            {
+              backgroundColor: isDarkMode ? "#064e3b" : "#ecfdf5",
+              borderColor: isDarkMode ? "#059669" : "#a7f3d0",
+            },
           ]}
-          onPress={() => setReciterModalOpen(true)}
-          activeOpacity={0.7}
+          onPress={() => navigation.navigate("Listen")}
+          activeOpacity={0.8}
         >
-          <View style={styles.reciterLeft}>
-            <Text style={[styles.changeText, { color: theme.primary }]}>
-              تغيير
-            </Text>
-            <ChevronLeft size={16} color={theme.primary} />
-          </View>
-          <View style={styles.reciterRight}>
-            <View style={styles.reciterInfo}>
-              <Text style={[styles.reciterLabel, { color: theme.textMuted }]}>
-                القارئ المختار ({currentReciter.style})
-              </Text>
-              <Text style={[styles.reciterName, { color: theme.text }]}>
-                {currentReciter.name}
-              </Text>
-            </View>
-            <View
+          <ChevronLeft size={16} color={theme.primary} />
+          <View style={styles.listenLinkInfo}>
+            <Text
               style={[
-                styles.micBadge,
-                { backgroundColor: "rgba(16,185,129,0.12)" },
+                styles.listenLinkTitle,
+                { color: theme.primary, fontFamily: FONTS.amiriBold },
               ]}
             >
-              <Mic size={16} color={theme.primary} />
-            </View>
+              الاستماع لكبار القراء
+            </Text>
+            <Text
+              style={[styles.listenLinkSubtitle, { color: theme.textMuted }]}
+            >
+              تلاوات كاملة ومجودة
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.micBadge,
+              { backgroundColor: "rgba(16,185,129,0.15)" },
+            ]}
+          >
+            <Headphones size={18} color={theme.primary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -275,6 +279,26 @@ const styles = StyleSheet.create({
   reciterBar: {
     paddingHorizontal: 16,
     paddingTop: 12,
+  },
+  listenLinkBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  listenLinkInfo: {
+    alignItems: "flex-end",
+    flex: 1,
+    marginHorizontal: 10,
+  },
+  listenLinkTitle: {
+    fontSize: 14,
+  },
+  listenLinkSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
   },
   reciterBtn: {
     flexDirection: "row-reverse",
