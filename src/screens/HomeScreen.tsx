@@ -14,7 +14,6 @@ import {
   Heart,
   Clock,
   ChevronLeft,
-  Sparkles,
   Compass,
   Bookmark,
   Volume2,
@@ -131,7 +130,6 @@ export const HomeScreen: React.FC = () => {
         >
           <View style={styles.heroTop}>
             <View style={styles.heroBadge}>
-              <Sparkles size={12} color={theme.primary} />
               <Text style={[styles.heroBadgeText, { color: theme.primary }]}>
                 متابعة القراءة
               </Text>
@@ -272,7 +270,6 @@ export const HomeScreen: React.FC = () => {
           ]}
         >
           <View style={styles.quoteHeader}>
-            <Sparkles size={16} color={theme.accentGold} />
             <Text style={[styles.quoteTag, { color: theme.accentGold }]}>
               من هدايات القرآن الكريم
             </Text>

@@ -12,7 +12,6 @@ import { useNavigation } from "@react-navigation/native";
 import {
   Search,
   ChevronRight,
-  Sparkles,
   BookOpen,
   X,
 } from "lucide-react-native";

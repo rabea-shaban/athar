@@ -16,7 +16,6 @@ import {
   Clock,
   Share2,
   ExternalLink,
-  Sparkles,
   Layers,
 } from "lucide-react-native";
 import { Book } from "../data/books";
@@ -159,7 +158,6 @@ export const BookDetailScreen: React.FC = () => {
                     },
                   ]}
                 >
-                  <Sparkles size={12} color={theme.primary} />
                   <Text style={[styles.topicText, { color: theme.text }]}>
                     {t}
                   </Text>

@@ -18,7 +18,6 @@ import {
   Clock,
   User,
   ChevronLeft,
-  Sparkles,
 } from "lucide-react-native";
 import { Header } from "../components/Header";
 import { BOOKS, Book, BOOK_CATEGORIES } from "../data/books";

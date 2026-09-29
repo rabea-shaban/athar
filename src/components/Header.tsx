@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Moon, Sun, Search, Sparkles, Bell } from "lucide-react-native";
+import { Moon, Sun, Search, Bell } from "lucide-react-native";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
 
@@ -75,7 +75,6 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleContainer}>
           <View style={styles.logoRow}>
             <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
-            <Sparkles size={16} color={theme.accent} style={{ marginLeft: 6 }} />
           </View>
           {subtitle ? (
             <Text style={[styles.subtitle, { color: theme.textMuted }]}>

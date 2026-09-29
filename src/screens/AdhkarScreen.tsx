@@ -14,7 +14,6 @@ import {
   Compass,
   Check,
   RotateCcw,
-  Sparkles,
   Share2,
 } from "lucide-react-native";
 import { Header } from "../components/Header";

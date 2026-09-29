@@ -14,7 +14,6 @@ import {
   BookOpen,
   Mic,
   Star,
-  Sparkles,
   ChevronLeft,
   Headphones,
 } from "lucide-react-native";

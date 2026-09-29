@@ -20,7 +20,6 @@ import {
   MapPin,
   Check,
   X,
-  Sparkles,
   Send,
 } from "lucide-react-native";
 import { useSettingsStore } from "../store/settingsStore";

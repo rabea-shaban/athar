@@ -13,7 +13,6 @@ import {
   MapPin,
   Bell,
   Compass,
-  Sparkles,
   Sun,
   Moon,
   Sunrise,
