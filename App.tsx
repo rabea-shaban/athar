@@ -1,20 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from "react";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useFonts, Amiri_400Regular, Amiri_700Bold } from "@expo-google-fonts/amiri";
+import { ActivityIndicator, View } from "react-native";
+import { AppNavigator } from "./src/navigation/AppNavigator";
+import { usePreferencesStore } from "./src/store/preferencesStore";
 
 export default function App() {
+  const { isDarkMode, loadPreferences } = usePreferencesStore();
+
+  const [fontsLoaded] = useFonts({
+    Amiri_400Regular,
+    Amiri_700Bold,
+  });
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: isDarkMode ? "#090d16" : "#f8fafc",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color="#10b981" />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
+      <AppNavigator />
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
