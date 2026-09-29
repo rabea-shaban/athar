@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+} from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
 import {
   Home,
   BookOpen,
@@ -19,6 +23,8 @@ import { LibraryScreen } from "../screens/LibraryScreen";
 import { SurahDetailScreen } from "../screens/SurahDetailScreen";
 import { BookDetailScreen } from "../screens/BookDetailScreen";
 import { QuranSearchScreen } from "../screens/QuranSearchScreen";
+import { NotificationSettingsScreen } from "../screens/NotificationSettingsScreen";
+import { PrayerTimesScreen } from "../screens/PrayerTimesScreen";
 
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -100,13 +106,43 @@ function MainTabNavigator() {
 }
 
 export function AppNavigator() {
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+
+  // Deep linking response handler
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        if (!data || !navigationRef.current) return;
+
+        if (data.type === "salawat") {
+          navigationRef.current.navigate("MainTabs", {
+            screen: "AdhkarTab",
+          });
+        } else if (
+          data.type === "prayer_adhan" ||
+          data.type === "prayer_before"
+        ) {
+          navigationRef.current.navigate("PrayerTimes");
+        }
+      }
+    );
+
+    return () => subscription.remove();
+  }, []);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
         <Stack.Screen name="SurahDetail" component={SurahDetailScreen} />
         <Stack.Screen name="BookDetail" component={BookDetailScreen} />
         <Stack.Screen name="QuranSearch" component={QuranSearchScreen} />
+        <Stack.Screen
+          name="NotificationSettings"
+          component={NotificationSettingsScreen}
+        />
+        <Stack.Screen name="PrayerTimes" component={PrayerTimesScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Moon, Sun, Search, Sparkles } from "lucide-react-native";
+import { Moon, Sun, Search, Sparkles, Bell } from "lucide-react-native";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
 
@@ -9,6 +9,7 @@ interface HeaderProps {
   title?: string;
   subtitle?: string;
   onSearchPress?: () => void;
+  onBellPress?: () => void;
   rightAction?: React.ReactNode;
 }
 
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   title = "أَثَر",
   subtitle = "منصة المعرفة الإسلامية",
   onSearchPress,
+  onBellPress,
   rightAction,
 }) => {
   const insets = useSafeAreaInsets();
@@ -46,6 +48,16 @@ export const Header: React.FC<HeaderProps> = ({
               <Moon size={18} color={theme.text} />
             )}
           </TouchableOpacity>
+
+          {onBellPress && (
+            <TouchableOpacity
+              style={[styles.iconButton, { backgroundColor: theme.border }]}
+              onPress={onBellPress}
+              activeOpacity={0.7}
+            >
+              <Bell size={18} color={theme.primary} />
+            </TouchableOpacity>
+          )}
 
           {onSearchPress && (
             <TouchableOpacity

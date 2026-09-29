@@ -1,13 +1,20 @@
 import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useFonts, Amiri_400Regular, Amiri_700Bold } from "@expo-google-fonts/amiri";
+import {
+  useFonts,
+  Amiri_400Regular,
+  Amiri_700Bold,
+} from "@expo-google-fonts/amiri";
 import { ActivityIndicator, View } from "react-native";
 import { AppNavigator } from "./src/navigation/AppNavigator";
 import { usePreferencesStore } from "./src/store/preferencesStore";
+import { useSettingsStore } from "./src/store/settingsStore";
+import { NotificationService } from "./src/services/notifications/NotificationService";
 
 export default function App() {
   const { isDarkMode, loadPreferences } = usePreferencesStore();
+  const { loadSettings, rescheduleNotifications } = useSettingsStore();
 
   const [fontsLoaded] = useFonts({
     Amiri_400Regular,
@@ -15,7 +22,13 @@ export default function App() {
   });
 
   useEffect(() => {
-    loadPreferences();
+    async function init() {
+      await loadPreferences();
+      await loadSettings();
+      await NotificationService.initialize();
+      await rescheduleNotifications();
+    }
+    init();
   }, []);
 
   if (!fontsLoaded) {

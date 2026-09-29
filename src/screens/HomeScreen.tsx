@@ -103,6 +103,7 @@ export const HomeScreen: React.FC = () => {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header
         onSearchPress={() => navigation.navigate("QuranSearch")}
+        onBellPress={() => navigation.navigate("NotificationSettings")}
       />
 
       <ScrollView
@@ -154,23 +155,29 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         {/* Prayer Times Widget */}
-        <View style={styles.sectionHeader}>
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          onPress={() => navigation.navigate("PrayerTimes")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.cityBadge}>
+            <Text style={[styles.seeAllText, { color: theme.primary }]}>
+              عرض الكل والتنبيهات
+            </Text>
+            <ChevronLeft size={14} color={theme.primary} />
+          </View>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             مواقيت الصلاة اليوم
           </Text>
-          <View style={styles.cityBadge}>
-            <Clock size={12} color={theme.textMuted} />
-            <Text style={[styles.cityText, { color: theme.textMuted }]}>
-              القاهرة، مصر
-            </Text>
-          </View>
-        </View>
+        </TouchableOpacity>
 
-        <View
+        <TouchableOpacity
           style={[
             styles.prayersCard,
             { backgroundColor: theme.card, borderColor: theme.border },
           ]}
+          onPress={() => navigation.navigate("PrayerTimes")}
+          activeOpacity={0.8}
         >
           {loadingPrayers ? (
             <ActivityIndicator color={theme.primary} style={{ padding: 20 }} />
@@ -204,7 +211,7 @@ export const HomeScreen: React.FC = () => {
               })}
             </ScrollView>
           ) : null}
-        </View>
+        </TouchableOpacity>
 
         {/* Quick Shortcuts Grid */}
         <View style={styles.sectionHeader}>
@@ -347,6 +354,10 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     alignItems: "center",
     gap: 4,
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: "bold",
   },
   cityText: {
     fontSize: 11,
