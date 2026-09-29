@@ -23,7 +23,6 @@ import {
   Copy,
   Share2,
   X,
-  Sparkles,
 } from "lucide-react-native";
 import {
   getQuranPage,
@@ -45,27 +44,29 @@ import {
   SURAH_PAGES,
 } from "../utils/arabic";
 
-const { width } = Dimensions.get("window");
 const TOTAL_PAGES = 604;
 
 interface Props {
   initialPage?: number;
   initialSurahNumber?: number;
+  fontScale?: number;
   onPageChanged?: (page: number, surahNumber: number) => void;
 }
+
+const FONT_SCALES = [18, 21, 24, 28, 32];
 
 export const QuranPageView: React.FC<Props> = ({
   initialPage = 1,
   initialSurahNumber,
+  fontScale = 3,
   onPageChanged,
 }) => {
-  const { isDarkMode, preferredReciter, setLastRead, lastRead, fontSize } =
+  const { isDarkMode, preferredReciter, setLastRead, lastRead } =
     usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const { playTrack, currentTrack, isPlaying, togglePlay } = useAudioStore();
 
-  // Determine starting page
   const startPage = useMemo(() => {
     if (initialPage && initialPage >= 1 && initialPage <= TOTAL_PAGES) {
       return initialPage;
@@ -80,14 +81,12 @@ export const QuranPageView: React.FC<Props> = ({
   const [ayahs, setAyahs] = useState<QuranPageAyah[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Selected Ayah for modal
   const [selectedAyah, setSelectedAyah] = useState<QuranPageAyah | null>(null);
   const [tafsirData, setTafsirData] = useState<TafsirAyah | null>(null);
   const [loadingTafsir, setLoadingTafsir] = useState(false);
   const [showTafsir, setShowTafsir] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Page Jump Modal
   const [jumpModalOpen, setJumpModalOpen] = useState(false);
   const [jumpInput, setJumpInput] = useState(String(currentPage));
 
@@ -126,7 +125,7 @@ export const QuranPageView: React.FC<Props> = ({
     loadPage(currentPage);
   }, [currentPage, loadPage]);
 
-  // Group ayahs by surah on this page
+  // Group ayahs by surah
   const groups = useMemo(() => {
     const list: {
       surahName: string;
@@ -152,11 +151,15 @@ export const QuranPageView: React.FC<Props> = ({
   const juz = firstAyah?.juz || 1;
   const currentSurahName = firstAyah?.surah.name || "";
   const juzTitle = JUZ_NAMES[juz] || `الجُزْءُ ${toArabicNumber(juz)}`;
+  const isThisPageBookmarked = lastRead?.pageNumber === currentPage;
+
+  const currentFontSize = FONT_SCALES[fontScale - 1] || 24;
 
   const handlePlayAyah = (ayah: QuranPageAyah) => {
     const isPlayingThis =
       isPlaying &&
-      currentTrack?.id === `surah_${ayah.surah.number}_ayah_${ayah.numberInSurah}`;
+      currentTrack?.id ===
+        `surah_${ayah.surah.number}_ayah_${ayah.numberInSurah}`;
 
     if (isPlayingThis) {
       togglePlay();
@@ -175,7 +178,18 @@ export const QuranPageView: React.FC<Props> = ({
     });
   };
 
-  const handleBookmark = (ayah: QuranPageAyah) => {
+  const handleBookmarkPage = () => {
+    if (firstAyah) {
+      setLastRead({
+        surahNumber: firstAyah.surah.number,
+        surahName: firstAyah.surah.name,
+        ayahNumber: firstAyah.numberInSurah,
+        pageNumber: currentPage,
+      });
+    }
+  };
+
+  const handleBookmarkAyah = (ayah: QuranPageAyah) => {
     setLastRead({
       surahNumber: ayah.surah.number,
       surahName: ayah.surah.name,
@@ -240,6 +254,60 @@ export const QuranPageView: React.FC<Props> = ({
 
   return (
     <View style={styles.container}>
+      {/* ─── Sub-Header Bar (Metadata + Bookmark Button) ─── */}
+      <View style={styles.subHeaderBar}>
+        <View style={styles.subHeaderLeft}>
+          <TouchableOpacity
+            style={[
+              styles.bookmarkTopBtn,
+              {
+                backgroundColor: isThisPageBookmarked
+                  ? isDarkMode
+                    ? "#451a03"
+                    : "#fef3c7"
+                  : theme.card,
+                borderColor: isThisPageBookmarked ? "#f59e0b" : theme.border,
+              },
+            ]}
+            onPress={handleBookmarkPage}
+            activeOpacity={0.7}
+          >
+            <BookmarkCheck
+              size={14}
+              color={isThisPageBookmarked ? "#d97706" : theme.textMuted}
+            />
+            <Text
+              style={[
+                styles.bookmarkTopBtnText,
+                {
+                  color: isThisPageBookmarked ? "#d97706" : theme.textMuted,
+                  fontFamily: FONTS.amiriBold,
+                },
+              ]}
+            >
+              {isThisPageBookmarked
+                ? "علامة الوقوف محفوظة"
+                : "حفظ علامة وقوف"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.subHeaderRight}>
+          <Text
+            style={[
+              styles.subHeaderMetaText,
+              { color: theme.text, fontFamily: FONTS.amiriBold },
+            ]}
+          >
+            صفحة {toArabicNumber(currentPage)}{" "}
+            <Text style={{ color: theme.primary }}>• {juzTitle}</Text>{" "}
+            <Text style={{ color: theme.textMuted }}>
+              • {toArabicNumber(currentPage)} / {toArabicNumber(TOTAL_PAGES)}
+            </Text>
+          </Text>
+        </View>
+      </View>
+
       {/* ─── Authentic Mushaf Page Frame ─── */}
       <View
         style={[
@@ -374,8 +442,8 @@ export const QuranPageView: React.FC<Props> = ({
                         styles.quranTextParagraph,
                         {
                           color: isDarkMode ? "#f1f5f9" : "#0f172a",
-                          fontSize: fontSize || 22,
-                          lineHeight: (fontSize || 22) * 2.2,
+                          fontSize: currentFontSize,
+                          lineHeight: currentFontSize * 2.2,
                           fontFamily: FONTS.amiri,
                         },
                       ]}
@@ -569,7 +637,6 @@ export const QuranPageView: React.FC<Props> = ({
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
             >
-              {/* Modal Header */}
               <View
                 style={[
                   styles.modalHeader,
@@ -600,7 +667,6 @@ export const QuranPageView: React.FC<Props> = ({
                 </TouchableOpacity>
               </View>
 
-              {/* Ayah Full Arabic Text */}
               <ScrollView style={styles.modalScroll}>
                 <View
                   style={[
@@ -624,7 +690,6 @@ export const QuranPageView: React.FC<Props> = ({
                   </Text>
                 </View>
 
-                {/* Tafsir Area if opened */}
                 {showTafsir && (
                   <View
                     style={[
@@ -675,14 +740,12 @@ export const QuranPageView: React.FC<Props> = ({
                 )}
               </ScrollView>
 
-              {/* Action Buttons Row */}
               <View
                 style={[
                   styles.modalActionsRow,
                   { borderTopColor: theme.border },
                 ]}
               >
-                {/* 1. Play */}
                 <TouchableOpacity
                   style={[
                     styles.modalActionItem,
@@ -694,7 +757,6 @@ export const QuranPageView: React.FC<Props> = ({
                   <Text style={styles.modalActionItemTextWhite}>استماع</Text>
                 </TouchableOpacity>
 
-                {/* 2. Tafsir */}
                 <TouchableOpacity
                   style={[
                     styles.modalActionItemOutline,
@@ -713,14 +775,13 @@ export const QuranPageView: React.FC<Props> = ({
                   </Text>
                 </TouchableOpacity>
 
-                {/* 3. Bookmark */}
                 <TouchableOpacity
                   style={[
                     styles.modalActionItemOutline,
                     { borderColor: theme.border, backgroundColor: theme.card },
                   ]}
                   onPress={() => {
-                    handleBookmark(selectedAyah);
+                    handleBookmarkAyah(selectedAyah);
                     setSelectedAyah(null);
                   }}
                 >
@@ -735,7 +796,6 @@ export const QuranPageView: React.FC<Props> = ({
                   </Text>
                 </TouchableOpacity>
 
-                {/* 4. Copy */}
                 <TouchableOpacity
                   style={[
                     styles.modalIconBtn,
@@ -746,7 +806,6 @@ export const QuranPageView: React.FC<Props> = ({
                   <Copy size={16} color={copied ? "#10b981" : theme.text} />
                 </TouchableOpacity>
 
-                {/* 5. Share */}
                 <TouchableOpacity
                   style={[
                     styles.modalIconBtn,
@@ -819,13 +878,12 @@ export const QuranPageView: React.FC<Props> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[
-                  styles.jumpCancelBtn,
-                  { borderColor: theme.border },
-                ]}
+                style={[styles.jumpCancelBtn, { borderColor: theme.border }]}
                 onPress={() => setJumpModalOpen(false)}
               >
-                <Text style={[styles.jumpCancelText, { color: theme.textMuted }]}>
+                <Text
+                  style={[styles.jumpCancelText, { color: theme.textMuted }]}
+                >
                   إلغاء
                 </Text>
               </TouchableOpacity>
@@ -842,7 +900,37 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 8,
     paddingTop: 4,
-    paddingBottom: 16,
+    paddingBottom: 12,
+  },
+  subHeaderBar: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  subHeaderRight: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+  },
+  subHeaderMetaText: {
+    fontSize: 12,
+  },
+  subHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  bookmarkTopBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  bookmarkTopBtnText: {
+    fontSize: 11,
   },
   outerFrame: {
     flex: 1,
