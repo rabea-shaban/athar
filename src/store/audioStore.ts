@@ -80,8 +80,18 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
       });
 
       const player = createAudioPlayer({ uri: track.audioUrl });
-      player.volume = get().volume;
-      player.playbackRate = get().playbackSpeed;
+      try {
+        player.volume = get().volume;
+      } catch (e) {
+        // ignore
+      }
+      try {
+        if (typeof (player as any).setPlaybackRate === "function") {
+          (player as any).setPlaybackRate(get().playbackSpeed);
+        }
+      } catch (e) {
+        // ignore
+      }
 
       player.addListener("playbackStatusUpdate", (status: any) => {
         set({
@@ -184,7 +194,9 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     try {
       const { player } = get();
       if (player) {
-        player.playbackRate = speed;
+        if (typeof (player as any).setPlaybackRate === "function") {
+          (player as any).setPlaybackRate(speed);
+        }
       }
       set({ playbackSpeed: speed });
     } catch (e) {
@@ -196,7 +208,11 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     try {
       const { player } = get();
       if (player) {
-        player.volume = volume;
+        try {
+          player.volume = volume;
+        } catch (e) {
+          // ignore
+        }
       }
       set({ volume });
     } catch (e) {
