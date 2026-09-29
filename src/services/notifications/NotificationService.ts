@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import {
   SalawatConfig,
   PrayerNotificationConfig,
@@ -8,23 +9,31 @@ import {
 import { PrayerTimesDay } from "../../types/prayer";
 import { PRAYER_NAMES_AR, toArabicNumber } from "../../utils/arabic";
 
-// Configure default notification handler for foreground presentation safely
-try {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-} catch (e) {
-  console.warn("Notification handler warning:", e);
-}
+export const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient ||
+  Constants.appOwnership === "expo";
 
 export class NotificationService {
+  private static isInitialized = false;
+
   static async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
+    try {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+    } catch (e) {
+      console.warn("Notification handler warning:", e);
+    }
+
     try {
       if (Platform.OS === "android") {
         // 1. Adhan & Exact Prayer Channel

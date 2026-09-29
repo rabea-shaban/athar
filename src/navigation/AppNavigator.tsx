@@ -110,25 +110,36 @@ export function AppNavigator() {
 
   // Deep linking response handler
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const data = response.notification.request.content.data;
-        if (!data || !navigationRef.current) return;
+    let subscription: Notifications.EventSubscription | null = null;
+    try {
+      subscription = Notifications.addNotificationResponseReceivedListener(
+        (response) => {
+          const data = response.notification.request.content.data;
+          if (!data || !navigationRef.current) return;
 
-        if (data.type === "salawat") {
-          navigationRef.current.navigate("MainTabs", {
-            screen: "AdhkarTab",
-          });
-        } else if (
-          data.type === "prayer_adhan" ||
-          data.type === "prayer_before"
-        ) {
-          navigationRef.current.navigate("PrayerTimes");
+          if (data.type === "salawat") {
+            navigationRef.current.navigate("MainTabs", {
+              screen: "AdhkarTab",
+            });
+          } else if (
+            data.type === "prayer_adhan" ||
+            data.type === "prayer_before"
+          ) {
+            navigationRef.current.navigate("PrayerTimes");
+          }
         }
-      }
-    );
+      );
+    } catch (e) {
+      console.warn("Notification response listener warning:", e);
+    }
 
-    return () => subscription.remove();
+    return () => {
+      try {
+        if (subscription) subscription.remove();
+      } catch (e) {
+        // ignore
+      }
+    };
   }, []);
 
   return (
