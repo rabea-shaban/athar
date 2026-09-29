@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from "expo-audio";
 
 export interface AudioTrack {
   id: string;
@@ -19,7 +19,7 @@ interface AudioStoreState {
   duration: number;
   volume: number;
   playbackSpeed: number;
-  soundObject: Audio.Sound | null;
+  player: AudioPlayer | null;
 
   initAudioMode: () => Promise<void>;
   playTrack: (track: AudioTrack) => Promise<void>;
@@ -27,7 +27,7 @@ interface AudioStoreState {
   pauseTrack: () => Promise<void>;
   resumeTrack: () => Promise<void>;
   stopTrack: () => Promise<void>;
-  seekTo: (positionMillis: number) => Promise<void>;
+  seekTo: (seconds: number) => Promise<void>;
   skipSeconds: (seconds: number) => Promise<void>;
   setPlaybackSpeed: (speed: number) => Promise<void>;
   setVolume: (volume: number) => Promise<void>;
@@ -41,19 +41,19 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
   duration: 0,
   volume: 1.0,
   playbackSpeed: 1.0,
-  soundObject: null,
+  player: null,
 
   initAudioMode: async () => {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
+      if (setAudioModeAsync) {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "doNotMix",
+        });
+      }
     } catch (err) {
-      console.warn("Audio mode initialization warning:", err);
+      console.warn("Audio mode init warning:", err);
     }
   },
 
@@ -61,10 +61,11 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     try {
       await get().initAudioMode();
 
-      const { soundObject } = get();
-      if (soundObject) {
+      const existingPlayer = get().player;
+      if (existingPlayer) {
         try {
-          await soundObject.unloadAsync();
+          existingPlayer.pause();
+          existingPlayer.remove();
         } catch (e) {
           // ignore
         }
@@ -78,36 +79,25 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
         duration: 0,
       });
 
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: track.audioUrl },
-        {
-          shouldPlay: true,
-          rate: get().playbackSpeed,
-          volume: get().volume,
-        },
-        (status: AVPlaybackStatus) => {
-          if (!status.isLoaded) {
-            if (status.error) {
-              console.warn(`Audio playback error: ${status.error}`);
-              set({ isPlaying: false, isLoading: false });
-            }
-            return;
-          }
+      const player = createAudioPlayer({ uri: track.audioUrl });
+      player.volume = get().volume;
+      player.playbackRate = get().playbackSpeed;
 
-          set({
-            isPlaying: status.isPlaying,
-            isLoading: status.isBuffering,
-            position: status.positionMillis / 1000,
-            duration: (status.durationMillis || 0) / 1000,
-          });
+      player.addListener("playbackStatusUpdate", (status: any) => {
+        set({
+          isPlaying: status.playing,
+          isLoading: status.isBuffering || !status.isLoaded,
+          position: status.currentTime || 0,
+          duration: status.duration || 0,
+        });
 
-          if (status.didJustFinish && !track.isLive) {
-            set({ isPlaying: false, position: 0 });
-          }
+        if (status.didJustFinish && !track.isLive) {
+          set({ isPlaying: false, position: 0 });
         }
-      );
+      });
 
-      set({ soundObject: sound, isLoading: false, isPlaying: true });
+      player.play();
+      set({ player, isLoading: false, isPlaying: true });
     } catch (error) {
       console.error("Failed to play track:", error);
       set({ isLoading: false, isPlaying: false });
@@ -116,12 +106,14 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   togglePlay: async () => {
     try {
-      const { soundObject, isPlaying } = get();
-      if (!soundObject) return;
+      const { player, isPlaying } = get();
+      if (!player) return;
       if (isPlaying) {
-        await soundObject.pauseAsync();
+        player.pause();
+        set({ isPlaying: false });
       } else {
-        await soundObject.playAsync();
+        player.play();
+        set({ isPlaying: true });
       }
     } catch (e) {
       console.warn("Toggle play error:", e);
@@ -130,9 +122,10 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   pauseTrack: async () => {
     try {
-      const { soundObject } = get();
-      if (soundObject) {
-        await soundObject.pauseAsync();
+      const { player } = get();
+      if (player) {
+        player.pause();
+        set({ isPlaying: false });
       }
     } catch (e) {
       console.warn("Pause error:", e);
@@ -141,9 +134,10 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   resumeTrack: async () => {
     try {
-      const { soundObject } = get();
-      if (soundObject) {
-        await soundObject.playAsync();
+      const { player } = get();
+      if (player) {
+        player.play();
+        set({ isPlaying: true });
       }
     } catch (e) {
       console.warn("Resume error:", e);
@@ -152,22 +146,22 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   stopTrack: async () => {
     try {
-      const { soundObject } = get();
-      if (soundObject) {
-        await soundObject.stopAsync();
-        await soundObject.unloadAsync();
+      const { player } = get();
+      if (player) {
+        player.pause();
+        player.remove();
       }
     } catch (e) {
       // ignore
     }
-    set({ currentTrack: null, isPlaying: false, soundObject: null, position: 0 });
+    set({ currentTrack: null, isPlaying: false, player: null, position: 0 });
   },
 
   seekTo: async (seconds: number) => {
     try {
-      const { soundObject } = get();
-      if (soundObject) {
-        await soundObject.setPositionAsync(seconds * 1000);
+      const { player } = get();
+      if (player) {
+        player.seekTo(seconds);
       }
     } catch (e) {
       console.warn("Seek error:", e);
@@ -176,10 +170,10 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   skipSeconds: async (seconds: number) => {
     try {
-      const { soundObject, position, duration } = get();
-      if (soundObject) {
+      const { player, position, duration } = get();
+      if (player) {
         const newPos = Math.max(0, Math.min(duration || Infinity, position + seconds));
-        await soundObject.setPositionAsync(newPos * 1000);
+        player.seekTo(newPos);
       }
     } catch (e) {
       console.warn("Skip error:", e);
@@ -188,9 +182,9 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   setPlaybackSpeed: async (speed: number) => {
     try {
-      const { soundObject } = get();
-      if (soundObject) {
-        await soundObject.setRateAsync(speed, true);
+      const { player } = get();
+      if (player) {
+        player.playbackRate = speed;
       }
       set({ playbackSpeed: speed });
     } catch (e) {
@@ -200,9 +194,9 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
 
   setVolume: async (volume: number) => {
     try {
-      const { soundObject } = get();
-      if (soundObject) {
-        await soundObject.setVolumeAsync(volume);
+      const { player } = get();
+      if (player) {
+        player.volume = volume;
       }
       set({ volume });
     } catch (e) {

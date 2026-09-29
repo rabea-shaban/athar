@@ -13,7 +13,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.athar.islamic",
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "fetch", "remote-notification"],
+        "UIBackgroundModes": [
+          "audio",
+          "fetch",
+          "remote-notification"
+        ],
         "NSLocationWhenInUseUsageDescription": "يستخدم التطبيق موقعك لحساب مواقيت الصلاة واتجاه القبلة بدقة."
       }
     },
@@ -51,7 +55,8 @@
         {
           "locationWhenInUsePermission": "يستخدم التطبيق موقعك لحساب مواقيت الصلاة بدقة."
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "web": {
       "favicon": "./assets/favicon.png"
