@@ -17,11 +17,10 @@ import {
   Bookmark,
   ChevronRight,
   Mic,
-  Share2,
-  Sparkles,
   Info,
   X,
   Type,
+  Layers,
 } from "lucide-react-native";
 import {
   getSurah,
@@ -33,14 +32,21 @@ import {
 } from "../api/islamic";
 import { useAudioStore } from "../store/audioStore";
 import { usePreferencesStore } from "../store/preferencesStore";
-import { lightTheme, darkTheme } from "../constants/theme";
-import { toArabicNumber } from "../utils/arabic";
+import { lightTheme, darkTheme, FONTS } from "../constants/theme";
+import {
+  toArabicNumber,
+  SURAH_PAGES,
+  cleanSurahName,
+  isDivineWord,
+} from "../utils/arabic";
 import { ReciterModal } from "../components/ReciterModal";
+import { QuranPageView } from "../components/QuranPageView";
 
 export const SurahDetailScreen: React.FC = () => {
   const route = useRoute<any>();
   const navigation = useNavigation();
-  const { surahNumber, surahName } = route.params;
+  const { surahNumber = 1, surahName = "الفاتحة", initialPage } =
+    route.params || {};
 
   const {
     isDarkMode,
@@ -54,14 +60,22 @@ export const SurahDetailScreen: React.FC = () => {
 
   const { playTrack, currentTrack, isPlaying } = useAudioStore();
 
+  // Mode: "mushaf" (Authentic Quran page view) or "list" (Ayah list)
+  const [viewMode, setViewMode] = useState<"mushaf" | "list">("mushaf");
+
   const [surahData, setSurahData] = useState<SurahDetail | null>(null);
   const [tafsirData, setTafsirData] = useState<TafsirAyah[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTafsirAyah, setSelectedTafsirAyah] = useState<TafsirAyah | null>(
-    null
-  );
+  const [selectedTafsirAyah, setSelectedTafsirAyah] =
+    useState<TafsirAyah | null>(null);
   const [tafsirModalVisible, setTafsirModalVisible] = useState(false);
   const [reciterModalOpen, setReciterModalOpen] = useState(false);
+
+  const startPageNum = useMemo(() => {
+    if (initialPage) return initialPage;
+    if (SURAH_PAGES[surahNumber]) return SURAH_PAGES[surahNumber].page;
+    return 1;
+  }, [initialPage, surahNumber]);
 
   const currentReciter = useMemo(() => {
     return (
@@ -72,7 +86,10 @@ export const SurahDetailScreen: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([getSurah(surahNumber, preferredReciter), getTafsir(surahNumber)])
+    Promise.all([
+      getSurah(surahNumber, preferredReciter),
+      getTafsir(surahNumber),
+    ])
       .then(([surahRes, tafsirRes]) => {
         setSurahData(surahRes);
         setTafsirData(tafsirRes);
@@ -84,7 +101,10 @@ export const SurahDetailScreen: React.FC = () => {
       });
   }, [surahNumber, preferredReciter]);
 
-  const handlePlayAyah = (ayahGlobalNumber: number, ayahNumberInSurah: number) => {
+  const handlePlayAyah = (
+    ayahGlobalNumber: number,
+    ayahNumberInSurah: number
+  ) => {
     const audioUrl = getAyahAudioUrl(ayahGlobalNumber, preferredReciter);
     playTrack({
       id: `surah_${surahNumber}_ayah_${ayahNumberInSurah}`,
@@ -102,7 +122,7 @@ export const SurahDetailScreen: React.FC = () => {
       surahNumber,
       surahName: surahData?.name || surahName,
       ayahNumber: ayahNumberInSurah,
-      pageNumber: pageNumber || 1,
+      pageNumber: pageNumber || startPageNum,
     });
   };
 
@@ -115,7 +135,7 @@ export const SurahDetailScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Custom Top Navigation Bar */}
+      {/* ─── Custom Top Navigation Bar ─── */}
       <View
         style={[
           styles.navBar,
@@ -123,12 +143,50 @@ export const SurahDetailScreen: React.FC = () => {
         ]}
       >
         <View style={styles.navLeft}>
+          {/* Mode Switcher */}
+          <TouchableOpacity
+            style={[
+              styles.modeBtn,
+              {
+                backgroundColor:
+                  viewMode === "mushaf"
+                    ? isDarkMode
+                      ? "#134e4a"
+                      : "#ccfbf1"
+                    : theme.border,
+                borderColor:
+                  viewMode === "mushaf" ? theme.primary : "transparent",
+              },
+            ]}
+            onPress={() =>
+              setViewMode(viewMode === "mushaf" ? "list" : "mushaf")
+            }
+          >
+            <Layers
+              size={16}
+              color={viewMode === "mushaf" ? theme.primary : theme.textMuted}
+            />
+            <Text
+              style={[
+                styles.modeBtnText,
+                {
+                  color:
+                    viewMode === "mushaf" ? theme.primary : theme.textMuted,
+                  fontWeight: "bold",
+                },
+              ]}
+            >
+              {viewMode === "mushaf" ? "المصحف" : "الآيات"}
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: theme.border }]}
             onPress={() => setReciterModalOpen(true)}
           >
             <Mic size={17} color={theme.primary} />
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: theme.border }]}
             onPress={() => setFontSize(fontSize === 26 ? 20 : fontSize + 2)}
@@ -138,14 +196,19 @@ export const SurahDetailScreen: React.FC = () => {
         </View>
 
         <View style={styles.navCenter}>
-          <Text style={[styles.navTitle, { color: theme.text }]}>
-            {surahData?.name || surahName}
+          <Text
+            style={[
+              styles.navTitle,
+              { color: theme.text, fontFamily: FONTS.amiriBold },
+            ]}
+          >
+            {surahData?.name || `سورة ${cleanSurahName(surahName)}`}
           </Text>
           <Text style={[styles.navSubtitle, { color: theme.textMuted }]}>
             {surahData
-              ? `${surahData.revelationType === "Meccan" ? "مكية" : "مدنية"} • ${toArabicNumber(
-                  surahData.numberOfAyahs
-                )} آية`
+              ? `${
+                  surahData.revelationType === "Meccan" ? "مكية" : "مدنية"
+                } • ${toArabicNumber(surahData.numberOfAyahs)} آية`
               : ""}
           </Text>
         </View>
@@ -158,8 +221,13 @@ export const SurahDetailScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Content */}
-      {loading ? (
+      {/* ─── Main Content: Mushaf Page Frame (Default) vs Ayah List ─── */}
+      {viewMode === "mushaf" ? (
+        <QuranPageView
+          initialPage={startPageNum}
+          initialSurahNumber={surahNumber}
+        />
+      ) : loading ? (
         <ActivityIndicator
           color={theme.primary}
           size="large"
@@ -182,10 +250,17 @@ export const SurahDetailScreen: React.FC = () => {
                   },
                 ]}
               >
-                <Text style={[styles.bannerTitle, { color: theme.primary }]}>
+                <Text
+                  style={[
+                    styles.bannerTitle,
+                    { color: theme.primary, fontFamily: FONTS.amiriBold },
+                  ]}
+                >
                   {surahData.name}
                 </Text>
-                <Text style={[styles.bannerSubtitle, { color: theme.textMuted }]}>
+                <Text
+                  style={[styles.bannerSubtitle, { color: theme.textMuted }]}
+                >
                   {surahData.englishNameTranslation}
                 </Text>
               </View>
@@ -196,7 +271,7 @@ export const SurahDetailScreen: React.FC = () => {
                   <Text
                     style={[
                       styles.basmalaText,
-                      { color: theme.text },
+                      { color: theme.text, fontFamily: FONTS.amiriBold },
                     ]}
                   >
                     بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
@@ -212,7 +287,10 @@ export const SurahDetailScreen: React.FC = () => {
 
             const isPlayingThis =
               isPlaying &&
-              currentTrack?.id === `surah_${surahNumber}_ayah_${item.numberInSurah}`;
+              currentTrack?.id ===
+                `surah_${surahNumber}_ayah_${item.numberInSurah}`;
+
+            const words = item.text.split(" ");
 
             return (
               <View
@@ -240,7 +318,12 @@ export const SurahDetailScreen: React.FC = () => {
                       onPress={() => openTafsir(index)}
                     >
                       <Info size={16} color={theme.textMuted} />
-                      <Text style={[styles.actionLabel, { color: theme.textMuted }]}>
+                      <Text
+                        style={[
+                          styles.actionLabel,
+                          { color: theme.textMuted },
+                        ]}
+                      >
                         التفسير
                       </Text>
                     </TouchableOpacity>
@@ -253,7 +336,9 @@ export const SurahDetailScreen: React.FC = () => {
                     >
                       <Bookmark
                         size={16}
-                        color={isBookmarked ? theme.accentGold : theme.textMuted}
+                        color={
+                          isBookmarked ? theme.accentGold : theme.textMuted
+                        }
                         fill={isBookmarked ? theme.accentGold : "transparent"}
                       />
                       <Text
@@ -274,7 +359,11 @@ export const SurahDetailScreen: React.FC = () => {
                   <TouchableOpacity
                     style={[
                       styles.playAyahBtn,
-                      { backgroundColor: isPlayingThis ? theme.primary : theme.border },
+                      {
+                        backgroundColor: isPlayingThis
+                          ? theme.primary
+                          : theme.border,
+                      },
                     ]}
                     onPress={() =>
                       handlePlayAyah(item.number, item.numberInSurah)
@@ -288,16 +377,44 @@ export const SurahDetailScreen: React.FC = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Ayah Arabic Text */}
+                {/* Ayah Arabic Text with Divine words highlighted */}
                 <Text
                   style={[
                     styles.ayahText,
-                    { color: theme.text, fontSize },
+                    {
+                      color: theme.text,
+                      fontSize,
+                      fontFamily: FONTS.amiri,
+                    },
                   ]}
                 >
-                  {item.text}{" "}
-                  <Text style={[styles.ayahBadge, { color: theme.primary }]}>
-                    ﴿{toArabicNumber(item.numberInSurah)}﴾
+                  {words.map((word, wIdx) => {
+                    const isDivine = isDivineWord(word);
+                    return (
+                      <Text
+                        key={wIdx}
+                        style={[
+                          isDivine && {
+                            color: isDarkMode ? "#f87171" : "#dc2626",
+                            fontFamily: FONTS.amiriBold,
+                          },
+                        ]}
+                      >
+                        {word}
+                        {wIdx < words.length - 1 ? " " : ""}
+                      </Text>
+                    );
+                  })}{" "}
+                  <Text
+                    style={[
+                      styles.ayahBadge,
+                      {
+                        color: theme.primary,
+                        fontFamily: FONTS.amiriBold,
+                      },
+                    ]}
+                  >
+                    {"\u200F"}﴿{toArabicNumber(item.numberInSurah)}﴾
                   </Text>
                 </Text>
               </View>
@@ -314,14 +431,24 @@ export const SurahDetailScreen: React.FC = () => {
         onRequestClose={() => setTafsirModalVisible(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
-          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: theme.border },
+            ]}
+          >
             <TouchableOpacity
               onPress={() => setTafsirModalVisible(false)}
               style={styles.closeBtn}
             >
               <X size={22} color={theme.text} />
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: theme.text, fontFamily: FONTS.amiriBold },
+              ]}
+            >
               التفسير الميسر
             </Text>
             <View style={{ width: 36 }} />
@@ -338,19 +465,33 @@ export const SurahDetailScreen: React.FC = () => {
                   },
                 ]}
               >
-                <Text style={[styles.tafsirAyahText, { color: theme.primary }]}>
+                <Text
+                  style={[
+                    styles.tafsirAyahText,
+                    { color: theme.primary, fontFamily: FONTS.amiriBold },
+                  ]}
+                >
                   {selectedTafsirAyah.arabic_text}
                 </Text>
               </View>
 
-              <Text style={[styles.tafsirLabel, { color: theme.textMuted }]}>
+              <Text
+                style={[
+                  styles.tafsirLabel,
+                  { color: theme.textMuted },
+                ]}
+              >
                 معنى وتفسير الآية:
               </Text>
 
               <Text
                 style={[
                   styles.tafsirExplanation,
-                  { color: theme.text, lineHeight: 28 },
+                  {
+                    color: theme.text,
+                    lineHeight: 28,
+                    fontFamily: FONTS.amiri,
+                  },
                 ]}
               >
                 {selectedTafsirAyah.translation}
@@ -382,7 +523,20 @@ const styles = StyleSheet.create({
   },
   navLeft: {
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    gap: 6,
+  },
+  modeBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  modeBtnText: {
+    fontSize: 11,
   },
   iconButton: {
     width: 36,

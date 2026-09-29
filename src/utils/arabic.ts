@@ -36,3 +36,116 @@ export const PRAYER_NAMES_AR: Record<string, string> = {
   Imsak: "الإمساك",
   Midnight: "منتصف الليل",
 };
+
+export function normalizeArabic(text: string): string {
+  return text
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/[أإآا]/g, "ا")
+    .replace(/[ىي]/g, "ي")
+    .replace(/ة/g, "ه")
+    .trim();
+}
+
+export function isDivineWord(word: string): boolean {
+  const stripped = normalizeArabic(word);
+  return (
+    stripped === "الله" ||
+    stripped === "بالله" ||
+    stripped === "والله" ||
+    stripped === "لله" ||
+    stripped === "فلله" ||
+    stripped === "ولله" ||
+    stripped === "تالله" ||
+    stripped === "افبالله" ||
+    stripped === "ربهم" ||
+    stripped === "ربك" ||
+    stripped === "ربكم" ||
+    stripped === "ربنا" ||
+    stripped === "ربه"
+  );
+}
+
+export function stripBismillah(
+  text: string,
+  surahNumber: number,
+  ayahNumber: number
+): string {
+  if (surahNumber === 1 || surahNumber === 9 || ayahNumber !== 1) return text;
+  return text
+    .replace(/^بِسْمِ\s*ٱللَّهِ\s*ٱلرَّحْمَٰنِ\s*ٱلرَّحِيمِ\s*/, "")
+    .replace(/^بِسْمِ\s*اللَّهِ\s*الرَّحْمَٰنِ\s*الرَّحِيمِ\s*/, "")
+    .replace(/^بِسْمِ\s*ٱللَّهِ\s*ٱلرَّحْمَٰنِ\s*ٱلرَّحِيمِ\s*/, "")
+    .replace(/^بِسْمِ\s*اللَّهِ\s*الرَّحْمَٰنِ\s*الرَّحِيمِ\s*/, "")
+    .trim();
+}
+
+export function cleanSurahName(name: string): string {
+  if (!name) return "";
+  return name.replace(/^سُ?و?رَ?ةُ?\s*/, "").trim();
+}
+
+export const JUZ_NAMES: Record<number, string> = {
+  1: "الجُزْءُ الأَوَّل",
+  2: "الجُزْءُ الثَّانِي",
+  3: "الجُزْءُ الثَّالِث",
+  4: "الجُزْءُ الرَّابِع",
+  5: "الجُزْءُ الخَامِس",
+  6: "الجُزْءُ السَّادِس",
+  7: "الجُزْءُ السَّابِع",
+  8: "الجُزْءُ الثَّامِن",
+  9: "الجُزْءُ التَّاسِع",
+  10: "الجُزْءُ العَاشِر",
+  11: "الجُزْءُ الحَادِي عَشَر",
+  12: "الجُزْءُ الثَّانِي عَشَر",
+  13: "الجُزْءُ الثَّالِث عَشَر",
+  14: "الجُزْءُ الرَّابِع عَشَر",
+  15: "الجُزْءُ الخَامِس عَشَر",
+  16: "الجُزْءُ السَّادِس عَشَر",
+  17: "الجُزْءُ السَّابِع عَشَر",
+  18: "الجُزْءُ الثَّامِن عَشَر",
+  19: "الجُزْءُ التَّاسِع عَشَر",
+  20: "الجُزْءُ العِشْرُون",
+  21: "الجُزْءُ الحَادِي وَالعِشْرُون",
+  22: "الجُزْءُ الثَّانِي وَالعِشْرُون",
+  23: "الجُزْءُ الثَّالِث وَالعِشْرُون",
+  24: "الجُزْءُ الرَّابِع وَالعِشْرُون",
+  25: "الجُزْءُ الخَامِس وَالعِشْرُون",
+  26: "الجُزْءُ السَّادِس وَالعِشْرُون",
+  27: "الجُزْءُ السَّابِع وَالعِشْرُون",
+  28: "الجُزْءُ الثَّامِن وَالعِشْرُون",
+  29: "الجُزْءُ التَّاسِع وَالعِشْرُون",
+  30: "الجُزْءُ الثَّلَاثُون",
+};
+
+export const SURAH_PAGES: Record<number, { page: number; juz: number }> = {
+  1: { page: 1, juz: 1 }, 2: { page: 2, juz: 1 }, 3: { page: 50, juz: 3 }, 4: { page: 77, juz: 4 },
+  5: { page: 106, juz: 6 }, 6: { page: 128, juz: 7 }, 7: { page: 151, juz: 8 }, 8: { page: 177, juz: 9 },
+  9: { page: 187, juz: 10 }, 10: { page: 208, juz: 11 }, 11: { page: 221, juz: 11 }, 12: { page: 235, juz: 12 },
+  13: { page: 249, juz: 13 }, 14: { page: 255, juz: 13 }, 15: { page: 262, juz: 14 }, 16: { page: 267, juz: 14 },
+  17: { page: 282, juz: 15 }, 18: { page: 293, juz: 15 }, 19: { page: 305, juz: 16 }, 20: { page: 312, juz: 16 },
+  21: { page: 322, juz: 17 }, 22: { page: 332, juz: 17 }, 23: { page: 342, juz: 18 }, 24: { page: 350, juz: 18 },
+  25: { page: 359, juz: 18 }, 26: { page: 367, juz: 19 }, 27: { page: 377, juz: 19 }, 28: { page: 385, juz: 20 },
+  29: { page: 396, juz: 20 }, 30: { page: 404, juz: 21 }, 31: { page: 411, juz: 21 }, 32: { page: 415, juz: 21 },
+  33: { page: 418, juz: 21 }, 34: { page: 428, juz: 22 }, 35: { page: 434, juz: 22 }, 36: { page: 440, juz: 22 },
+  37: { page: 446, juz: 23 }, 38: { page: 453, juz: 23 }, 39: { page: 458, juz: 23 }, 40: { page: 467, juz: 24 },
+  41: { page: 477, juz: 24 }, 42: { page: 483, juz: 25 }, 43: { page: 489, juz: 25 }, 44: { page: 496, juz: 25 },
+  45: { page: 499, juz: 25 }, 46: { page: 502, juz: 26 }, 47: { page: 507, juz: 26 }, 48: { page: 511, juz: 26 },
+  49: { page: 515, juz: 26 }, 50: { page: 518, juz: 26 }, 51: { page: 520, juz: 26 }, 52: { page: 523, juz: 27 },
+  53: { page: 526, juz: 27 }, 54: { page: 528, juz: 27 }, 55: { page: 531, juz: 27 }, 56: { page: 534, juz: 27 },
+  57: { page: 537, juz: 27 }, 58: { page: 542, juz: 28 }, 59: { page: 545, juz: 28 }, 60: { page: 549, juz: 28 },
+  61: { page: 551, juz: 28 }, 62: { page: 553, juz: 28 }, 63: { page: 554, juz: 28 }, 64: { page: 556, juz: 28 },
+  65: { page: 558, juz: 28 }, 66: { page: 560, juz: 28 }, 67: { page: 562, juz: 29 }, 68: { page: 564, juz: 29 },
+  69: { page: 566, juz: 29 }, 70: { page: 568, juz: 29 }, 71: { page: 570, juz: 29 }, 72: { page: 572, juz: 29 },
+  73: { page: 574, juz: 29 }, 74: { page: 575, juz: 29 }, 75: { page: 577, juz: 29 }, 76: { page: 578, juz: 29 },
+  77: { page: 580, juz: 29 }, 78: { page: 582, juz: 30 }, 79: { page: 583, juz: 30 }, 80: { page: 585, juz: 30 },
+  81: { page: 586, juz: 30 }, 82: { page: 587, juz: 30 }, 83: { page: 587, juz: 30 }, 84: { page: 589, juz: 30 },
+  85: { page: 590, juz: 30 }, 86: { page: 591, juz: 30 }, 87: { page: 591, juz: 30 }, 88: { page: 592, juz: 30 },
+  89: { page: 593, juz: 30 }, 90: { page: 594, juz: 30 }, 91: { page: 595, juz: 30 }, 92: { page: 595, juz: 30 },
+  93: { page: 596, juz: 30 }, 94: { page: 596, juz: 30 }, 95: { page: 597, juz: 30 }, 96: { page: 597, juz: 30 },
+  97: { page: 598, juz: 30 }, 98: { page: 598, juz: 30 }, 99: { page: 599, juz: 30 }, 100: { page: 599, juz: 30 },
+  101: { page: 600, juz: 30 }, 102: { page: 600, juz: 30 }, 103: { page: 601, juz: 30 }, 104: { page: 601, juz: 30 },
+  105: { page: 601, juz: 30 }, 106: { page: 602, juz: 30 }, 107: { page: 602, juz: 30 }, 108: { page: 602, juz: 30 },
+  109: { page: 603, juz: 30 }, 110: { page: 603, juz: 30 }, 111: { page: 603, juz: 30 }, 112: { page: 604, juz: 30 },
+  113: { page: 604, juz: 30 }, 114: { page: 604, juz: 30 },
+};
+
