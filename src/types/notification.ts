@@ -21,7 +21,8 @@ export interface PrayerNotificationConfig {
   maghrib: boolean;
   isha: boolean;
   prePrayerMinutes: number; // 0 (off), 5, 10, 15, 30
-  sound: "default" | "adhan" | "adhan_makkah" | "none";
+  sound: string; // Adhan id, e.g. "makkah", "madinah", "alafasy", "alnafees", "zahrani", "aqsa", "egypt", "turkey", "default", "none"
+  fajrSound?: string; // Optional custom Adhan for Fajr
   vibration: boolean;
 }
 

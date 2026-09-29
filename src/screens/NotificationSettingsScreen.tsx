@@ -21,7 +21,13 @@ import {
   Check,
   X,
   Send,
+  Play,
+  Pause,
+  Music,
+  Headphones,
 } from "lucide-react-native";
+import { ADHANS_LIST, getAdhanById, AdhanTrack } from "../data/adhans";
+import { useAudioStore } from "../store/audioStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { useNotifications } from "../hooks/useNotifications";
@@ -55,6 +61,33 @@ export const NotificationSettingsScreen: React.FC = () => {
 
   const [cityModalVisible, setCityModalVisible] = useState(false);
   const [methodModalVisible, setMethodModalVisible] = useState(false);
+  const [adhanModalVisible, setAdhanModalVisible] = useState(false);
+  const [fajrModalVisible, setFajrModalVisible] = useState(false);
+
+  const { playTrack, togglePlay, currentTrack, isPlaying } = useAudioStore();
+
+  const selectedAdhan = getAdhanById(prayerNotifications.sound);
+  const selectedFajrAdhan = getAdhanById(
+    prayerNotifications.fajrSound || "fajr"
+  );
+
+  const isPlayingPreview = (adhanId: string) => {
+    return currentTrack?.id === `adhan_preview_${adhanId}` && isPlaying;
+  };
+
+  const handlePreviewAdhan = (adhan: AdhanTrack) => {
+    const trackId = `adhan_preview_${adhan.id}`;
+    if (currentTrack?.id === trackId) {
+      togglePlay();
+    } else {
+      playTrack({
+        id: trackId,
+        title: adhan.name,
+        subtitle: adhan.muadhin,
+        audioUrl: adhan.audioUrl,
+      });
+    }
+  };
 
   const calculationMethods: { id: CalculationMethodName; label: string }[] = [
     { id: "Egyptian", label: "الهيئة المصرية العامة للمساحة (مصر وأفريقيا)" },
@@ -379,6 +412,147 @@ export const NotificationSettingsScreen: React.FC = () => {
                   الاهتزاز عند الأذان
                 </Text>
               </View>
+
+              {/* Adhan Sound Voice Selectors */}
+              <Text
+                style={[
+                  styles.subLabel,
+                  { color: theme.textMuted, marginTop: 14 },
+                ]}
+              >
+                أصوات الأذان والتكبير:
+              </Text>
+
+              {/* General Adhan */}
+              <View
+                style={[
+                  styles.adhanCardBox,
+                  {
+                    backgroundColor: isDarkMode ? "#172535" : "#f8fafc",
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <View style={styles.adhanCardHeader}>
+                  <TouchableOpacity
+                    style={[
+                      styles.previewAudioBtn,
+                      { backgroundColor: theme.primary },
+                    ]}
+                    onPress={() => handlePreviewAdhan(selectedAdhan)}
+                    activeOpacity={0.8}
+                  >
+                    {isPlayingPreview(selectedAdhan.id) ? (
+                      <Pause size={15} color="#ffffff" />
+                    ) : (
+                      <Play
+                        size={15}
+                        color="#ffffff"
+                        style={{ marginLeft: 2 }}
+                      />
+                    )}
+                    <Text style={styles.previewAudioBtnText}>
+                      {isPlayingPreview(selectedAdhan.id)
+                        ? "إيقاف"
+                        : "استماع للأذان"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={{ alignItems: "flex-end", flex: 1 }}>
+                    <Text
+                      style={[styles.adhanCardTitle, { color: theme.text }]}
+                    >
+                      صوت الأذان العام
+                    </Text>
+                    <Text
+                      style={[
+                        styles.adhanCardMuadhin,
+                        { color: theme.primary },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {selectedAdhan.name} ({selectedAdhan.muadhin})
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.changeAdhanBtn, { borderColor: theme.border }]}
+                  onPress={() => setAdhanModalVisible(true)}
+                >
+                  <ChevronRight size={16} color={theme.textMuted} />
+                  <Text
+                    style={[styles.changeAdhanBtnText, { color: theme.text }]}
+                  >
+                    تغيير صوت الأذان ({toArabicNumber(ADHANS_LIST.length)} أصوات
+                    ومؤذنين)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Dedicated Fajr Adhan */}
+              <View
+                style={[
+                  styles.adhanCardBox,
+                  {
+                    backgroundColor: isDarkMode ? "#172535" : "#f8fafc",
+                    borderColor: theme.border,
+                    marginTop: 10,
+                  },
+                ]}
+              >
+                <View style={styles.adhanCardHeader}>
+                  <TouchableOpacity
+                    style={[
+                      styles.previewAudioBtn,
+                      { backgroundColor: "#059669" },
+                    ]}
+                    onPress={() => handlePreviewAdhan(selectedFajrAdhan)}
+                    activeOpacity={0.8}
+                  >
+                    {isPlayingPreview(selectedFajrAdhan.id) ? (
+                      <Pause size={15} color="#ffffff" />
+                    ) : (
+                      <Play
+                        size={15}
+                        color="#ffffff"
+                        style={{ marginLeft: 2 }}
+                      />
+                    )}
+                    <Text style={styles.previewAudioBtnText}>
+                      {isPlayingPreview(selectedFajrAdhan.id)
+                        ? "إيقاف"
+                        : "استماع للأذان"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={{ alignItems: "flex-end", flex: 1 }}>
+                    <Text
+                      style={[styles.adhanCardTitle, { color: theme.text }]}
+                    >
+                      أذان الفجر المخصوص
+                    </Text>
+                    <Text
+                      style={[styles.adhanCardMuadhin, { color: "#059669" }]}
+                      numberOfLines={1}
+                    >
+                      {selectedFajrAdhan.name} ({selectedFajrAdhan.muadhin})
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.changeAdhanBtn, { borderColor: theme.border }]}
+                  onPress={() => setFajrModalVisible(true)}
+                >
+                  <ChevronRight size={16} color={theme.textMuted} />
+                  <Text
+                    style={[styles.changeAdhanBtnText, { color: theme.text }]}
+                  >
+                    تغيير أذان الفجر (مع التثويب الشرعي)
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>
@@ -631,6 +805,354 @@ export const NotificationSettingsScreen: React.FC = () => {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* General Adhan Selection Modal */}
+      <Modal
+        visible={adhanModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setAdhanModalVisible(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: theme.border },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={() => setAdhanModalVisible(false)}
+              style={styles.closeBtn}
+            >
+              <X size={22} color={theme.text} />
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              اختيار صوت الأذان
+            </Text>
+            <View style={{ width: 36 }} />
+          </View>
+
+          <ScrollView contentContainerStyle={styles.modalList}>
+            {ADHANS_LIST.map((adhan) => {
+              const isSelected = prayerNotifications.sound === adhan.id;
+              const isPreviewing = isPlayingPreview(adhan.id);
+
+              return (
+                <View
+                  key={adhan.id}
+                  style={[
+                    styles.adhanModalCard,
+                    {
+                      backgroundColor: isSelected
+                        ? isDarkMode
+                          ? "#0f372a"
+                          : "#ecfdf5"
+                        : isDarkMode
+                        ? "#172535"
+                        : "#ffffff",
+                      borderColor: isSelected ? theme.primary : theme.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.adhanModalCardTop}>
+                    {/* Select Action */}
+                    <TouchableOpacity
+                      style={[
+                        styles.selectAdhanBtn,
+                        {
+                          backgroundColor: isSelected
+                            ? theme.primary
+                            : "transparent",
+                          borderColor: isSelected
+                            ? theme.primary
+                            : theme.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        setPrayerNotificationConfig({ sound: adhan.id });
+                        setAdhanModalVisible(false);
+                      }}
+                    >
+                      {isSelected ? (
+                        <Check size={16} color="#ffffff" />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.selectAdhanBtnText,
+                            { color: theme.text },
+                          ]}
+                        >
+                          اختيار
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+
+                    {/* Info */}
+                    <View style={{ flex: 1, alignItems: "flex-end" }}>
+                      <View style={styles.adhanTitleRow}>
+                        {adhan.badge && (
+                          <View
+                            style={[
+                              styles.badgeSmall,
+                              {
+                                backgroundColor: adhan.color
+                                  ? `${adhan.color}20`
+                                  : "rgba(16,185,129,0.15)",
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.badgeSmallText,
+                                { color: adhan.color || theme.primary },
+                              ]}
+                            >
+                              {adhan.badge}
+                            </Text>
+                          </View>
+                        )}
+                        <Text
+                          style={[
+                            styles.adhanModalName,
+                            { color: theme.text },
+                          ]}
+                        >
+                          {adhan.name}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.adhanModalMuadhin,
+                          { color: theme.primary },
+                        ]}
+                      >
+                        {adhan.muadhin}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.adhanModalLocation,
+                          { color: theme.textMuted },
+                        ]}
+                      >
+                        {adhan.location} • {adhan.durationFormatted}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Preview audio playback button */}
+                  <View style={styles.adhanModalCardBottom}>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalPreviewBtn,
+                        {
+                          backgroundColor: isPreviewing
+                            ? "#ef4444"
+                            : isDarkMode
+                            ? "#1e293b"
+                            : "#f1f5f9",
+                        },
+                      ]}
+                      onPress={() => handlePreviewAdhan(adhan)}
+                    >
+                      {isPreviewing ? (
+                        <Pause size={14} color="#ffffff" />
+                      ) : (
+                        <Play
+                          size={14}
+                          color={theme.text}
+                          style={{ marginLeft: 2 }}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.modalPreviewBtnText,
+                          {
+                            color: isPreviewing ? "#ffffff" : theme.text,
+                          },
+                        ]}
+                      >
+                        {isPreviewing ? "إيقاف الاستماع" : "معاينة صوت الأذان"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Fajr Dedicated Adhan Selection Modal */}
+      <Modal
+        visible={fajrModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setFajrModalVisible(false)}
+      >
+        <View style={[styles.modalContainer, { backgroundColor: theme.card }]}>
+          <View
+            style={[
+              styles.modalHeader,
+              { borderBottomColor: theme.border },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={() => setFajrModalVisible(false)}
+              style={styles.closeBtn}
+            >
+              <X size={22} color={theme.text} />
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              اختيار أذان صلاة الفجر
+            </Text>
+            <View style={{ width: 36 }} />
+          </View>
+
+          <ScrollView contentContainerStyle={styles.modalList}>
+            {ADHANS_LIST.map((adhan) => {
+              const currentFajrSound =
+                prayerNotifications.fajrSound || "fajr";
+              const isSelected = currentFajrSound === adhan.id;
+              const isPreviewing = isPlayingPreview(adhan.id);
+
+              return (
+                <View
+                  key={adhan.id}
+                  style={[
+                    styles.adhanModalCard,
+                    {
+                      backgroundColor: isSelected
+                        ? isDarkMode
+                          ? "#0f372a"
+                          : "#ecfdf5"
+                        : isDarkMode
+                        ? "#172535"
+                        : "#ffffff",
+                      borderColor: isSelected ? "#059669" : theme.border,
+                    },
+                  ]}
+                >
+                  <View style={styles.adhanModalCardTop}>
+                    {/* Select Action */}
+                    <TouchableOpacity
+                      style={[
+                        styles.selectAdhanBtn,
+                        {
+                          backgroundColor: isSelected
+                            ? "#059669"
+                            : "transparent",
+                          borderColor: isSelected ? "#059669" : theme.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        setPrayerNotificationConfig({ fajrSound: adhan.id });
+                        setFajrModalVisible(false);
+                      }}
+                    >
+                      {isSelected ? (
+                        <Check size={16} color="#ffffff" />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.selectAdhanBtnText,
+                            { color: theme.text },
+                          ]}
+                        >
+                          اختيار
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+
+                    {/* Info */}
+                    <View style={{ flex: 1, alignItems: "flex-end" }}>
+                      <View style={styles.adhanTitleRow}>
+                        {adhan.isFajr ? (
+                          <View
+                            style={[
+                              styles.badgeSmall,
+                              { backgroundColor: "rgba(5,150,105,0.2)" },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.badgeSmallText,
+                                { color: "#059669" },
+                              ]}
+                            >
+                              مع التثويب
+                            </Text>
+                          </View>
+                        ) : null}
+                        <Text
+                          style={[
+                            styles.adhanModalName,
+                            { color: theme.text },
+                          ]}
+                        >
+                          {adhan.name}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.adhanModalMuadhin,
+                          { color: "#059669" },
+                        ]}
+                      >
+                        {adhan.muadhin}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.adhanModalLocation,
+                          { color: theme.textMuted },
+                        ]}
+                      >
+                        {adhan.location} • {adhan.durationFormatted}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Preview audio playback button */}
+                  <View style={styles.adhanModalCardBottom}>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalPreviewBtn,
+                        {
+                          backgroundColor: isPreviewing
+                            ? "#ef4444"
+                            : isDarkMode
+                            ? "#1e293b"
+                            : "#f1f5f9",
+                        },
+                      ]}
+                      onPress={() => handlePreviewAdhan(adhan)}
+                    >
+                      {isPreviewing ? (
+                        <Pause size={14} color="#ffffff" />
+                      ) : (
+                        <Play
+                          size={14}
+                          color={theme.text}
+                          style={{ marginLeft: 2 }}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.modalPreviewBtnText,
+                          {
+                            color: isPreviewing ? "#ffffff" : theme.text,
+                          },
+                        ]}
+                      >
+                        {isPreviewing ? "إيقاف الاستماع" : "معاينة صوت الأذان"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -841,5 +1363,124 @@ const styles = StyleSheet.create({
   },
   cityName: {
     fontSize: 14,
+  },
+  adhanCardBox: {
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+  },
+  adhanCardHeader: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  adhanCardTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  adhanCardMuadhin: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+    textAlign: "right",
+  },
+  previewAudioBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  previewAudioBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  changeAdhanBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+  },
+  changeAdhanBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  adhanModalCard: {
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1.5,
+    gap: 10,
+  },
+  adhanModalCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  adhanTitleRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  adhanModalName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  adhanModalMuadhin: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginTop: 3,
+    textAlign: "right",
+  },
+  adhanModalLocation: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: "right",
+  },
+  badgeSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeSmallText: {
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  selectAdhanBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    minWidth: 60,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectAdhanBtnText: {
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  adhanModalCardBottom: {
+    flexDirection: "row-reverse",
+    justifyContent: "flex-start",
+  },
+  modalPreviewBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  modalPreviewBtnText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
 });
