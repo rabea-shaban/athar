@@ -39,8 +39,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "build:apk": "eas-cli build -p android --profile preview",
-    "build:bundle": "eas-cli build -p android --profile production"
+    "build:apk": "eas build -p android --profile preview",
+    "build:bundle": "eas build -p android --profile production"
   },
   "private": true
 }
