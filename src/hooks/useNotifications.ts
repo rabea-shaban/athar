@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import * as Notifications from "expo-notifications";
+import { NotificationsWrapper } from "../services/notifications/NotificationsWrapper";
 import { NotificationService } from "../services/notifications/NotificationService";
 import { useSettingsStore } from "../store/settingsStore";
 
@@ -9,7 +9,7 @@ export function useNotifications() {
 
   useEffect(() => {
     NotificationService.initialize();
-    Notifications.getPermissionsAsync().then(({ status }) => {
+    NotificationsWrapper.getPermissionsAsync().then(({ status }: any) => {
       setHasPermission(status === "granted");
     });
   }, []);

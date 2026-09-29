@@ -1,6 +1,10 @@
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import Constants, { ExecutionEnvironment } from "expo-constants";
+import {
+  NotificationsWrapper,
+  SchedulableTriggerInputTypes,
+  AndroidImportance,
+  isRunningInExpoGo,
+} from "./NotificationsWrapper";
 import {
   SalawatConfig,
   PrayerNotificationConfig,
@@ -8,10 +12,6 @@ import {
 } from "../../types/notification";
 import { PrayerTimesDay } from "../../types/prayer";
 import { PRAYER_NAMES_AR, toArabicNumber } from "../../utils/arabic";
-
-export const isExpoGo =
-  Constants.executionEnvironment === ExecutionEnvironment.StoreClient ||
-  Constants.appOwnership === "expo";
 
 export class NotificationService {
   private static isInitialized = false;
@@ -21,7 +21,7 @@ export class NotificationService {
     this.isInitialized = true;
 
     try {
-      Notifications.setNotificationHandler({
+      NotificationsWrapper.setNotificationHandler({
         handleNotification: async () => ({
           shouldShowAlert: true,
           shouldPlaySound: true,
@@ -37,9 +37,9 @@ export class NotificationService {
     try {
       if (Platform.OS === "android") {
         // 1. Adhan & Exact Prayer Channel
-        await Notifications.setNotificationChannelAsync("athar_adhan_channel", {
+        await NotificationsWrapper.setNotificationChannelAsync("athar_adhan_channel", {
           name: "تنبيهات الأذان ومواقيت الصلاة",
-          importance: Notifications.AndroidImportance.MAX,
+          importance: AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250, 500],
           lightColor: "#10b981",
           sound: "default",
@@ -49,9 +49,9 @@ export class NotificationService {
         });
 
         // 2. Pre-Prayer Channel
-        await Notifications.setNotificationChannelAsync("athar_prep_channel", {
+        await NotificationsWrapper.setNotificationChannelAsync("athar_prep_channel", {
           name: "التذكير قبل دخول وقت الصلاة",
-          importance: Notifications.AndroidImportance.HIGH,
+          importance: AndroidImportance.HIGH,
           vibrationPattern: [0, 200, 200, 200],
           lightColor: "#d97706",
           sound: "default",
@@ -60,9 +60,9 @@ export class NotificationService {
         });
 
         // 3. Salawat Channel
-        await Notifications.setNotificationChannelAsync("athar_salawat_channel", {
+        await NotificationsWrapper.setNotificationChannelAsync("athar_salawat_channel", {
           name: "الصلاة على النبي ﷺ",
-          importance: Notifications.AndroidImportance.HIGH,
+          importance: AndroidImportance.HIGH,
           vibrationPattern: [0, 150, 150, 150],
           lightColor: "#10b981",
           sound: "default",
@@ -71,9 +71,9 @@ export class NotificationService {
         });
 
         // 4. General Channel
-        await Notifications.setNotificationChannelAsync("athar_general_channel", {
+        await NotificationsWrapper.setNotificationChannelAsync("athar_general_channel", {
           name: "إشعارات عامة وتذكيرات",
-          importance: Notifications.AndroidImportance.DEFAULT,
+          importance: AndroidImportance.DEFAULT,
           sound: "default",
         });
       }
@@ -85,11 +85,11 @@ export class NotificationService {
   static async requestPermissions(): Promise<boolean> {
     try {
       const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
+        await NotificationsWrapper.getPermissionsAsync();
       let finalStatus = existingStatus;
 
       if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await NotificationsWrapper.requestPermissionsAsync();
         finalStatus = status;
       }
 
@@ -102,7 +102,7 @@ export class NotificationService {
 
   static async cancelAllAtharNotifications(): Promise<void> {
     try {
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      await NotificationsWrapper.cancelAllScheduledNotificationsAsync();
     } catch (e) {
       console.warn("Failed to cancel notifications:", e);
     }
@@ -121,7 +121,7 @@ export class NotificationService {
       for (let hour = start; hour <= end; hour += interval) {
         const identifier = `athar_salawat_${hour}_00`;
 
-        await Notifications.scheduleNotificationAsync({
+        await NotificationsWrapper.scheduleNotificationAsync({
           identifier,
           content: {
             title: "الصلاة على النبي ﷺ",
@@ -136,7 +136,7 @@ export class NotificationService {
               : {}),
           },
           trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            type: SchedulableTriggerInputTypes.DAILY,
             hour,
             minute: 0,
           },
@@ -177,7 +177,7 @@ export class NotificationService {
             const dateStr = p.time.toISOString().split("T")[0];
             const identifier = `athar_prayer_${p.key}_${dateStr}`;
 
-            await Notifications.scheduleNotificationAsync({
+            await NotificationsWrapper.scheduleNotificationAsync({
               identifier,
               content: {
                 title: `موعد صلاة ${p.nameAr}`,
@@ -194,7 +194,7 @@ export class NotificationService {
                   : {}),
               },
               trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.DATE,
+                type: SchedulableTriggerInputTypes.DATE,
                 date: p.time,
               },
             });
@@ -210,7 +210,7 @@ export class NotificationService {
               const dateStr = p.time.toISOString().split("T")[0];
               const preIdentifier = `athar_prayer_${p.key}_${dateStr}_before`;
 
-              await Notifications.scheduleNotificationAsync({
+              await NotificationsWrapper.scheduleNotificationAsync({
                 identifier: preIdentifier,
                 content: {
                   title: `اقترب موعد صلاة ${p.nameAr}`,
@@ -228,7 +228,7 @@ export class NotificationService {
                     : {}),
                 },
                 trigger: {
-                  type: Notifications.SchedulableTriggerInputTypes.DATE,
+                  type: SchedulableTriggerInputTypes.DATE,
                   date: preTime,
                 },
               });
@@ -243,7 +243,7 @@ export class NotificationService {
 
   static async sendTestNotification(): Promise<void> {
     try {
-      await Notifications.scheduleNotificationAsync({
+      await NotificationsWrapper.scheduleNotificationAsync({
         content: {
           title: "تجربة تنبيهات أَثَر",
           body: "تم تفعيل التنبيهات الإسلامية بنجاح في تطبيق أَثَر.",

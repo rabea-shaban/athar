@@ -6,7 +6,6 @@ import {
   NavigationContainer,
   NavigationContainerRef,
 } from "@react-navigation/native";
-import * as Notifications from "expo-notifications";
 import {
   Home,
   BookOpen,
@@ -29,6 +28,7 @@ import { PrayerTimesScreen } from "../screens/PrayerTimesScreen";
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
+import { NotificationsWrapper } from "../services/notifications/NotificationsWrapper";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -110,32 +110,35 @@ export function AppNavigator() {
 
   // Deep linking response handler
   useEffect(() => {
-    let subscription: Notifications.EventSubscription | null = null;
+    let subscription: any = null;
     try {
-      subscription = Notifications.addNotificationResponseReceivedListener(
-        (response) => {
-          const data = response.notification.request.content.data;
-          if (!data || !navigationRef.current) return;
+      subscription =
+        NotificationsWrapper.addNotificationResponseReceivedListener(
+          (response: any) => {
+            const data = response.notification.request.content.data;
+            if (!data || !navigationRef.current) return;
 
-          if (data.type === "salawat") {
-            navigationRef.current.navigate("MainTabs", {
-              screen: "AdhkarTab",
-            });
-          } else if (
-            data.type === "prayer_adhan" ||
-            data.type === "prayer_before"
-          ) {
-            navigationRef.current.navigate("PrayerTimes");
+            if (data.type === "salawat") {
+              navigationRef.current.navigate("MainTabs", {
+                screen: "AdhkarTab",
+              });
+            } else if (
+              data.type === "prayer_adhan" ||
+              data.type === "prayer_before"
+            ) {
+              navigationRef.current.navigate("PrayerTimes");
+            }
           }
-        }
-      );
+        );
     } catch (e) {
       console.warn("Notification response listener warning:", e);
     }
 
     return () => {
       try {
-        if (subscription) subscription.remove();
+        if (subscription && typeof subscription.remove === "function") {
+          subscription.remove();
+        }
       } catch (e) {
         // ignore
       }
