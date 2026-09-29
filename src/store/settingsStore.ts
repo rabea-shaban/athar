@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeStorage } from "../utils/storage";
 import { AppSettings, CityPreset } from "../types/settings";
 import {
   SalawatConfig,
@@ -113,7 +113,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   loadSettings: async () => {
     try {
-      const data = await AsyncStorage.getItem(SETTINGS_STORAGE_KEY);
+      const data = await SafeStorage.getItem(SETTINGS_STORAGE_KEY);
       if (data) {
         const parsed = JSON.parse(data);
         set({ ...parsed, isLoading: false });
@@ -138,7 +138,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         selectedCity: state.selectedCity,
         customCoords: state.customCoords,
       };
-      await AsyncStorage.setItem(
+      await SafeStorage.setItem(
         SETTINGS_STORAGE_KEY,
         JSON.stringify(payload)
       );

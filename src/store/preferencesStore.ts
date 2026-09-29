@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeStorage } from "../utils/storage";
 
 interface LastRead {
   surahNumber: number;
@@ -155,7 +155,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
 
   loadPreferences: async () => {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEY);
+      const data = await SafeStorage.getItem(STORAGE_KEY);
       if (data) {
         const parsed = JSON.parse(data);
         set({ ...parsed });
@@ -182,7 +182,7 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
         prayerCountry: state.prayerCountry,
         fontSize: state.fontSize,
       };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      await SafeStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch (e) {
       console.warn("Failed to save preferences to storage", e);
     }
