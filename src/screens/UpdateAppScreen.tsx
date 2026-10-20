@@ -25,6 +25,8 @@ import { Download, Sparkles, ChevronRight, ShieldAlert } from "lucide-react-nati
 import Constants from "expo-constants";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
+import { OFFICIAL_STORE_URL } from "../constants/config";
+import { AppUpdateChecker } from "../services/updates/AppUpdateChecker";
 
 export const UpdateAppScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -38,17 +40,22 @@ export const UpdateAppScreen: React.FC = () => {
   const {
     version = "1.1.0",
     minimumVersion = "1.0.0",
-    storeUrl = "https://rabea-shaban.com/athar",
+    storeUrl = OFFICIAL_STORE_URL,
     forceUpdate = false,
     releaseNotes = "يتضمن هذا الإصدار تحسينات جديدة على محرك الأذان الأصلي، وإصلاحات لمواقيت الصلاة، مع تحسين الأداء وإضافة مزايا جديدة في المكتبة الإسلامية.",
   } = route.params || {};
 
   const isForceUpdate = forceUpdate === true || forceUpdate === "true";
   const isForceUpdateRequired =
-    isForceUpdate && compareVersions(currentVersion, minimumVersion) < 0;
+    isForceUpdate &&
+    AppUpdateChecker.compareVersions(currentVersion, minimumVersion) < 0;
 
   const handleUpdatePress = () => {
-    const targetUrl = storeUrl || "https://rabea-shaban.com/athar";
+    let targetUrl = typeof storeUrl === "string" ? storeUrl.trim() : "";
+    if (!targetUrl || targetUrl.includes("rabea-shaban.com/athar")) {
+      targetUrl = OFFICIAL_STORE_URL;
+    }
+
     Linking.openURL(targetUrl).catch((err) =>
       console.warn("Failed to open store URL:", err)
     );
@@ -189,18 +196,6 @@ export const UpdateAppScreen: React.FC = () => {
     </View>
   );
 };
-
-function compareVersions(v1: string, v2: string): number {
-  const p1 = v1.split(".").map(Number);
-  const p2 = v2.split(".").map(Number);
-  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
-    const num1 = p1[i] || 0;
-    const num2 = p2[i] || 0;
-    if (num1 > num2) return 1;
-    if (num1 < num2) return -1;
-  }
-  return 0;
-}
 
 const styles = StyleSheet.create({
   container: {

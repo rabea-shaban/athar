@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  AppState,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -53,12 +54,28 @@ export const HomeScreen: React.FC = () => {
         setLoadingPrayers(false);
       });
 
-    // Check for app updates automatically on mount
-    AppUpdateChecker.checkForUpdates().then((res) => {
-      if (res.hasUpdate) {
-        setUpdateResult(res);
+    const runCheck = () => {
+      AppUpdateChecker.checkForUpdates().then((res) => {
+        if (res.hasUpdate) {
+          setUpdateResult(res);
+        } else {
+          setUpdateResult(null);
+        }
+      });
+    };
+
+    runCheck();
+
+    // Re-check for updates whenever app returns to active foreground
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        runCheck();
       }
     });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const handlePostponeUpdate = async () => {

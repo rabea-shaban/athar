@@ -11,8 +11,11 @@
 
 import Constants from "expo-constants";
 import { SafeStorage } from "../../utils/storage";
+import {
+  OFFICIAL_REMOTE_VERSION_URL,
+  OFFICIAL_STORE_URL,
+} from "../../constants/config";
 
-const REMOTE_VERSION_URL = "https://athar-library.vercel.app/version.json";
 const DISMISS_VER_KEY = "@athar_update_dismiss_ver_v1";
 const DISMISS_TIME_KEY = "@athar_update_dismiss_time_v1";
 const POSTPONE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 Hours
@@ -41,11 +44,11 @@ export class AppUpdateChecker {
     const installedVersion = this.getInstalledVersion();
 
     try {
-      // 1. Fetch remote version configuration with 3s timeout
+      // 1. Fetch official remote version configuration with 3s timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      const response = await fetch(REMOTE_VERSION_URL, {
+      const response = await fetch(OFFICIAL_REMOTE_VERSION_URL, {
         signal: controller.signal,
         headers: { "Cache-Control": "no-cache" },
       });
@@ -56,18 +59,46 @@ export class AppUpdateChecker {
         return { hasUpdate: false, installedVersion };
       }
 
-      const remoteData: RemoteVersionInfo = await response.json();
-      if (!remoteData || !remoteData.latestVersion) {
+      const remoteData: any = await response.json();
+      if (
+        !remoteData ||
+        typeof remoteData !== "object" ||
+        !remoteData.latestVersion ||
+        typeof remoteData.latestVersion !== "string"
+      ) {
         return { hasUpdate: false, installedVersion };
       }
 
-      // 2. Parse forceUpdate boolean safely
+      // 2. Parse and sanitize remote configuration
+      const latestVersion = remoteData.latestVersion.trim();
+      const minimumVersion =
+        typeof remoteData.minimumVersion === "string"
+          ? remoteData.minimumVersion.trim()
+          : "1.0.0";
+
+      // Ensure storeUrl is a valid HTTPS URL pointing to official platform
+      let storeUrl =
+        typeof remoteData.storeUrl === "string" &&
+        remoteData.storeUrl.startsWith("http")
+          ? remoteData.storeUrl.trim()
+          : OFFICIAL_STORE_URL;
+
+      // Replace old URL if present in JSON payload with official store URL
+      if (storeUrl.includes("rabea-shaban.com/athar")) {
+        storeUrl = OFFICIAL_STORE_URL;
+      }
+
       const isForce =
-        remoteData.forceUpdate === true ||
-        (remoteData as any).forceUpdate === "true";
+        remoteData.forceUpdate === true || remoteData.forceUpdate === "true";
+
+      const releaseNotes =
+        typeof remoteData.releaseNotes === "string" &&
+        remoteData.releaseNotes.trim().length > 0
+          ? remoteData.releaseNotes.trim()
+          : "يتضمن هذا الإصدار تحسينات جديدة على منصة أثر وإصلاحات عامة.";
 
       const hasNewerVersion =
-        this.compareVersions(remoteData.latestVersion, installedVersion) > 0;
+        this.compareVersions(latestVersion, installedVersion) > 0;
 
       // 3. Auto-clear dismissal if user already updated
       if (!hasNewerVersion) {
@@ -76,17 +107,11 @@ export class AppUpdateChecker {
       }
 
       const isForceUpdateRequired =
-        isForce &&
-        this.compareVersions(
-          remoteData.minimumVersion || "1.0.0",
-          installedVersion
-        ) > 0;
+        isForce || this.compareVersions(minimumVersion, installedVersion) > 0;
 
       // 4. Check if postponed recently (unless force update required)
       if (!isForceUpdateRequired) {
-        const isPostponed = await this.isUpdatePostponed(
-          remoteData.latestVersion
-        );
+        const isPostponed = await this.isUpdatePostponed(latestVersion);
         if (isPostponed) {
           return { hasUpdate: false, installedVersion };
         }
@@ -96,13 +121,16 @@ export class AppUpdateChecker {
         hasUpdate: true,
         installedVersion,
         updateInfo: {
-          ...remoteData,
+          latestVersion,
+          minimumVersion,
+          storeUrl,
           forceUpdate: isForce,
+          releaseNotes,
         },
         isForceUpdateRequired,
       };
     } catch (e) {
-      // Fail silently on network offline or error
+      // Fail silently on network offline, timeout or parsing error
       return { hasUpdate: false, installedVersion };
     }
   }
@@ -144,9 +172,9 @@ export class AppUpdateChecker {
     return false;
   }
 
-  private static compareVersions(v1: string, v2: string): number {
-    const p1 = (v1 || "1.0.0").split(".").map(Number);
-    const p2 = (v2 || "1.0.0").split(".").map(Number);
+  static compareVersions(v1: string, v2: string): number {
+    const p1 = (v1 || "1.0.0").split(".").map((x) => parseInt(x, 10) || 0);
+    const p2 = (v2 || "1.0.0").split(".").map((x) => parseInt(x, 10) || 0);
     for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
       const num1 = p1[i] || 0;
       const num2 = p2[i] || 0;
