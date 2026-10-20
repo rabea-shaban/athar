@@ -20,6 +20,9 @@ import {
   GraduationCap,
   Library,
   ChevronLeft,
+  Clock,
+  Compass,
+  Info,
   LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,8 @@ const navLinks: NavItem[] = [
   { href: "/quran", label: "القرآن", icon: BookOpen },
   { href: "/tafsir", label: "التفسير", icon: BookText },
   { href: "/quran-search", label: "البحث", icon: Search },
+  { href: "/prayer-times", label: "المواقيت", icon: Clock },
+  { href: "/qibla", label: "القبلة", icon: Compass },
   { href: "/listen", label: "الاستماع", icon: Headphones },
   { href: "/radio", label: "الإذاعة", icon: Radio },
   { href: "/adhkar", label: "الأذكار", icon: Heart },
@@ -117,6 +122,13 @@ export default function Navbar() {
               <Search className="h-4 w-4" />
             </Button>
           </Link>
+
+          <Link href="/about">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" title="عن المنصة">
+              <Info className="h-4 w-4" />
+            </Button>
+          </Link>
+
           <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-primary">
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
