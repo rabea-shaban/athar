@@ -13,7 +13,7 @@ export const OFFICIAL_REMOTE_VERSION_URL =
   "https://athar-library.vercel.app/version.json";
 
 export const OFFICIAL_STORE_URL =
-  "https://athar-library.vercel.app/";
+  "https://athar-library.vercel.app/download";
 
 export const DEVELOPER_WEBSITE_URL =
   "https://rabea-shaban.com/";
