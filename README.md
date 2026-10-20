@@ -66,3 +66,16 @@ npm install -g eas-cli
 eas login
 eas build -p android --profile preview
 ```
+
+---
+
+## 📜 حقوق الملكية والتطوير (Copyright & Attribution):
+
+**© 2026 ATHAR — أَثَر**
+Designed, Developed & Owned by **Rabea Shaban** (Full Stack Software Engineer).
+
+جميع الحقوق محفوظة للأجزاء الأصلية المملوكة لصاحب المشروع.
+- **الموقع الرسمي**: [https://rabea-shaban.com/](https://rabea-shaban.com/)
+- **البريد الإلكتروني**: [rabea.elzayate@gmail.com](mailto:rabea.elzayate@gmail.com)
+- **GitHub**: [https://github.com/rabea-shaban/athar](https://github.com/rabea-shaban/athar)
+- **شروط الحقوق والمصادر الخارجية**: يرجى مراجعة ملفات [COPYRIGHT](./COPYRIGHT) و [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

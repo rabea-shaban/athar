@@ -3,7 +3,6 @@ import {
   NotificationsWrapper,
   SchedulableTriggerInputTypes,
   AndroidImportance,
-  isRunningInExpoGo,
 } from "./NotificationsWrapper";
 import {
   SalawatConfig,
@@ -12,6 +11,8 @@ import {
 } from "../../types/notification";
 import { PrayerTimesDay } from "../../types/prayer";
 import { PRAYER_NAMES_AR, toArabicNumber } from "../../utils/arabic";
+import { NativeEngine, NativePrayerScheduleItem } from "../native/AtharNativeModule";
+import { getAdhanById } from "../../data/adhans";
 
 export class NotificationService {
   private static isInitialized = false;
@@ -19,6 +20,10 @@ export class NotificationService {
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
     this.isInitialized = true;
+
+    if (NativeEngine.isAvailable()) {
+      NativeEngine.initializeEngine();
+    }
 
     try {
       NotificationsWrapper.setNotificationHandler({
@@ -36,7 +41,6 @@ export class NotificationService {
 
     try {
       if (Platform.OS === "android") {
-        // 1. Adhan & Exact Prayer Channel
         await NotificationsWrapper.setNotificationChannelAsync("athar_adhan_channel", {
           name: "تنبيهات الأذان ومواقيت الصلاة",
           importance: AndroidImportance.MAX,
@@ -48,7 +52,6 @@ export class NotificationService {
           showBadge: true,
         });
 
-        // 2. Pre-Prayer Channel
         await NotificationsWrapper.setNotificationChannelAsync("athar_prep_channel", {
           name: "التذكير قبل دخول وقت الصلاة",
           importance: AndroidImportance.HIGH,
@@ -59,7 +62,6 @@ export class NotificationService {
           enableVibrate: true,
         });
 
-        // 3. Salawat Channel
         await NotificationsWrapper.setNotificationChannelAsync("athar_salawat_channel", {
           name: "الصلاة على النبي ﷺ",
           importance: AndroidImportance.HIGH,
@@ -70,7 +72,6 @@ export class NotificationService {
           enableVibrate: true,
         });
 
-        // 4. General Channel
         await NotificationsWrapper.setNotificationChannelAsync("athar_general_channel", {
           name: "إشعارات عامة وتذكيرات",
           importance: AndroidImportance.DEFAULT,
@@ -102,6 +103,9 @@ export class NotificationService {
 
   static async cancelAllAtharNotifications(): Promise<void> {
     try {
+      if (NativeEngine.isAvailable()) {
+        NativeEngine.cancelAllSchedules();
+      }
       await NotificationsWrapper.cancelAllScheduledNotificationsAsync();
     } catch (e) {
       console.warn("Failed to cancel notifications:", e);
@@ -114,6 +118,17 @@ export class NotificationService {
     try {
       if (!config.enabled) return;
 
+      if (NativeEngine.isAvailable()) {
+        NativeEngine.scheduleSalawat(
+          config.enabled,
+          config.intervalHours || 1,
+          config.startHour ?? 8,
+          config.endHour ?? 22
+        );
+        return;
+      }
+
+      // JS Fallback for iOS / Web
       const interval = Math.max(1, config.intervalHours || 1);
       const start = config.startHour ?? 8;
       const end = config.endHour ?? 22;
@@ -156,6 +171,64 @@ export class NotificationService {
 
       const now = new Date();
 
+      if (NativeEngine.isAvailable()) {
+        const nativeItems: NativePrayerScheduleItem[] = [];
+
+        for (const day of schedule) {
+          const prayers: {
+            key: "fajr" | "dhuhr" | "asr" | "maghrib" | "isha";
+            nameAr: string;
+            time: Date;
+          }[] = [
+            { key: "fajr", nameAr: PRAYER_NAMES_AR.Fajr, time: day.fajr },
+            { key: "dhuhr", nameAr: PRAYER_NAMES_AR.Dhuhr, time: day.dhuhr },
+            { key: "asr", nameAr: PRAYER_NAMES_AR.Asr, time: day.asr },
+            { key: "maghrib", nameAr: PRAYER_NAMES_AR.Maghrib, time: day.maghrib },
+            { key: "isha", nameAr: PRAYER_NAMES_AR.Isha, time: day.isha },
+          ];
+
+          for (const p of prayers) {
+            if (!config[p.key]) continue;
+
+            const chosenSoundId = p.key === "fajr"
+              ? (config.fajrSound || "fajr")
+              : (config.sound || "makkah");
+            const adhanTrack = getAdhanById(chosenSoundId);
+            const soundUrl = adhanTrack?.audioUrl;
+
+            if (p.time > now) {
+              nativeItems.push({
+                prayerKey: p.key,
+                prayerNameAr: p.nameAr,
+                timestamp: p.time.getTime(),
+                isPrePrayer: false,
+                preMinutes: 0,
+                soundUrl: soundUrl,
+              });
+            }
+
+            if (config.prePrayerMinutes > 0) {
+              const preTime = new Date(
+                p.time.getTime() - config.prePrayerMinutes * 60 * 1000
+              );
+              if (preTime > now) {
+                nativeItems.push({
+                  prayerKey: p.key,
+                  prayerNameAr: p.nameAr,
+                  timestamp: preTime.getTime(),
+                  isPrePrayer: true,
+                  preMinutes: config.prePrayerMinutes,
+                });
+              }
+            }
+          }
+        }
+
+        NativeEngine.schedulePrayerTimes(nativeItems);
+        return;
+      }
+
+      // JS Fallback for iOS / Web
       for (const day of schedule) {
         const prayers: {
           key: "fajr" | "dhuhr" | "asr" | "maghrib" | "isha";
@@ -172,7 +245,6 @@ export class NotificationService {
         for (const p of prayers) {
           if (!config[p.key]) continue;
 
-          // 1. Schedule Exact Prayer Time Adhan Notification
           if (p.time > now) {
             const dateStr = p.time.toISOString().split("T")[0];
             const identifier = `athar_prayer_${p.key}_${dateStr}`;
@@ -200,7 +272,6 @@ export class NotificationService {
             });
           }
 
-          // 2. Schedule Pre-Prayer Reminder (e.g. 15 mins before)
           if (config.prePrayerMinutes > 0) {
             const preTime = new Date(
               p.time.getTime() - config.prePrayerMinutes * 60 * 1000
@@ -253,7 +324,7 @@ export class NotificationService {
             ? { channelId: "athar_general_channel" }
             : {}),
         },
-        trigger: null, // send immediately
+        trigger: null,
       });
     } catch (e) {
       console.warn("Test notification error:", e);

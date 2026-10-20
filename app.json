@@ -7,7 +7,9 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#1a5d44"
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090d16"
     },
     "ios": {
       "supportsTablet": true,
@@ -24,8 +26,8 @@
     "android": {
       "package": "com.athar.islamic",
       "adaptiveIcon": {
-        "backgroundColor": "#1a5d44",
-        "foregroundImage": "./assets/android-icon-foreground.png"
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/icon.png"
       },
       "permissions": [
         "WAKE_LOCK",
@@ -37,7 +39,13 @@
         "POST_NOTIFICATIONS",
         "VIBRATE",
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -60,6 +68,11 @@
     ],
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fca183d7-785a-4fed-8910-4f4ec0b26049"
+      }
     }
   }
 }

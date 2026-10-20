@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import {
   ChevronRight,
@@ -25,6 +26,7 @@ import { toArabicNumber } from "../utils/arabic";
 
 export const PrayerTimesScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
@@ -95,7 +97,11 @@ export const PrayerTimesScreen: React.FC = () => {
       <View
         style={[
           styles.navBar,
-          { backgroundColor: theme.card, borderBottomColor: theme.border },
+          {
+            backgroundColor: theme.card,
+            borderBottomColor: theme.border,
+            paddingTop: insets.top + 8,
+          },
         ]}
       >
         <TouchableOpacity

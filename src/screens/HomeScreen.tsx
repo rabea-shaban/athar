@@ -19,12 +19,19 @@ import {
   Volume2,
   GraduationCap,
   Headphones,
+  Sparkles,
+  Download,
+  X,
 } from "lucide-react-native";
 import { Header } from "../components/Header";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
 import { getPrayerTimes, PrayerTimings } from "../api/islamic";
 import { toArabicNumber, PRAYER_NAMES_AR } from "../utils/arabic";
+import {
+  AppUpdateChecker,
+  CheckUpdateResult,
+} from "../services/updates/AppUpdateChecker";
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -33,6 +40,7 @@ export const HomeScreen: React.FC = () => {
 
   const [prayers, setPrayers] = useState<PrayerTimings | null>(null);
   const [loadingPrayers, setLoadingPrayers] = useState(true);
+  const [updateResult, setUpdateResult] = useState<CheckUpdateResult | null>(null);
 
   useEffect(() => {
     getPrayerTimes("cairo", "egypt")
@@ -44,7 +52,33 @@ export const HomeScreen: React.FC = () => {
         console.warn("Prayer times fetch error:", err);
         setLoadingPrayers(false);
       });
+
+    // Check for app updates automatically on mount
+    AppUpdateChecker.checkForUpdates().then((res) => {
+      if (res.hasUpdate) {
+        setUpdateResult(res);
+      }
+    });
   }, []);
+
+  const handlePostponeUpdate = async () => {
+    if (updateResult?.updateInfo?.latestVersion) {
+      await AppUpdateChecker.postponeUpdate(updateResult.updateInfo.latestVersion);
+      setUpdateResult(null);
+    }
+  };
+
+  const handleOpenUpdateScreen = () => {
+    if (updateResult?.updateInfo) {
+      navigation.navigate("UpdateApp", {
+        version: updateResult.updateInfo.latestVersion,
+        minimumVersion: updateResult.updateInfo.minimumVersion,
+        storeUrl: updateResult.updateInfo.storeUrl,
+        forceUpdate: updateResult.updateInfo.forceUpdate,
+        releaseNotes: updateResult.updateInfo.releaseNotes,
+      });
+    }
+  };
 
   const quickShortcuts = [
     {
@@ -112,12 +146,78 @@ export const HomeScreen: React.FC = () => {
       <Header
         onSearchPress={() => navigation.navigate("QuranSearch")}
         onBellPress={() => navigation.navigate("NotificationSettings")}
+        onInfoPress={() => navigation.navigate("About")}
       />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Automatic In-App Update Notice Banner */}
+        {updateResult?.hasUpdate && updateResult.updateInfo && (
+          <View
+            style={[
+              styles.updateBanner,
+              {
+                backgroundColor: isDarkMode ? "#1e293b" : "#f0fdf4",
+                borderColor: theme.primary,
+              },
+            ]}
+          >
+            <View style={styles.updateBannerHeader}>
+              <TouchableOpacity
+                style={styles.closeBannerBtn}
+                onPress={handlePostponeUpdate}
+              >
+                <X size={16} color={theme.textMuted} />
+              </TouchableOpacity>
+
+              <View style={styles.updateBannerTitleRow}>
+                <Text style={[styles.updateBannerTitle, { color: theme.text }]}>
+                  تحديث جديد متوفر بـ أثر (v{updateResult.updateInfo.latestVersion}) 🌙
+                </Text>
+                <Sparkles size={16} color={theme.accentGold} />
+              </View>
+            </View>
+
+            <Text
+              style={[styles.updateBannerBody, { color: theme.textMuted }]}
+              numberOfLines={2}
+            >
+              {updateResult.updateInfo.releaseNotes}
+            </Text>
+
+            <View style={styles.updateBannerActions}>
+              <TouchableOpacity
+                style={[
+                  styles.updateActionBtn,
+                  { backgroundColor: theme.primary },
+                ]}
+                onPress={handleOpenUpdateScreen}
+              >
+                <Download size={14} color="#ffffff" />
+                <Text style={styles.updateActionBtnText}>
+                  عرض التحديث والتفاصيل
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.postponeActionBtn,
+                  { borderColor: theme.border },
+                ]}
+                onPress={handlePostponeUpdate}
+              >
+                <Text
+                  style={[styles.postponeActionText, { color: theme.textMuted }]}
+                >
+                  تأجيل 24 ساعة
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Welcome & Last Read Banner */}
         <View
           style={[
@@ -283,6 +383,17 @@ export const HomeScreen: React.FC = () => {
             سورة الإسراء • آية ٩
           </Text>
         </View>
+
+        {/* Copyright & About ATHAR Footer */}
+        <TouchableOpacity
+          style={styles.aboutFooter}
+          onPress={() => navigation.navigate("About")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.aboutFooterText, { color: theme.textMuted }]}>
+            © 2026 ATHAR — أَثَر • Developed by Rabea Shaban
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -296,6 +407,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 40,
+  },
+  updateBanner: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 16,
+  },
+  updateBannerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  updateBannerTitleRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+  },
+  updateBannerTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  closeBannerBtn: {
+    padding: 4,
+  },
+  updateBannerBody: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "right",
+    marginTop: 6,
+    marginBottom: 10,
+  },
+  updateBannerActions: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  updateActionBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  updateActionBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  postponeActionBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  postponeActionText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
   heroCard: {
     borderRadius: 20,
@@ -364,9 +533,6 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 12,
     fontWeight: "bold",
-  },
-  cityText: {
-    fontSize: 11,
   },
   prayersCard: {
     borderRadius: 16,
@@ -453,5 +619,15 @@ const styles = StyleSheet.create({
   quoteSurah: {
     fontSize: 12,
     marginTop: 10,
+  },
+  aboutFooter: {
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 10,
+    paddingVertical: 8,
+  },
+  aboutFooterText: {
+    fontSize: 11,
+    fontWeight: "500",
   },
 });

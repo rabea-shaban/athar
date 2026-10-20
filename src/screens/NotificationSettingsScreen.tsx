@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  Platform,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import {
   ChevronRight,
@@ -25,6 +27,9 @@ import {
   Pause,
   Music,
   Headphones,
+  ShieldAlert,
+  BatteryCharging,
+  Info,
 } from "lucide-react-native";
 import { ADHANS_LIST, getAdhanById, AdhanTrack } from "../data/adhans";
 import { useAudioStore } from "../store/audioStore";
@@ -35,21 +40,25 @@ import { lightTheme, darkTheme } from "../constants/theme";
 import { CITY_PRESETS } from "../services/location/LocationService";
 import { CalculationMethodName, MadhabName } from "../types/prayer";
 import { toArabicNumber } from "../utils/arabic";
+import { NativeEngine } from "../services/native/AtharNativeModule";
 
 export const NotificationSettingsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const {
     salawat,
     prayerNotifications,
+    pushPreferences,
     selectedCity,
     calculationMethod,
     madhab,
     useGps,
     setSalawatConfig,
     setPrayerNotificationConfig,
+    setPushPreferences,
     setSelectedCity,
     setCalculationMethod,
     setMadhab,
@@ -64,12 +73,26 @@ export const NotificationSettingsScreen: React.FC = () => {
   const [adhanModalVisible, setAdhanModalVisible] = useState(false);
   const [fajrModalVisible, setFajrModalVisible] = useState(false);
 
+  const [canExactAlarm, setCanExactAlarm] = useState<boolean>(true);
+  const [isTestingAdhanNative, setIsTestingAdhanNative] = useState<boolean>(false);
+
   const { playTrack, togglePlay, currentTrack, isPlaying } = useAudioStore();
 
   const selectedAdhan = getAdhanById(prayerNotifications.sound);
   const selectedFajrAdhan = getAdhanById(
     prayerNotifications.fajrSound || "fajr"
   );
+
+  useEffect(() => {
+    checkExactAlarmStatus();
+  }, []);
+
+  const checkExactAlarmStatus = async () => {
+    if (NativeEngine.isAvailable()) {
+      const status = await NativeEngine.canScheduleExactAlarms();
+      setCanExactAlarm(status);
+    }
+  };
 
   const isPlayingPreview = (adhanId: string) => {
     return currentTrack?.id === `adhan_preview_${adhanId}` && isPlaying;
@@ -86,6 +109,16 @@ export const NotificationSettingsScreen: React.FC = () => {
         subtitle: adhan.muadhin,
         audioUrl: adhan.audioUrl,
       });
+    }
+  };
+
+  const handleTestNativeAdhan = () => {
+    if (isTestingAdhanNative) {
+      NativeEngine.stopAdhan();
+      setIsTestingAdhanNative(false);
+    } else {
+      NativeEngine.startAdhanTest("الظهر");
+      setIsTestingAdhanNative(true);
     }
   };
 
@@ -109,9 +142,12 @@ export const NotificationSettingsScreen: React.FC = () => {
   ];
 
   const salawatIntervalOptions = [
+    { value: 0.5, label: "كل 30 دقيقة" },
     { value: 1, label: "كل ساعة" },
     { value: 2, label: "كل ساعتين" },
     { value: 3, label: "كل ٣ ساعات" },
+    { value: 4, label: "كل ٤ ساعات" },
+    { value: 6, label: "كل ٦ ساعات" },
   ];
 
   const handleTestNotification = async () => {
@@ -135,7 +171,11 @@ export const NotificationSettingsScreen: React.FC = () => {
       <View
         style={[
           styles.navBar,
-          { backgroundColor: theme.card, borderBottomColor: theme.border },
+          {
+            backgroundColor: theme.card,
+            borderBottomColor: theme.border,
+            paddingTop: insets.top + 8,
+          },
         ]}
       >
         <TouchableOpacity
@@ -184,6 +224,102 @@ export const NotificationSettingsScreen: React.FC = () => {
               onPress={requestPermission}
             >
               <Text style={styles.permissionActionText}>تفعيل</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Exact Alarm Permission Banner (Android 12+) */}
+        {Platform.OS === "android" && !canExactAlarm && (
+          <View
+            style={[
+              styles.permissionCard,
+              {
+                backgroundColor: isDarkMode ? "#3a2512" : "#fffbe1",
+                borderColor: "#d97706",
+              },
+            ]}
+          >
+            <ShieldAlert size={20} color="#d97706" />
+            <View style={styles.permissionInfo}>
+              <Text style={[styles.permissionTitle, { color: "#d97706" }]}>
+                التنبيهات الدقيقة تحتاج إلى إذن
+              </Text>
+              <Text style={[styles.permissionDesc, { color: "#92400e" }]}>
+                لضمان إطلاق الأذان في ثانية الوقت بالضبط، يرجى السماح للتطبيق بالتنبيهات الدقيقة.
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.permissionActionBtn, { backgroundColor: "#d97706" }]}
+              onPress={() => NativeEngine.openExactAlarmSettings()}
+            >
+              <Text style={styles.permissionActionText}>السماح</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Android Native Engine Controls Card */}
+        {Platform.OS === "android" && NativeEngine.isAvailable() && (
+          <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: theme.card, borderColor: theme.border },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 10 }]}>
+              محرك الأذان والتنبيهات الأصلي (Android)
+            </Text>
+
+            <TouchableOpacity
+              style={[
+                styles.nativeActionBtn,
+                {
+                  backgroundColor: isTestingAdhanNative ? "#ef4444" : theme.primary,
+                },
+              ]}
+              onPress={handleTestNativeAdhan}
+            >
+              {isTestingAdhanNative ? (
+                <Pause size={18} color="#ffffff" />
+              ) : (
+                <Play size={18} color="#ffffff" />
+              )}
+              <Text style={styles.nativeActionBtnText}>
+                {isTestingAdhanNative
+                  ? "إيقاف صوت الأذان الأصلي"
+                  : `اختبار الأذان بصوت (${selectedAdhan.muadhin})`}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.nativeSecondaryBtn,
+                { borderColor: theme.border, marginTop: 10 },
+              ]}
+              onPress={() => {
+                NativeEngine.scheduleTestAdhanInOneMinute("الظهر", selectedAdhan.audioUrl);
+                Alert.alert(
+                  "تم جدولة الأذان التجريبي",
+                  `سيعمل أذان (${selectedAdhan.muadhin}) بعد 60 ثانية بالضبط. اغلق التطبيق واقفل الشاشة لاختبار العمل في الخلفية!`
+                );
+              }}
+            >
+              <Clock size={18} color={theme.primary} />
+              <Text style={[styles.nativeSecondaryBtnText, { color: theme.text }]}>
+                جدولة أذان تجريبي بعد 60 ثانية (اختبار التطبيق المغلق والشاشة المقفولة)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.nativeSecondaryBtn,
+                { borderColor: theme.border, marginTop: 10 },
+              ]}
+              onPress={() => NativeEngine.openBatteryOptimizationSettings()}
+            >
+              <BatteryCharging size={18} color={theme.primary} />
+              <Text style={[styles.nativeSecondaryBtnText, { color: theme.text }]}>
+                إعدادات استثناء البطارية (لضمان عمل الأذان بدون تأخير)
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -274,6 +410,19 @@ export const NotificationSettingsScreen: React.FC = () => {
                   من {toArabicNumber("08:00")} صباحاً إلى {toArabicNumber("10:00")} مساءً
                 </Text>
               </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.nativeSecondaryBtn,
+                  { borderColor: theme.primary, marginTop: 12 },
+                ]}
+                onPress={() => NativeEngine.startSalawatTest()}
+              >
+                <Heart size={16} color={theme.primary} />
+                <Text style={[styles.nativeSecondaryBtnText, { color: theme.primary }]}>
+                  تجربة استماع لنغمة «صلي على محمد»
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -678,6 +827,115 @@ export const NotificationSettingsScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* 4. Push Notifications Preferences Card (FCM) */}
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <View style={{ flex: 1, alignItems: "flex-end" }}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                  إشعارات التحديثات والإعلانات العامة
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: theme.textMuted }]}>
+                  إشعارات إطلاق التحديثات والمحتوى الجديد
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: "rgba(59,130,246,0.12)" },
+                ]}
+              >
+                <Bell size={20} color="#3b82f6" />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.subOptions}>
+            <View style={styles.prayerRowToggle}>
+              <Switch
+                value={pushPreferences.appUpdatesEnabled}
+                onValueChange={(val) =>
+                  setPushPreferences({ appUpdatesEnabled: val })
+                }
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#ffffff"
+              />
+              <Text style={[styles.prayerRowLabel, { color: theme.text }]}>
+                تنبيهات إطلاق التحديثات والنسخ الجديدة
+              </Text>
+            </View>
+
+            <View style={styles.prayerRowToggle}>
+              <Switch
+                value={pushPreferences.announcementsEnabled}
+                onValueChange={(val) =>
+                  setPushPreferences({ announcementsEnabled: val })
+                }
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#ffffff"
+              />
+              <Text style={[styles.prayerRowLabel, { color: theme.text }]}>
+                الإعلانات والأخبار العامة للمنصة
+              </Text>
+            </View>
+
+            <View style={styles.prayerRowToggle}>
+              <Switch
+                value={pushPreferences.islamicContentEnabled}
+                onValueChange={(val) =>
+                  setPushPreferences({ islamicContentEnabled: val })
+                }
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#ffffff"
+              />
+              <Text style={[styles.prayerRowLabel, { color: theme.text }]}>
+                إشعارات الدروس والمستجدات الإسلامية
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* About ATHAR & Copyright Card */}
+        <TouchableOpacity
+          style={[
+            styles.sectionCard,
+            {
+              backgroundColor: theme.card,
+              borderColor: theme.border,
+              flexDirection: "row-reverse",
+              alignItems: "center",
+              justifyContent: "space-between",
+            },
+          ]}
+          onPress={() => navigation.navigate("About" as never)}
+          activeOpacity={0.7}
+        >
+          <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 12 }}>
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: "rgba(16,185,129,0.12)" },
+              ]}
+            >
+              <Info size={20} color={theme.primary} />
+            </View>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                عن تطبيق أَثَر وحقوق الملكية
+              </Text>
+              <Text style={[styles.sectionSubtitle, { color: theme.textMuted }]}>
+                المطور والمالك: Rabea Shaban • الإصدار 1.0.0
+              </Text>
+            </View>
+          </View>
+          <ChevronRight size={18} color={theme.textMuted} />
+        </TouchableOpacity>
       </ScrollView>
 
       {/* City Selection Modal */}
@@ -1481,6 +1739,34 @@ const styles = StyleSheet.create({
   },
   modalPreviewBtnText: {
     fontSize: 11,
+    fontWeight: "600",
+  },
+  nativeActionBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  nativeActionBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  nativeSecondaryBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  nativeSecondaryBtnText: {
+    fontSize: 12,
     fontWeight: "600",
   },
 });

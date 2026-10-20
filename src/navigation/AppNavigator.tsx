@@ -25,11 +25,13 @@ import { QuranSearchScreen } from "../screens/QuranSearchScreen";
 import { NotificationSettingsScreen } from "../screens/NotificationSettingsScreen";
 import { PrayerTimesScreen } from "../screens/PrayerTimesScreen";
 import { ListenScreen } from "../screens/ListenScreen";
+import { AboutScreen } from "../screens/AboutScreen";
+import { UpdateAppScreen } from "../screens/UpdateAppScreen";
 
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
-import { NotificationsWrapper } from "../services/notifications/NotificationsWrapper";
+import { FirebasePushService } from "../services/firebase/FirebasePushService";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -109,36 +111,16 @@ function MainTabNavigator() {
 export function AppNavigator() {
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
-  // Deep linking response handler
+  // Single Centralized Push Notification & Cold Start Response Handler
   useEffect(() => {
-    let subscription: any = null;
-    try {
-      subscription =
-        NotificationsWrapper.addNotificationResponseReceivedListener(
-          (response: any) => {
-            const data = response.notification.request.content.data;
-            if (!data || !navigationRef.current) return;
-
-            if (data.type === "salawat") {
-              navigationRef.current.navigate("MainTabs", {
-                screen: "AdhkarTab",
-              });
-            } else if (
-              data.type === "prayer_adhan" ||
-              data.type === "prayer_before"
-            ) {
-              navigationRef.current.navigate("PrayerTimes");
-            }
-          }
-        );
-    } catch (e) {
-      console.warn("Notification response listener warning:", e);
-    }
+    FirebasePushService.registerForPushNotificationsAsync();
+    const pushSub =
+      FirebasePushService.setupNotificationResponseHandler(navigationRef);
 
     return () => {
       try {
-        if (subscription && typeof subscription.remove === "function") {
-          subscription.remove();
+        if (pushSub && typeof pushSub.remove === "function") {
+          pushSub.remove();
         }
       } catch (e) {
         // ignore
@@ -159,6 +141,8 @@ export function AppNavigator() {
         />
         <Stack.Screen name="PrayerTimes" component={PrayerTimesScreen} />
         <Stack.Screen name="Listen" component={ListenScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="UpdateApp" component={UpdateAppScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

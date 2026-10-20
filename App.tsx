@@ -6,7 +6,7 @@ import {
   Amiri_400Regular,
   Amiri_700Bold,
 } from "@expo-google-fonts/amiri";
-import { ActivityIndicator, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { ActivityIndicator, View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { AppNavigator } from "./src/navigation/AppNavigator";
 import { usePreferencesStore } from "./src/store/preferencesStore";
 import { useSettingsStore } from "./src/store/settingsStore";
@@ -95,15 +95,21 @@ export default function App() {
 
   if (!fontsLoaded && !fontError) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: isDarkMode ? "#090d16" : "#f8fafc",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ActivityIndicator size="large" color="#10b981" />
+      <View style={splashStyles.container}>
+        <StatusBar style="light" />
+        <View style={splashStyles.logoBox}>
+          <Image
+            source={require("./assets/icon.png")}
+            style={splashStyles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
+        <Text style={splashStyles.appName}>أَثَر</Text>
+        <Text style={splashStyles.appSubtitle}>منصة المعرفة والهدى الإسلامية</Text>
+        <View style={splashStyles.loadingRow}>
+          <ActivityIndicator size="small" color="#10b981" />
+          <Text style={splashStyles.loadingText}>جاري تجهيز التطبيق...</Text>
+        </View>
       </View>
     );
   }
@@ -117,6 +123,53 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+const splashStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#090d16",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  logoBox: {
+    width: 110,
+    height: 110,
+    borderRadius: 28,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.25)",
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+  },
+  appName: {
+    color: "#10b981",
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 6,
+    letterSpacing: 1,
+  },
+  appSubtitle: {
+    color: "#94a3b8",
+    fontSize: 14,
+    marginBottom: 36,
+  },
+  loadingRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  loadingText: {
+    color: "#64748b",
+    fontSize: 13,
+  },
+});
 
 const errorStyles = StyleSheet.create({
   container: {

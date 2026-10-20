@@ -1,3 +1,14 @@
+/**
+ * ATHAR — أَثَر
+ * Islamic Knowledge & Guidance Platform
+ *
+ * Copyright (c) 2026 Rabea Shaban.
+ * All rights reserved.
+ *
+ * Contact: rabea.elzayate@gmail.com
+ * Website: https://rabea-shaban.com/
+ */
+
 import { create } from "zustand";
 import { SafeStorage } from "../utils/storage";
 import { AppSettings, CityPreset } from "../types/settings";
@@ -13,15 +24,18 @@ import {
 import { CITY_PRESETS, LocationService } from "../services/location/LocationService";
 import { PrayerTimesService } from "../services/prayer/PrayerTimesService";
 import { NotificationService } from "../services/notifications/NotificationService";
+import { UserPushPreferences } from "../types/fcm";
 
 const SETTINGS_STORAGE_KEY = "@athar_app_settings_v1";
 
 interface SettingsStoreState extends AppSettings {
   isLoading: boolean;
+  pushPreferences: UserPushPreferences;
   setSalawatConfig: (config: Partial<SalawatConfig>) => void;
   setPrayerNotificationConfig: (
     config: Partial<PrayerNotificationConfig>
   ) => void;
+  setPushPreferences: (config: Partial<UserPushPreferences>) => void;
   setCalculationMethod: (method: CalculationMethodName) => void;
   setMadhab: (madhab: MadhabName) => void;
   setUseGps: (useGps: boolean) => void;
@@ -52,6 +66,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     fajrSound: "fajr",
     vibration: true,
   },
+  pushPreferences: {
+    appUpdatesEnabled: true,
+    announcementsEnabled: true,
+    islamicContentEnabled: true,
+  },
   calculationMethod: "Egyptian",
   madhab: "shafi",
   useGps: true,
@@ -70,6 +89,13 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     });
     get().saveSettings();
     get().rescheduleNotifications();
+  },
+
+  setPushPreferences: (config) => {
+    set({
+      pushPreferences: { ...get().pushPreferences, ...config },
+    });
+    get().saveSettings();
   },
 
   setCalculationMethod: (calculationMethod) => {
@@ -117,7 +143,16 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       const data = await SafeStorage.getItem(SETTINGS_STORAGE_KEY);
       if (data) {
         const parsed = JSON.parse(data);
-        set({ ...parsed, isLoading: false });
+        set({
+          ...parsed,
+          pushPreferences: {
+            appUpdatesEnabled: true,
+            announcementsEnabled: true,
+            islamicContentEnabled: true,
+            ...(parsed.pushPreferences || {}),
+          },
+          isLoading: false,
+        });
       } else {
         set({ isLoading: false });
       }
@@ -130,9 +165,10 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   saveSettings: async () => {
     try {
       const state = get();
-      const payload: AppSettings = {
+      const payload = {
         salawat: state.salawat,
         prayerNotifications: state.prayerNotifications,
+        pushPreferences: state.pushPreferences,
         calculationMethod: state.calculationMethod,
         madhab: state.madhab,
         useGps: state.useGps,

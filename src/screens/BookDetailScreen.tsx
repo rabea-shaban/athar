@@ -8,6 +8,7 @@ import {
   Share,
   Linking,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   ChevronRight,
@@ -26,6 +27,7 @@ import { toArabicNumber } from "../utils/arabic";
 export const BookDetailScreen: React.FC = () => {
   const route = useRoute<any>();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { book } = route.params as { book: Book };
 
   const { isDarkMode } = usePreferencesStore();
@@ -53,7 +55,11 @@ export const BookDetailScreen: React.FC = () => {
       <View
         style={[
           styles.navBar,
-          { backgroundColor: theme.card, borderBottomColor: theme.border },
+          {
+            backgroundColor: theme.card,
+            borderBottomColor: theme.border,
+            paddingTop: insets.top + 8,
+          },
         ]}
       >
         <TouchableOpacity

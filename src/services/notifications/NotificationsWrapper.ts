@@ -87,6 +87,28 @@ export const NotificationsWrapper = {
     return { status: "granted", granted: true };
   },
 
+  getExpoPushTokenAsync: async (options?: any) => {
+    if (ExpoNotifications?.getExpoPushTokenAsync) {
+      try {
+        return await ExpoNotifications.getExpoPushTokenAsync(options);
+      } catch (e) {
+        console.warn("getExpoPushTokenAsync error:", e);
+      }
+    }
+    return { data: "mock-expo-push-token" };
+  },
+
+  getDevicePushTokenAsync: async () => {
+    if (ExpoNotifications?.getDevicePushTokenAsync) {
+      try {
+        return await ExpoNotifications.getDevicePushTokenAsync();
+      } catch (e) {
+        console.warn("getDevicePushTokenAsync error:", e);
+      }
+    }
+    return { data: "mock-device-push-token" };
+  },
+
   cancelAllScheduledNotificationsAsync: async () => {
     if (ExpoNotifications?.cancelAllScheduledNotificationsAsync) {
       try {
@@ -120,5 +142,16 @@ export const NotificationsWrapper = {
       }
     }
     return { remove: () => {} };
+  },
+
+  getLastNotificationResponseAsync: async () => {
+    if (ExpoNotifications?.getLastNotificationResponseAsync) {
+      try {
+        return await ExpoNotifications.getLastNotificationResponseAsync();
+      } catch (e) {
+        console.warn("getLastNotificationResponseAsync error:", e);
+      }
+    }
+    return null;
   },
 };

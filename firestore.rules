@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Notifications Collection: Admin only
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Device Tokens: Registration allowed with strict schema & token matching; Read/Delete admin-only
+    match /deviceTokens/{tokenId} {
+      allow create: if request.resource.data.keys().hasOnly(['tokenId', 'token', 'platform', 'appVersion', 'enabled', 'createdAt', 'updatedAt'])
+                    && request.resource.data.tokenId == tokenId
+                    && request.resource.data.token is string
+                    && request.resource.data.token.size() >= 10
+                    && request.resource.data.token.size() <= 256
+                    && request.resource.data.platform in ['android', 'ios'];
+
+      allow update: if resource != null
+                    && resource.data.token == request.resource.data.token
+                    && request.resource.data.keys().hasOnly(['tokenId', 'token', 'platform', 'appVersion', 'enabled', 'createdAt', 'updatedAt']);
+
+      allow read, delete: if isAdmin();
+    }
+
+    // User Notification Preferences: Authenticated owner only
+    match /userNotificationPreferences/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Notification Campaigns: Admin only
+    match /notificationCampaigns/{campaignId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

@@ -11,6 +11,7 @@ import {
   Share,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   Play,
@@ -53,6 +54,7 @@ const FONT_SCALES = [19, 22, 25, 29, 34];
 export const SurahDetailScreen: React.FC = () => {
   const route = useRoute<any>();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { surahNumber = 1, surahName = "الفاتحة", initialPage } =
     route.params || {};
 
@@ -178,7 +180,11 @@ export const SurahDetailScreen: React.FC = () => {
       <View
         style={[
           styles.navBar,
-          { backgroundColor: theme.card, borderBottomColor: theme.border },
+          {
+            backgroundColor: theme.card,
+            borderBottomColor: theme.border,
+            paddingTop: insets.top + 8,
+          },
         ]}
       >
         <TouchableOpacity
