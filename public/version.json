@@ -1,7 +1,22 @@
 {
   "latestVersion": "1.1.0",
   "minimumVersion": "1.0.0",
-  "storeUrl": "https://athar-library.vercel.app/",
+  "storeUrl": "https://athar-library.vercel.app/download",
   "forceUpdate": false,
-  "releaseNotes": "يتضمن هذا الإصدار تحسينات جديدة على محرك الأذان الأصلي، ومواقيت الصلاة، وإصلاحات عامة لمنصة أَثَر."
+  "releaseNotes": "يتضمن هذا الإصدار تحسينات جديدة على محرك الأذان الأصلي، ومواقيت الصلاة، وإصلاحات عامة لمنصة أَثَر.",
+  "downloads": {
+    "directApk": {
+      "available": false,
+      "url": "",
+      "size": "~28 ميجابايت"
+    },
+    "googlePlay": {
+      "available": false,
+      "url": ""
+    },
+    "apkPure": {
+      "available": false,
+      "url": ""
+    }
+  }
 }

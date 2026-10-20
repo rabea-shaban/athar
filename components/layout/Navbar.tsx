@@ -23,6 +23,7 @@ import {
   Clock,
   Compass,
   Info,
+  Download,
   LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,17 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <Link href="/download">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-[var(--athar-green)] hover:text-primary"
+              title="تحميل التطبيق"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </Link>
+
           <Link href="/quran-search">
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
               <Search className="h-4 w-4" />
@@ -163,6 +175,20 @@ export default function Navbar() {
 
               {/* Drawer Links List */}
               <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+                <Link
+                  href="/download"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-arabic font-bold transition-all bg-[var(--athar-green)]/15 text-[var(--athar-green)] mb-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--athar-green)] text-white">
+                      <Download className="w-4 h-4" />
+                    </div>
+                    <span>تحميل التطبيق</span>
+                  </div>
+                  <ChevronLeft className="w-4 h-4" />
+                </Link>
+
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   const isActive = isLinkActive(link.href);

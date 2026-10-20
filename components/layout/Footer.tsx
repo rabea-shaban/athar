@@ -46,8 +46,9 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3 text-sm font-arabic">عن المنصة</h4>
+            <h4 className="font-semibold mb-3 text-sm font-arabic">التطبيق والمنصة</h4>
             <ul className="space-y-2 text-sm text-muted-foreground font-arabic">
+              <li><Link href="/download" className="hover:text-primary transition-colors text-[var(--athar-green)] font-bold">تحميل تطبيق أثر للأندرويد</Link></li>
               <li><Link href="/about" className="hover:text-primary transition-colors">عن أثر وحقوق الملكية</Link></li>
               <li><Link href="/contact" className="hover:text-primary transition-colors">تواصل معنا</Link></li>
               <li><Link href="/privacy" className="hover:text-primary transition-colors">سياسة الخصوصية</Link></li>
