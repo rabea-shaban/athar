@@ -144,31 +144,42 @@ export async function getRadioStations(): Promise<RadioStation[]> {
     const res = await fetch(RADIO_API);
     if (!res.ok) throw new Error("Failed to fetch radio api");
     const data = await res.json();
-    return (data.radios ?? data) as RadioStation[];
+    const list = (data.radios ?? data) as RadioStation[];
+
+    // Ensure Cairo Quran Radio uses live 24/7 stream
+    return list.map((st) => {
+      if (st.name.includes("القاهرة") || st.id === 19) {
+        return {
+          ...st,
+          url: "https://stream.zeno.fm/f3wvbbqmdg8uv",
+        };
+      }
+      return st;
+    });
   } catch (err) {
     console.warn("Using fallback radio stations:", err);
     return [
       {
         id: 19,
         name: "إذاعة القرآن الكريم من القاهرة",
-        url: "https://stream.radiojar.com/8s5u5tpdtwzuv",
+        url: "https://stream.zeno.fm/f3wvbbqmdg8uv",
         img: "https://apkdownmod.com/thumbnail?src=images/appsicon/2020/08/app-image-5f42ba68a61b1.jpg",
       },
       {
         id: 20,
-        name: "إذاعة السنة النبوية",
-        url: "https://backup.qurango.net/radio/prophet_sunnah",
+        name: "إذاعة القرآن الكريم - السعودية",
+        url: "https://stream.radiojar.com/0tpy1h0kxtzuv",
         img: "https://i.pinimg.com/564x/55/16/ab/5516abd3744c3d0b0a7b28bedd5474c0.jpg",
       },
       {
         id: 11,
         name: "إذاعة محمد صديق المنشاوي",
-        url: "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad",
+        url: "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
       },
       {
         id: 12,
         name: "إذاعة محمود خليل الحصري",
-        url: "https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad",
+        url: "https://backup.qurango.net/radio/mahmoud_khalil_alhussary",
       },
       {
         id: 7,
@@ -197,8 +208,8 @@ export async function getRadioStations(): Promise<RadioStation[]> {
       },
       {
         id: 21,
-        name: "إذاعة تلاوات خاشعة",
-        url: "https://backup.qurango.net/radio/salma",
+        name: "إذاعة سورة البقرة",
+        url: "https://backup.qurango.net/radio/albaqarah",
       },
       {
         id: 22,

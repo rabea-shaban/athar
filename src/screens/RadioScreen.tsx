@@ -54,6 +54,12 @@ const STATION_IMAGES: Record<string, string> = {
 
 const EXTRA_STATIONS: RadioStation[] = [
   {
+    id: 100,
+    name: "إذاعة القرآن الكريم من القاهرة",
+    url: "https://stream.zeno.fm/f3wvbbqmdg8uv",
+    img: "https://apkdownmod.com/thumbnail?src=images/appsicon/2020/08/app-image-5f42ba68a61b1.jpg",
+  },
+  {
     id: 101,
     name: "إذاعة القرآن الكريم - السعودية",
     url: "https://stream.radiojar.com/0tpy1h0kxtzuv",
