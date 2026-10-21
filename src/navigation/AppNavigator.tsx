@@ -27,6 +27,7 @@ import { PrayerTimesScreen } from "../screens/PrayerTimesScreen";
 import { ListenScreen } from "../screens/ListenScreen";
 import { AboutScreen } from "../screens/AboutScreen";
 import { UpdateAppScreen } from "../screens/UpdateAppScreen";
+import { QiblaScreen } from "../screens/QiblaScreen";
 
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -140,6 +141,7 @@ export function AppNavigator() {
           component={NotificationSettingsScreen}
         />
         <Stack.Screen name="PrayerTimes" component={PrayerTimesScreen} />
+        <Stack.Screen name="Qibla" component={QiblaScreen} />
         <Stack.Screen name="Listen" component={ListenScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="UpdateApp" component={UpdateAppScreen} />

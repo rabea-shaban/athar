@@ -25,6 +25,8 @@ import { CITY_PRESETS, LocationService } from "../services/location/LocationServ
 import { PrayerTimesService } from "../services/prayer/PrayerTimesService";
 import { NotificationService } from "../services/notifications/NotificationService";
 import { UserPushPreferences } from "../types/fcm";
+import { NativeEngine } from "../services/native/AtharNativeModule";
+import { getAdhanById } from "../data/adhans";
 
 const SETTINGS_STORAGE_KEY = "@athar_app_settings_v1";
 
@@ -65,6 +67,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     sound: "makkah",
     fajrSound: "fajr",
     vibration: true,
+    adhanVolume: 100,
   },
   pushPreferences: {
     appUpdatesEnabled: true,
@@ -84,9 +87,11 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   },
 
   setPrayerNotificationConfig: (config) => {
-    set({
-      prayerNotifications: { ...get().prayerNotifications, ...config },
-    });
+    const newConfig = { ...get().prayerNotifications, ...config };
+    set({ prayerNotifications: newConfig });
+    if (config.adhanVolume !== undefined) {
+      NativeEngine.setAdhanVolume(config.adhanVolume);
+    }
     get().saveSettings();
     get().rescheduleNotifications();
   },
@@ -143,8 +148,13 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       const data = await SafeStorage.getItem(SETTINGS_STORAGE_KEY);
       if (data) {
         const parsed = JSON.parse(data);
+        const prayerNotifs = {
+          adhanVolume: 100,
+          ...(parsed.prayerNotifications || {}),
+        };
         set({
           ...parsed,
+          prayerNotifications: prayerNotifs,
           pushPreferences: {
             appUpdatesEnabled: true,
             announcementsEnabled: true,
@@ -153,12 +163,17 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
           },
           isLoading: false,
         });
+
+        // Sync volume setting natively
+        NativeEngine.setAdhanVolume(prayerNotifs.adhanVolume);
       } else {
         set({ isLoading: false });
+        NativeEngine.setAdhanVolume(100);
       }
     } catch (e) {
       console.warn("Failed to load settings:", e);
       set({ isLoading: false });
+      NativeEngine.setAdhanVolume(100);
     }
   },
 
@@ -200,6 +215,26 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
           state.useGps && state.customCoords
             ? state.customCoords
             : state.selectedCity.coords;
+
+        const chosenSoundId = state.prayerNotifications.sound || "makkah";
+        const chosenFajrSoundId = state.prayerNotifications.fajrSound || "fajr";
+        const generalTrack = getAdhanById(chosenSoundId);
+        const fajrTrack = getAdhanById(chosenFajrSoundId);
+
+        NativeEngine.saveCalculationParams(
+          effectiveCoords.latitude,
+          effectiveCoords.longitude,
+          state.calculationMethod,
+          state.madhab,
+          state.prayerNotifications.prePrayerMinutes || 15,
+          generalTrack?.audioUrl || null,
+          fajrTrack?.audioUrl || null,
+          state.prayerNotifications.fajr !== false,
+          state.prayerNotifications.dhuhr !== false,
+          state.prayerNotifications.asr !== false,
+          state.prayerNotifications.maghrib !== false,
+          state.prayerNotifications.isha !== false
+        );
 
         const schedule = PrayerTimesService.calculateScheduleForDays(
           effectiveCoords,

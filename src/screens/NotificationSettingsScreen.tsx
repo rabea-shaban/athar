@@ -75,6 +75,7 @@ export const NotificationSettingsScreen: React.FC = () => {
 
   const [canExactAlarm, setCanExactAlarm] = useState<boolean>(true);
   const [isTestingAdhanNative, setIsTestingAdhanNative] = useState<boolean>(false);
+  const [isPreviewingVolume, setIsPreviewingVolume] = useState<boolean>(false);
 
   const { playTrack, togglePlay, currentTrack, isPlaying } = useAudioStore();
 
@@ -83,8 +84,13 @@ export const NotificationSettingsScreen: React.FC = () => {
     prayerNotifications.fajrSound || "fajr"
   );
 
+  const currentAdhanVolume = prayerNotifications.adhanVolume ?? 100;
+
   useEffect(() => {
     checkExactAlarmStatus();
+    return () => {
+      NativeEngine.stopAdhanVolumePreview();
+    };
   }, []);
 
   const checkExactAlarmStatus = async () => {
@@ -121,6 +127,14 @@ export const NotificationSettingsScreen: React.FC = () => {
       setIsTestingAdhanNative(true);
     }
   };
+
+  const volumePresets = [
+    { value: 0, label: "0% (كتم)" },
+    { value: 25, label: "25%" },
+    { value: 50, label: "50%" },
+    { value: 75, label: "75%" },
+    { value: 100, label: "100% (أقصى)" },
+  ];
 
   const calculationMethods: { id: CalculationMethodName; label: string }[] = [
     { id: "Egyptian", label: "الهيئة المصرية العامة للمساحة (مصر وأفريقيا)" },
@@ -465,8 +479,167 @@ export const NotificationSettingsScreen: React.FC = () => {
 
           {prayerNotifications.enabled && (
             <View style={styles.subOptions}>
-              {/* Pre-prayer selector */}
+              {/* Adhan Volume Control Section */}
               <Text style={[styles.subLabel, { color: theme.textMuted }]}>
+                مستوى صوت الأذان الأصلي ({toArabicNumber(currentAdhanVolume)}%):
+              </Text>
+
+              <View style={styles.pillsRow}>
+                {volumePresets.map((opt) => {
+                  const isSelected = currentAdhanVolume === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[
+                        styles.pillOption,
+                        {
+                          backgroundColor: isSelected
+                            ? theme.primary
+                            : isDarkMode
+                            ? "#172535"
+                            : "#f1f5f9",
+                          borderColor: isSelected
+                            ? theme.primary
+                            : theme.border,
+                        },
+                      ]}
+                      onPress={() => {
+                        setPrayerNotificationConfig({ adhanVolume: opt.value });
+                        if (isPreviewingVolume) {
+                          NativeEngine.startAdhanVolumePreview(opt.value);
+                        }
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.pillOptionText,
+                          {
+                            color: isSelected ? "#ffffff" : theme.text,
+                            fontWeight: isSelected ? "bold" : "500",
+                          },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Volume Fine Adjuster Stepper */}
+              <View
+                style={[
+                  styles.volumeStepperRow,
+                  {
+                    backgroundColor: isDarkMode ? "#172535" : "#f8fafc",
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={[styles.stepperBtn, { backgroundColor: theme.primary }]}
+                  onPress={() => {
+                    const nextVal = Math.min(100, currentAdhanVolume + 10);
+                    setPrayerNotificationConfig({ adhanVolume: nextVal });
+                    if (isPreviewingVolume) {
+                      NativeEngine.startAdhanVolumePreview(nextVal);
+                    }
+                  }}
+                >
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </TouchableOpacity>
+
+                <View style={styles.volumeReadout}>
+                  <Volume2 size={16} color={theme.primary} />
+                  <Text style={[styles.volumeReadoutText, { color: theme.text }]}>
+                    مستوى الصوت: {toArabicNumber(currentAdhanVolume)}%
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.stepperBtn,
+                    { backgroundColor: isDarkMode ? "#334155" : "#e2e8f0" },
+                  ]}
+                  onPress={() => {
+                    const nextVal = Math.max(0, currentAdhanVolume - 10);
+                    setPrayerNotificationConfig({ adhanVolume: nextVal });
+                    if (isPreviewingVolume) {
+                      NativeEngine.startAdhanVolumePreview(nextVal);
+                    }
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.stepperBtnText,
+                      { color: isDarkMode ? "#ffffff" : "#0f172a" },
+                    ]}
+                  >
+                    -
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Preview Volume Sound Action */}
+              <TouchableOpacity
+                style={[
+                  styles.nativeSecondaryBtn,
+                  {
+                    borderColor: isPreviewingVolume ? "#ef4444" : theme.primary,
+                    marginTop: 10,
+                    marginBottom: 12,
+                  },
+                ]}
+                onPress={() => {
+                  if (isPreviewingVolume) {
+                    NativeEngine.stopAdhanVolumePreview();
+                    setIsPreviewingVolume(false);
+                  } else {
+                    NativeEngine.startAdhanVolumePreview(currentAdhanVolume);
+                    setIsPreviewingVolume(true);
+                  }
+                }}
+              >
+                {isPreviewingVolume ? (
+                  <Pause size={16} color="#ef4444" />
+                ) : (
+                  <Volume2 size={16} color={theme.primary} />
+                )}
+                <Text
+                  style={[
+                    styles.nativeSecondaryBtnText,
+                    { color: isPreviewingVolume ? "#ef4444" : theme.primary },
+                  ]}
+                >
+                  {isPreviewingVolume
+                    ? "إيقاف معاينة مستوى الصوت"
+                    : `معاينة صوت الأذان بمستوى (${toArabicNumber(currentAdhanVolume)}%)`}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Volume Explanation Notice */}
+              <View
+                style={[
+                  styles.volumeNoticeBox,
+                  {
+                    backgroundColor: isDarkMode ? "#132130" : "#f0fdf4",
+                    borderColor: "rgba(16,185,129,0.25)",
+                  },
+                ]}
+              >
+                <Info size={14} color={theme.primary} style={{ marginTop: 2 }} />
+                <Text style={[styles.volumeNoticeText, { color: theme.textMuted }]}>
+                  ملاحظة: يتحكم هذا الإعداد في مستوى صوت مشغل الأذان بداخل التطبيق. يتأثر مستوى الصوت النهائي أيضاً بمستوى صوت الهاتف المعين في إعدادات جهازك.
+                </Text>
+              </View>
+
+              {/* Pre-prayer selector */}
+              <Text
+                style={[
+                  styles.subLabel,
+                  { color: theme.textMuted, marginTop: 16 },
+                ]}
+              >
                 التنبيه قبل دخول الوقت:
               </Text>
               <View style={styles.pillsRow}>
@@ -1546,6 +1719,52 @@ const styles = StyleSheet.create({
   },
   pillOptionText: {
     fontSize: 12,
+  },
+  volumeStepperRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 10,
+  },
+  stepperBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepperBtnText: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "bold",
+    lineHeight: 22,
+  },
+  volumeReadout: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  volumeReadoutText: {
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  volumeNoticeBox: {
+    flexDirection: "row-reverse",
+    alignItems: "flex-start",
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 6,
+  },
+  volumeNoticeText: {
+    fontSize: 11,
+    lineHeight: 18,
+    flex: 1,
+    textAlign: "right",
   },
   timeRangeBox: {
     alignItems: "flex-end",

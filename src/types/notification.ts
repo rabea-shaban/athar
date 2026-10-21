@@ -24,6 +24,7 @@ export interface PrayerNotificationConfig {
   sound: string; // Adhan id, e.g. "makkah", "madinah", "alafasy", "alnafees", "zahrani", "aqsa", "egypt", "turkey", "default", "none"
   fajrSound?: string; // Optional custom Adhan for Fajr
   vibration: boolean;
+  adhanVolume?: number; // 0 to 100 percentage
 }
 
 export interface NotificationPayload {

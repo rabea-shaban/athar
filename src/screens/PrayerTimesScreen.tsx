@@ -104,12 +104,21 @@ export const PrayerTimesScreen: React.FC = () => {
           },
         ]}
       >
-        <TouchableOpacity
-          style={[styles.iconBtn, { backgroundColor: theme.border }]}
-          onPress={() => navigation.navigate("NotificationSettings")}
-        >
-          <Bell size={18} color={theme.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: theme.border }]}
+            onPress={() => navigation.navigate("Qibla")}
+          >
+            <Compass size={18} color={theme.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: theme.border }]}
+            onPress={() => navigation.navigate("NotificationSettings")}
+          >
+            <Bell size={18} color={theme.primary} />
+          </TouchableOpacity>
+        </View>
 
         <Text style={[styles.navTitle, { color: theme.text }]}>
           مواقيت الصلاة
@@ -145,12 +154,15 @@ export const PrayerTimesScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
 
-            <View style={styles.livePulseRow}>
-              <View style={styles.livePulseDot} />
-              <Text style={[styles.livePulseText, { color: theme.primary }]}>
-                الصلاة القادمة
+            <TouchableOpacity
+              style={[styles.cityBadge, { backgroundColor: theme.card }]}
+              onPress={() => navigation.navigate("Qibla")}
+            >
+              <Compass size={13} color={theme.primary} />
+              <Text style={[styles.cityBadgeText, { color: theme.primary }]}>
+                بوصلة القبلة
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
 
           <Text style={[styles.nextPrayerName, { color: theme.text }]}>

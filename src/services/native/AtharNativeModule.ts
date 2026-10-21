@@ -1,4 +1,4 @@
-import { NativeModules, Platform } from "react-native";
+import { NativeModules, Platform, DeviceEventEmitter } from "react-native";
 
 export interface NativePrayerScheduleItem {
   prayerKey: "fajr" | "sunrise" | "dhuhr" | "asr" | "maghrib" | "isha";
@@ -7,6 +7,14 @@ export interface NativePrayerScheduleItem {
   isPrePrayer: boolean;
   preMinutes: number;
   soundUrl?: string;
+}
+
+export interface QiblaHeadingData {
+  magneticHeading: number;
+  trueHeading: number;
+  declination: number;
+  accuracy: number;
+  isAvailable: boolean;
 }
 
 const { AtharNativeModule } = NativeModules;
@@ -22,6 +30,42 @@ export const NativeEngine = {
         AtharNativeModule.initializeEngine();
       } catch (e) {
         console.warn("[AtharNativeModule] initializeEngine error:", e);
+      }
+    }
+  },
+
+  saveCalculationParams(
+    latitude: number,
+    longitude: number,
+    methodName: string,
+    madhabName: string,
+    prePrayerMinutes: number,
+    soundUrl: string | null,
+    fajrSoundUrl: string | null,
+    fajr: boolean,
+    dhuhr: boolean,
+    asr: boolean,
+    maghrib: boolean,
+    isha: boolean
+  ): void {
+    if (this.isAvailable()) {
+      try {
+        AtharNativeModule.saveCalculationParams(
+          latitude,
+          longitude,
+          methodName,
+          madhabName,
+          prePrayerMinutes,
+          soundUrl || null,
+          fajrSoundUrl || null,
+          fajr,
+          dhuhr,
+          asr,
+          maghrib,
+          isha
+        );
+      } catch (e) {
+        console.warn("[AtharNativeModule] saveCalculationParams error:", e);
       }
     }
   },
@@ -104,6 +148,86 @@ export const NativeEngine = {
       } catch (e) {
         console.warn("[AtharNativeModule] stopAdhan error:", e);
       }
+    }
+  },
+
+  setAdhanVolume(volumePercent: number): void {
+    if (this.isAvailable()) {
+      try {
+        AtharNativeModule.setAdhanVolume(Math.round(volumePercent));
+      } catch (e) {
+        console.warn("[AtharNativeModule] setAdhanVolume error:", e);
+      }
+    }
+  },
+
+  async getAdhanVolume(): Promise<number> {
+    if (this.isAvailable()) {
+      try {
+        return await AtharNativeModule.getAdhanVolume();
+      } catch (e) {
+        console.warn("[AtharNativeModule] getAdhanVolume error:", e);
+      }
+    }
+    return 100;
+  },
+
+  startAdhanVolumePreview(volumePercent: number): void {
+    if (this.isAvailable()) {
+      try {
+        AtharNativeModule.startAdhanVolumePreview(Math.round(volumePercent));
+      } catch (e) {
+        console.warn("[AtharNativeModule] startAdhanVolumePreview error:", e);
+      }
+    }
+  },
+
+  stopAdhanVolumePreview(): void {
+    if (this.isAvailable()) {
+      try {
+        AtharNativeModule.stopAdhanVolumePreview();
+      } catch (e) {
+        console.warn("[AtharNativeModule] stopAdhanVolumePreview error:", e);
+      }
+    }
+  },
+
+  startQiblaCompass(latitude: number, longitude: number): void {
+    if (this.isAvailable()) {
+      try {
+        AtharNativeModule.startQiblaCompass(latitude, longitude);
+      } catch (e) {
+        console.warn("[AtharNativeModule] startQiblaCompass error:", e);
+      }
+    }
+  },
+
+  stopQiblaCompass(): void {
+    if (this.isAvailable()) {
+      try {
+        AtharNativeModule.stopQiblaCompass();
+      } catch (e) {
+        console.warn("[AtharNativeModule] stopQiblaCompass error:", e);
+      }
+    }
+  },
+
+  addQiblaHeadingListener(
+    callback: (data: QiblaHeadingData) => void
+  ): { remove: () => void } {
+    try {
+      const subscription = DeviceEventEmitter.addListener(
+        "onQiblaHeadingUpdate",
+        callback
+      );
+      return {
+        remove: () => {
+          subscription.remove();
+        },
+      };
+    } catch (e) {
+      console.warn("[AtharNativeModule] addQiblaHeadingListener error:", e);
+      return { remove: () => {} };
     }
   },
 
