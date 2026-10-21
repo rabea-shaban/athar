@@ -1,14 +1,14 @@
 {
-  "latestVersion": "1.1.0",
+  "latestVersion": "2.0.1",
   "minimumVersion": "1.0.0",
   "storeUrl": "https://athar-library.vercel.app/download",
   "forceUpdate": false,
-  "releaseNotes": "يتضمن هذا الإصدار تحسينات جديدة على محرك الأذان الأصلي، ومواقيت الصلاة، وإصلاحات عامة لمنصة أَثَر.",
+  "releaseNotes": "يتضمن هذا الإصدار المحدث ربط الـ GPS الحي المباشر لبوصلة القبلة، والتحكم بـ مستوى صوت الأذان بـ أزرار الهاتف الفيزيائية، وتأمين كافة الاتصالات وسرعة الأداء بـ منصة أَثَر.",
   "downloads": {
     "directApk": {
-      "available": false,
-      "url": "",
-      "size": "~28 ميجابايت"
+      "available": true,
+      "url": "https://athar-library.vercel.app/downloads/ATHAR-v2-arm64.apk",
+      "size": "~51 ميجابايت"
     },
     "googlePlay": {
       "available": false,

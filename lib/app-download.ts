@@ -6,6 +6,8 @@
  * Copyright (c) 2026 Rabea Shaban.
  */
 
+import versionData from "@/public/version.json";
+
 export interface DownloadSource {
   available: boolean;
   url: string;
@@ -34,28 +36,27 @@ export const APP_DOWNLOAD_CONFIG: AppDownloadConfig = {
   appName: "أَثَر — منصة المعرفة الإسلامية",
   packageName: "com.athar.islamic",
   officialDownloadPageUrl: "https://athar-library.vercel.app/download",
-  latestVersion: "1.1.0",
-  minimumVersion: "1.0.0",
+  latestVersion: versionData.latestVersion,
+  minimumVersion: versionData.minimumVersion,
   releaseDate: "أكتوبر 2026",
   minAndroidVersion: "Android 7.0 (API 24) أو أحدث",
-  forceUpdate: false,
-  releaseNotes:
-    "يتضمن هذا الإصدار تحسينات جديدة على محرك الأذان الأصلي، وإصلاحات لمواقيت الصلاة، مع تحسين السرعة وإضافة مزايا جديدة بـ المكتبة الإسلامية.",
+  forceUpdate: versionData.forceUpdate,
+  releaseNotes: versionData.releaseNotes,
   downloads: {
     directApk: {
-      available: false,
-      url: "",
+      available: versionData.downloads?.directApk?.available ?? false,
+      url: versionData.downloads?.directApk?.url ?? "",
       badgeText: "تحميل مباشر APK",
-      size: "~28 ميجابايت",
+      size: versionData.downloads?.directApk?.size ?? "~28 ميجابايت",
     },
     googlePlay: {
-      available: false,
-      url: "",
+      available: versionData.downloads?.googlePlay?.available ?? false,
+      url: versionData.downloads?.googlePlay?.url ?? "",
       badgeText: "Google Play",
     },
     apkPure: {
-      available: false,
-      url: "",
+      available: versionData.downloads?.apkPure?.available ?? false,
+      url: versionData.downloads?.apkPure?.url ?? "",
       badgeText: "APKPure",
     },
   },
