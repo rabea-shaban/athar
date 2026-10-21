@@ -8,6 +8,7 @@ import {
   Animated,
   Easing,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
@@ -21,12 +22,18 @@ import {
   CheckCircle2,
   Navigation,
   Info,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  Radio,
 } from "lucide-react-native";
 import { useSettingsStore } from "../store/settingsStore";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
 import { toArabicNumber } from "../utils/arabic";
 import { PrayerTimesService } from "../services/prayer/PrayerTimesService";
+import { LocationService } from "../services/location/LocationService";
 import {
   NativeEngine,
   QiblaHeadingData,
@@ -39,7 +46,15 @@ export const QiblaScreen: React.FC = () => {
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const { selectedCity, useGps, customCoords } = useSettingsStore();
+  const {
+    selectedCity,
+    useGps,
+    customCoords,
+    setCustomCoords,
+    setUseGps,
+  } = useSettingsStore();
+
+  const [isLocating, setIsLocating] = useState<boolean>(false);
 
   const effectiveCoords =
     useGps && customCoords ? customCoords : selectedCity.coords;
@@ -54,11 +69,51 @@ export const QiblaScreen: React.FC = () => {
     isAvailable: true,
   });
 
+  const [showDiagnostics, setShowDiagnostics] = useState<boolean>(false);
+
   const animatedDialRotation = useRef(new Animated.Value(0)).current;
+  const prevHeadingRef = useRef<number>(0);
 
-  // Calculate arrow rotation relative to phone top edge
-  const rawArrowRotation = (qiblaBearing - headingData.trueHeading + 360) % 360;
+  // Calculate relative Qibla angle from phone top edge
+  const relativeQiblaAngle = (qiblaBearing - headingData.trueHeading + 360) % 360;
 
+  const fetchLiveGpsLocation = async () => {
+    setIsLocating(true);
+    const coords = await LocationService.getCurrentCoordinates();
+    if (coords) {
+      setCustomCoords(coords);
+      setUseGps(true);
+    }
+    setIsLocating(false);
+  };
+
+  // Continuous Real-Time GPS Location Watcher while on QiblaScreen
+  useEffect(() => {
+    if (!isFocused) return;
+
+    fetchLiveGpsLocation();
+
+    let locationSub: { remove: () => void } | null = null;
+
+    LocationService.watchLocationAsync((coords) => {
+      setCustomCoords(coords);
+      setUseGps(true);
+    }).then((sub) => {
+      locationSub = sub;
+    });
+
+    return () => {
+      if (locationSub && typeof locationSub.remove === "function") {
+        try {
+          locationSub.remove();
+        } catch (e) {
+          // ignore
+        }
+      }
+    };
+  }, [isFocused]);
+
+  // Continuous Real-Time Compass Sensor Listener
   useEffect(() => {
     if (!isFocused) {
       NativeEngine.stopQiblaCompass();
@@ -80,12 +135,22 @@ export const QiblaScreen: React.FC = () => {
         subscription.remove();
       }
     };
-  }, [isFocused, effectiveCoords]);
+  }, [isFocused, effectiveCoords.latitude, effectiveCoords.longitude]);
 
-  // Smooth rotation animation
+  // Smooth rotation animation with shortest angular path (prevents 0/360 boundary jump)
   useEffect(() => {
+    let current = headingData.trueHeading;
+    let prev = prevHeadingRef.current;
+
+    let diff = current - (prev % 360);
+    if (diff < -180) diff += 360;
+    if (diff > 180) diff -= 360;
+
+    const targetAngle = prev + diff;
+    prevHeadingRef.current = targetAngle;
+
     Animated.timing(animatedDialRotation, {
-      toValue: -headingData.trueHeading,
+      toValue: -targetAngle,
       duration: 120,
       easing: Easing.out(Easing.ease),
       useNativeDriver: true,
@@ -97,7 +162,7 @@ export const QiblaScreen: React.FC = () => {
     outputRange: ["-360deg", "360deg"],
   });
 
-  const isPointingToQibla = Math.abs((rawArrowRotation + 180) % 360 - 180) <= 3;
+  const isPointingToQibla = Math.abs((relativeQiblaAngle + 180) % 360 - 180) <= 3;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -120,7 +185,7 @@ export const QiblaScreen: React.FC = () => {
         </TouchableOpacity>
 
         <Text style={[styles.navTitle, { color: theme.text }]}>
-          اتجاه القبلة
+          اتجاه القبلة المباشر (Real-Time GPS)
         </Text>
 
         <TouchableOpacity
@@ -132,16 +197,30 @@ export const QiblaScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* City Location Badge */}
+        {/* City & Real-Time Live GPS Location Badge Row */}
         <View style={styles.locationBadgeRow}>
           <TouchableOpacity
-            style={[styles.cityBadge, { backgroundColor: theme.card, borderColor: theme.border }]}
-            onPress={() => navigation.navigate("NotificationSettings")}
+            style={[
+              styles.cityBadge,
+              { backgroundColor: theme.card, borderColor: theme.border },
+            ]}
+            onPress={fetchLiveGpsLocation}
+            activeOpacity={0.7}
+            disabled={isLocating}
           >
-            <MapPin size={13} color={theme.primary} />
+            {isLocating ? (
+              <ActivityIndicator size="small" color={theme.primary} />
+            ) : (
+              <Radio size={13} color="#10b981" />
+            )}
             <Text style={[styles.cityBadgeText, { color: theme.text }]}>
-              {useGps ? "الموقع الحالي (GPS)" : selectedCity.nameAr}
+              {isLocating
+                ? "جاري ربط الـ GPS المباشر..."
+                : useGps && customCoords
+                ? `GPS حتّى الآن (${effectiveCoords.latitude.toFixed(4)}°, ${effectiveCoords.longitude.toFixed(4)}°)`
+                : selectedCity.nameAr}
             </Text>
+            <RefreshCw size={12} color={theme.textMuted} />
           </TouchableOpacity>
 
           <View style={styles.qiblaBadge}>
@@ -176,19 +255,33 @@ export const QiblaScreen: React.FC = () => {
                 { transform: [{ rotate: dialInterpolation }] },
               ]}
             >
-              {/* Cardinal Directions */}
-              <Text style={[styles.cardinalNorth, { color: theme.primary }]}>
-                ش
-              </Text>
-              <Text style={[styles.cardinalEast, { color: theme.textMuted }]}>
-                ق
-              </Text>
-              <Text style={[styles.cardinalSouth, { color: theme.textMuted }]}>
-                ج
-              </Text>
-              <Text style={[styles.cardinalWest, { color: theme.textMuted }]}>
-                غ
-              </Text>
+              {/* North (0°) */}
+              <View style={styles.cardinalNorthBox}>
+                <Text style={[styles.cardinalText, { color: theme.primary, fontWeight: "bold" }]}>
+                  ش
+                </Text>
+              </View>
+
+              {/* East (90°) */}
+              <View style={styles.cardinalEastBox}>
+                <Text style={[styles.cardinalText, { color: theme.textMuted }]}>
+                  ق
+                </Text>
+              </View>
+
+              {/* South (180°) */}
+              <View style={styles.cardinalSouthBox}>
+                <Text style={[styles.cardinalText, { color: theme.textMuted }]}>
+                  ج
+                </Text>
+              </View>
+
+              {/* West (270°) */}
+              <View style={styles.cardinalWestBox}>
+                <Text style={[styles.cardinalText, { color: theme.textMuted }]}>
+                  غ
+                </Text>
+              </View>
 
               {/* Kaaba Direction Marker on Dial */}
               <View
@@ -203,7 +296,7 @@ export const QiblaScreen: React.FC = () => {
               </View>
             </Animated.View>
 
-            {/* Static Phone Alignment Indicator */}
+            {/* Static Phone Alignment Indicator Pointer */}
             <View style={styles.staticPhonePointer}>
               <Navigation
                 size={36}
@@ -291,6 +384,78 @@ export const QiblaScreen: React.FC = () => {
             </Text>
           </View>
         ) : null}
+
+        {/* Diagnostic Debug Panel Toggle */}
+        <TouchableOpacity
+          style={[
+            styles.diagnosticToggleBtn,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+          onPress={() => setShowDiagnostics(!showDiagnostics)}
+        >
+          <View style={styles.diagnosticToggleRight}>
+            <Activity size={16} color={theme.primary} />
+            <Text style={[styles.diagnosticToggleTitle, { color: theme.text }]}>
+              شاشة الفحص والتشخيص الرياضي المباشر
+            </Text>
+          </View>
+          {showDiagnostics ? (
+            <ChevronUp size={16} color={theme.textMuted} />
+          ) : (
+            <ChevronDown size={16} color={theme.textMuted} />
+          )}
+        </TouchableOpacity>
+
+        {showDiagnostics && (
+          <View
+            style={[
+              styles.diagnosticPanel,
+              { backgroundColor: isDarkMode ? "#111827" : "#f8fafc", borderColor: theme.border },
+            ]}
+          >
+            <Text style={[styles.diagTitle, { color: theme.primary }]}>
+              بيانات التشخيص المباشرة (Real-Time Live GPS & Sensors):
+            </Text>
+
+            <TouchableOpacity
+              style={[
+                styles.refreshGpsBtn,
+                { backgroundColor: theme.primary },
+              ]}
+              onPress={fetchLiveGpsLocation}
+            >
+              <RefreshCw size={14} color="#ffffff" />
+              <Text style={styles.refreshGpsBtnText}>
+                إعادة جلب موثوق لـ GPS الآن
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Real-Time Latitude: {effectiveCoords.latitude.toFixed(6)}
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Real-Time Longitude: {effectiveCoords.longitude.toFixed(6)}
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Qibla Bearing (الكعبة): {qiblaBearing.toFixed(1)}°
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Magnetic Heading: {headingData.magneticHeading.toFixed(1)}°
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Declination: {headingData.declination.toFixed(1)}°
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • True Heading: {headingData.trueHeading.toFixed(1)}°
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Relative Qibla Angle: {relativeQiblaAngle.toFixed(1)}°
+            </Text>
+            <Text style={[styles.diagLine, { color: theme.text }]}>
+              • Sensor Accuracy: {headingData.accuracy} (0=Unreliable, 1=Low, 2=Med, 3=High)
+            </Text>
+          </View>
+        )}
 
         {/* Guidance Note */}
         <View
@@ -385,29 +550,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     position: "relative",
   },
-  cardinalNorth: {
+  cardinalNorthBox: {
     position: "absolute",
     top: 6,
-    fontSize: 14,
-    fontWeight: "bold",
+    alignItems: "center",
   },
-  cardinalEast: {
+  cardinalEastBox: {
     position: "absolute",
     right: 8,
-    fontSize: 13,
-    fontWeight: "bold",
+    alignItems: "center",
+    transform: [{ rotate: "90deg" }],
   },
-  cardinalSouth: {
+  cardinalSouthBox: {
     position: "absolute",
     bottom: 6,
-    fontSize: 13,
-    fontWeight: "bold",
+    alignItems: "center",
+    transform: [{ rotate: "180deg" }],
   },
-  cardinalWest: {
+  cardinalWestBox: {
     position: "absolute",
     left: 8,
-    fontSize: 13,
-    fontWeight: "bold",
+    alignItems: "center",
+    transform: [{ rotate: "270deg" }],
+  },
+  cardinalText: {
+    fontSize: 14,
   },
   kaabaMarkerBox: {
     position: "absolute",
@@ -481,6 +648,52 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
     color: "#991b1b",
+  },
+  diagnosticToggleBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  diagnosticToggleRight: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  diagnosticToggleTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+  },
+  diagnosticPanel: {
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+  },
+  diagTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  refreshGpsBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  refreshGpsBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  diagLine: {
+    fontSize: 11,
+    fontFamily: Platform.OS === "android" ? "monospace" : "Courier",
   },
   noticeCard: {
     flexDirection: "row-reverse",

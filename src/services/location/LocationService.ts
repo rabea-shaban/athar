@@ -134,7 +134,7 @@ export class LocationService {
       if (!hasPermission) return null;
 
       const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+        accuracy: Location.Accuracy.High,
       });
 
       return {
@@ -144,6 +144,42 @@ export class LocationService {
     } catch (e) {
       console.warn("Failed to get current GPS location:", e);
       return null;
+    }
+  }
+
+  static async watchLocationAsync(
+    callback: (coords: Coordinates) => void
+  ): Promise<{ remove: () => void }> {
+    try {
+      const hasPermission = await this.requestLocationPermission();
+      if (!hasPermission) return { remove: () => {} };
+
+      const subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 1000, // Live updates every 1 second
+          distanceInterval: 1, // Live updates every 1 meter
+        },
+        (position) => {
+          callback({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        }
+      );
+
+      return {
+        remove: () => {
+          try {
+            subscription.remove();
+          } catch (e) {
+            // ignore
+          }
+        },
+      };
+    } catch (e) {
+      console.warn("Failed to watch real-time GPS location:", e);
+      return { remove: () => {} };
     }
   }
 }

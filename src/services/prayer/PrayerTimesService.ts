@@ -4,7 +4,6 @@ import {
   CalculationParameters,
   Madhab,
   PrayerTimes,
-  Qibla,
 } from "adhan";
 import {
   Coordinates,
@@ -156,25 +155,28 @@ export class PrayerTimesService {
   }
 
   static calculateQiblaBearing(coords: Coordinates): number {
-    try {
-      const adhanCoords = new AdhanCoordinates(coords.latitude, coords.longitude);
-      const bearing = Qibla(adhanCoords);
-      return Math.round(bearing * 10) / 10;
-    } catch (e) {
-      const KAABA_LAT = 21.422487;
-      const KAABA_LNG = 39.826206;
-      const phi1 = (coords.latitude * Math.PI) / 180;
-      const lambda1 = (coords.longitude * Math.PI) / 180;
-      const phi2 = (KAABA_LAT * Math.PI) / 180;
-      const lambda2 = (KAABA_LNG * Math.PI) / 180;
+    const KAABA_LAT = 21.422487;
+    const KAABA_LNG = 39.826206;
 
-      const y = Math.sin(lambda2 - lambda1) * Math.cos(phi2);
-      const x =
-        Math.cos(phi1) * Math.sin(phi2) -
-        Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
-      const theta = Math.atan2(y, x);
-      const bearing = ((theta * 180) / Math.PI + 360) % 360;
-      return Math.round(bearing * 10) / 10;
+    // Direct distance check: if user is at Makkah, return 0°
+    if (
+      Math.abs(coords.latitude - KAABA_LAT) < 0.01 &&
+      Math.abs(coords.longitude - KAABA_LNG) < 0.01
+    ) {
+      return 0;
     }
+
+    const phi1 = (coords.latitude * Math.PI) / 180;
+    const lambda1 = (coords.longitude * Math.PI) / 180;
+    const phi2 = (KAABA_LAT * Math.PI) / 180;
+    const lambda2 = (KAABA_LNG * Math.PI) / 180;
+
+    const y = Math.sin(lambda2 - lambda1) * Math.cos(phi2);
+    const x =
+      Math.cos(phi1) * Math.sin(phi2) -
+      Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
+    const theta = Math.atan2(y, x);
+    const bearing = ((theta * 180) / Math.PI + 360) % 360;
+    return Math.round(bearing * 10) / 10;
   }
 }
