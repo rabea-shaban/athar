@@ -146,12 +146,12 @@ export async function getRadioStations(): Promise<RadioStation[]> {
     const data = await res.json();
     const list = (data.radios ?? data) as RadioStation[];
 
-    // Ensure Cairo Quran Radio uses live 24/7 stream
+    // Ensure Cairo Quran Radio uses official 24/7 Shoutcast stream
     return list.map((st) => {
       if (st.name.includes("القاهرة") || st.id === 19) {
         return {
           ...st,
-          url: "https://stream.zeno.fm/f3wvbbqmdg8uv",
+          url: "http://live.mp3quran.net:9972/",
         };
       }
       return st;
@@ -162,7 +162,7 @@ export async function getRadioStations(): Promise<RadioStation[]> {
       {
         id: 19,
         name: "إذاعة القرآن الكريم من القاهرة",
-        url: "https://stream.zeno.fm/f3wvbbqmdg8uv",
+        url: "http://live.mp3quran.net:9972/",
         img: "https://apkdownmod.com/thumbnail?src=images/appsicon/2020/08/app-image-5f42ba68a61b1.jpg",
       },
       {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Share,
+  ScrollView,
 } from "react-native";
 import {
   ChevronDown,
@@ -16,7 +17,9 @@ import {
   RotateCw,
   Radio,
   Share2,
-  Volume2,
+  Timer,
+  Check,
+  X,
 } from "lucide-react-native";
 import { useAudioStore } from "../store/audioStore";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -35,6 +38,8 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
+  const [timerModalVisible, setTimerModalVisible] = useState(false);
+
   const {
     currentTrack,
     isPlaying,
@@ -42,9 +47,12 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
     position,
     duration,
     playbackSpeed,
+    sleepTimerMinutes,
+    sleepTimerRemainingSecs,
     togglePlay,
     skipSeconds,
     setPlaybackSpeed,
+    setSleepTimer,
   } = useAudioStore();
 
   if (!currentTrack) return null;
@@ -67,6 +75,22 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
     }
   };
 
+  const timerOptions = [
+    { minutes: null, label: "إيقاف مؤقت النوم" },
+    { minutes: 15, label: "١٥ دقيقة" },
+    { minutes: 30, label: "٣٠ دقيقة" },
+    { minutes: 45, label: "٤٥ دقيقة" },
+    { minutes: 60, label: "٦٠ دقيقة (ساعة واحدة)" },
+    { minutes: 90, label: "٩٠ دقيقة (ساعة ونصف)" },
+  ];
+
+  const formatRemainingTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    const sStr = s < 10 ? `0${s}` : `${s}`;
+    return `${toArabicNumber(m)} د : ${toArabicNumber(sStr)} ث`;
+  };
+
   const progressPercentage =
     duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
@@ -84,7 +108,7 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
             <ChevronDown size={28} color={theme.text} />
           </TouchableOpacity>
           <Text style={[styles.topTitle, { color: theme.textMuted }]}>
-            {currentTrack.isLive ? "بث مباشر" : "مشغل الصوتيات"}
+            {currentTrack.isLive ? "بث مباشر 24/7" : "مشغل الصوتيات"}
           </Text>
           <TouchableOpacity onPress={handleShare} style={styles.closeBtn}>
             <Share2 size={20} color={theme.text} />
@@ -104,7 +128,7 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
           >
             <Radio size={80} color={theme.primary} />
             <Text style={[styles.artSubtitle, { color: theme.textMuted }]}>
-              منصة أَثَر
+              منصة أَثَر الإسلامية
             </Text>
           </View>
         </View>
@@ -120,6 +144,26 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
             </Text>
           ) : null}
         </View>
+
+        {/* Sleep Timer Countdown Active Badge */}
+        {sleepTimerMinutes && sleepTimerRemainingSecs !== null ? (
+          <TouchableOpacity
+            style={[
+              styles.timerActiveBadge,
+              {
+                backgroundColor: isDarkMode ? "#0d281e" : "#ecfdf5",
+                borderColor: theme.primary,
+              },
+            ]}
+            onPress={() => setTimerModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Timer size={15} color={theme.primary} />
+            <Text style={[styles.timerActiveText, { color: theme.primary }]}>
+              مؤقت النوم مفعّل: متبقي {formatRemainingTimer(sleepTimerRemainingSecs)}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
 
         {/* Progress Bar (if not live) */}
         {!currentTrack.isLive ? (
@@ -147,7 +191,7 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
         ) : (
           <View style={styles.liveBadgeRow}>
             <View style={styles.liveDot} />
-            <Text style={styles.liveText}>جاري البث المباشر الآن</Text>
+            <Text style={styles.liveText}>جاري البث المباشر بـ الخلفية وقفل الشاشة</Text>
           </View>
         )}
 
@@ -193,13 +237,95 @@ export const FullAudioPlayerModal: React.FC<FullAudioPlayerModalProps> = ({
             <Text style={[styles.skipBadge, { color: theme.textMuted }]}>١٠</Text>
           </TouchableOpacity>
 
+          {/* Sleep Timer Button */}
           <TouchableOpacity
-            style={[styles.secondaryControl, { backgroundColor: theme.border }]}
-            onPress={() => {}}
+            style={[
+              styles.secondaryControl,
+              {
+                backgroundColor: sleepTimerMinutes
+                  ? theme.primary
+                  : theme.border,
+              },
+            ]}
+            onPress={() => setTimerModalVisible(true)}
           >
-            <Volume2 size={20} color={theme.text} />
+            <Timer
+              size={20}
+              color={sleepTimerMinutes ? "#ffffff" : theme.text}
+            />
           </TouchableOpacity>
         </View>
+
+        {/* Sleep Timer Modal Selection Sheet */}
+        <Modal
+          visible={timerModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setTimerModalVisible(false)}
+        >
+          <View style={[styles.timerModalContainer, { backgroundColor: theme.card }]}>
+            <View style={[styles.timerModalHeader, { borderBottomColor: theme.border }]}>
+              <TouchableOpacity
+                onPress={() => setTimerModalVisible(false)}
+                style={styles.closeBtn}
+              >
+                <X size={22} color={theme.text} />
+              </TouchableOpacity>
+
+              <View style={styles.timerTitleRow}>
+                <Timer size={20} color={theme.primary} />
+                <Text style={[styles.timerModalTitle, { color: theme.text }]}>
+                  مؤقت النوم (الإيقاف التلقائي)
+                </Text>
+              </View>
+
+              <View style={{ width: 36 }} />
+            </View>
+
+            <ScrollView contentContainerStyle={styles.timerModalList}>
+              <Text style={[styles.timerSubtitle, { color: theme.textMuted }]}>
+                سيقوم المشغل بـ إيقاف البث أوتوماتيكياً بعد انقضاء الوقت المحدد:
+              </Text>
+
+              {timerOptions.map((opt, idx) => {
+                const isSelected = sleepTimerMinutes === opt.minutes;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.timerOptionItem,
+                      {
+                        backgroundColor: isSelected
+                          ? isDarkMode
+                            ? "#0f372a"
+                            : "#ecfdf5"
+                          : theme.card,
+                        borderColor: isSelected ? theme.primary : theme.border,
+                      },
+                    ]}
+                    onPress={() => {
+                      setSleepTimer(opt.minutes);
+                      setTimerModalVisible(false);
+                    }}
+                  >
+                    {isSelected ? <Check size={18} color={theme.primary} /> : <View />}
+                    <Text
+                      style={[
+                        styles.timerOptionLabel,
+                        {
+                          color: isSelected ? theme.primary : theme.text,
+                          fontWeight: isSelected ? "bold" : "500",
+                        },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -259,6 +385,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 6,
     textAlign: "center",
+  },
+  timerActiveBadge: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignSelf: "center",
+    marginVertical: 4,
+  },
+  timerActiveText: {
+    fontSize: 12,
+    fontWeight: "bold",
   },
   progressSection: {
     marginVertical: 14,
@@ -334,5 +476,45 @@ const styles = StyleSheet.create({
   speedText: {
     fontSize: 13,
     fontWeight: "bold",
+  },
+  timerModalContainer: {
+    flex: 1,
+  },
+  timerModalHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  timerTitleRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  timerModalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  timerModalList: {
+    padding: 20,
+    gap: 12,
+  },
+  timerSubtitle: {
+    fontSize: 13,
+    textAlign: "right",
+    marginBottom: 8,
+  },
+  timerOptionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  timerOptionLabel: {
+    fontSize: 14,
   },
 });

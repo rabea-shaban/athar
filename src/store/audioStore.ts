@@ -11,6 +11,8 @@ export interface AudioTrack {
   reciterId?: string;
 }
 
+let sleepTimerInterval: ReturnType<typeof setInterval> | null = null;
+
 interface AudioStoreState {
   currentTrack: AudioTrack | null;
   isPlaying: boolean;
@@ -20,6 +22,8 @@ interface AudioStoreState {
   volume: number;
   playbackSpeed: number;
   player: AudioPlayer | null;
+  sleepTimerMinutes: number | null;
+  sleepTimerRemainingSecs: number | null;
 
   initAudioMode: () => Promise<void>;
   playTrack: (track: AudioTrack) => Promise<void>;
@@ -31,6 +35,8 @@ interface AudioStoreState {
   skipSeconds: (seconds: number) => Promise<void>;
   setPlaybackSpeed: (speed: number) => Promise<void>;
   setVolume: (volume: number) => Promise<void>;
+  setSleepTimer: (minutes: number | null) => void;
+  clearSleepTimer: () => void;
 }
 
 export const useAudioStore = create<AudioStoreState>((set, get) => ({
@@ -42,6 +48,8 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
   volume: 1.0,
   playbackSpeed: 1.0,
   player: null,
+  sleepTimerMinutes: null,
+  sleepTimerRemainingSecs: null,
 
   initAudioMode: async () => {
     try {
@@ -164,6 +172,7 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     } catch (e) {
       // ignore
     }
+    get().clearSleepTimer();
     set({ currentTrack: null, isPlaying: false, player: null, position: 0 });
   },
 
@@ -218,5 +227,44 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     } catch (e) {
       console.warn("Volume change error:", e);
     }
+  },
+
+  setSleepTimer: (minutes: number | null) => {
+    if (sleepTimerInterval) {
+      clearInterval(sleepTimerInterval);
+      sleepTimerInterval = null;
+    }
+
+    if (!minutes || minutes <= 0) {
+      set({ sleepTimerMinutes: null, sleepTimerRemainingSecs: null });
+      return;
+    }
+
+    const totalSeconds = minutes * 60;
+    let remaining = totalSeconds;
+
+    set({ sleepTimerMinutes: minutes, sleepTimerRemainingSecs: remaining });
+
+    sleepTimerInterval = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        if (sleepTimerInterval) {
+          clearInterval(sleepTimerInterval);
+          sleepTimerInterval = null;
+        }
+        get().stopTrack();
+        set({ sleepTimerMinutes: null, sleepTimerRemainingSecs: null });
+      } else {
+        set({ sleepTimerRemainingSecs: remaining });
+      }
+    }, 1000);
+  },
+
+  clearSleepTimer: () => {
+    if (sleepTimerInterval) {
+      clearInterval(sleepTimerInterval);
+      sleepTimerInterval = null;
+    }
+    set({ sleepTimerMinutes: null, sleepTimerRemainingSecs: null });
   },
 }));
