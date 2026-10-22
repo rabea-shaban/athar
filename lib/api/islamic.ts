@@ -7,6 +7,19 @@ const AZKAR_API =
 const RADIO_API = "https://data-rosy.vercel.app/radio.json";
 const QURAN_AUDIO_API = "https://api.quran.com/api/v4";
 
+function cleanZikrText(text: string): string {
+  const quoted = text.match(/"([^"]+)"/);
+  if (quoted) return quoted[1].trim();
+  return text
+    .replace(/\\n/g, " ")
+    .replace(/\\'/g, "'")
+    .replace(/\\"/g, '"')
+    .replace(/[',]\s*'/g, " ")
+    .replace(/^['"\s]+|['"\s]+$/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export interface QuranReciter {
   id: string;
   name: string;
@@ -88,11 +101,14 @@ export async function getTafsir(surahNumber: number): Promise<TafsirAyah[]> {
 
 export async function getPrayerTimes(
   city = "cairo",
-  country = "egypt"
+  country = "egypt",
+  coords?: { latitude: number; longitude: number }
 ): Promise<PrayerTimings> {
-  const res = await fetch(
-    `${PRAYER_API}/timingsByCity?city=${city}&country=${country}&method=8`
-  );
+  let url = `${PRAYER_API}/timingsByCity?city=${city}&country=${country}&method=8`;
+  if (coords) {
+    url = `${PRAYER_API}/timings?latitude=${coords.latitude}&longitude=${coords.longitude}&method=8`;
+  }
+  const res = await fetch(url);
   const data = await res.json();
   return data.data.timings as PrayerTimings;
 }
@@ -120,19 +136,6 @@ export async function getHadiths(
   return data as HadithResponse;
 }
 
-function cleanZikrText(text: string): string {
-  const quoted = text.match(/"([^"]+)"/);
-  if (quoted) return quoted[1].trim();
-  return text
-    .replace(/\\n/g, " ")
-    .replace(/\\'/g, "'")
-    .replace(/\\"/g, '"')
-    .replace(/[',]\s*'/g, " ")
-    .replace(/^['"\s]+|['"\s]+$/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
 export async function getAzkar(): Promise<AzkarCategory[]> {
   const res = await fetch(AZKAR_API);
   const data = (await res.json()) as Record<string, Zikr[][]>;
@@ -152,31 +155,42 @@ export async function getRadioStations(): Promise<RadioStation[]> {
     const res = await fetch(RADIO_API);
     if (!res.ok) throw new Error("Failed to fetch radio api");
     const data = await res.json();
-    return (data.radios ?? data) as RadioStation[];
+    const list = (data.radios ?? data) as RadioStation[];
+
+    // Map Cairo Quran Radio to official n13.radiojar.com direct live stream
+    return list.map((st) => {
+      if (st.name.includes("القاهرة") || st.id === 19) {
+        return {
+          ...st,
+          url: "https://n13.radiojar.com/8s5u5tpdtwzuv",
+        };
+      }
+      return st;
+    });
   } catch (err) {
     console.warn("Using fallback radio stations:", err);
     return [
       {
         id: 19,
         name: "إذاعة القرآن الكريم من القاهرة",
-        url: "https://stream.radiojar.com/8s5u5tpdtwzuv",
+        url: "https://n13.radiojar.com/8s5u5tpdtwzuv",
         img: "https://apkdownmod.com/thumbnail?src=images/appsicon/2020/08/app-image-5f42ba68a61b1.jpg",
       },
       {
         id: 20,
-        name: "إذاعة السنة النبوية",
-        url: "http://live.mp3quran.net:9972/",
+        name: "إذاعة القرآن الكريم - السعودية",
+        url: "https://stream.radiojar.com/0tpy1h0kxtzuv",
         img: "https://i.pinimg.com/564x/55/16/ab/5516abd3744c3d0b0a7b28bedd5474c0.jpg",
       },
       {
         id: 11,
         name: "إذاعة محمد صديق المنشاوي",
-        url: "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad",
+        url: "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
       },
       {
         id: 12,
         name: "إذاعة محمود خليل الحصري",
-        url: "https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad",
+        url: "https://backup.qurango.net/radio/mahmoud_khalil_alhussary",
       },
       {
         id: 7,
@@ -205,8 +219,8 @@ export async function getRadioStations(): Promise<RadioStation[]> {
       },
       {
         id: 21,
-        name: "إذاعة تلاوات خاشعة",
-        url: "https://backup.qurango.net/radio/salma",
+        name: "إذاعة سورة البقرة",
+        url: "https://backup.qurango.net/radio/albaqarah",
       },
       {
         id: 22,
@@ -310,6 +324,7 @@ export interface PrayerTimings {
   Asr: string;
   Maghrib: string;
   Isha: string;
+  [key: string]: string;
 }
 
 export interface HadithResponse {
@@ -321,28 +336,34 @@ export interface HadithResponse {
     currentPage: number;
     pageSize: number;
     totalPages: number;
+    startPage: number;
+    endPage: number;
+    startIndex: number;
+    endIndex: number;
+    pages: number[];
   };
-  items: Hadith[];
+  items: HadithItem[];
 }
 
-export interface Hadith {
+export interface HadithItem {
   number: number;
   arab: string;
   id: string;
+}
+
+export type Hadith = HadithItem;
+
+export interface Zikr {
+  count: string;
+  description: string;
+  content: string;
+  reference: string;
 }
 
 export interface AzkarCategory {
   category: string;
   count: number;
   array: Zikr[];
-}
-
-export interface Zikr {
-  content: string;
-  count: string;
-  description: string;
-  reference: string;
-  category: string;
 }
 
 export interface RadioStation {
@@ -353,18 +374,22 @@ export interface RadioStation {
 }
 
 export interface QuranAudioFile {
+  id: number;
   chapter_id: number;
   file_size: number;
   format: string;
   audio_url: string;
 }
 
+export interface QuranSearchMatch {
+  number: number;
+  text: string;
+  surah: Surah;
+  numberInSurah: number;
+  juz: number;
+}
+
 export interface QuranSearchResult {
   count: number;
-  matches: {
-    number: number;
-    text: string;
-    surah: Surah;
-    numberInSurah: number;
-  }[];
+  matches: QuranSearchMatch[];
 }
