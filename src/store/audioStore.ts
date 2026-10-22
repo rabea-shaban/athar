@@ -72,6 +72,13 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
       const existingPlayer = get().player;
       if (existingPlayer) {
         try {
+          if (typeof (existingPlayer as any).setActiveForLockScreen === "function") {
+            (existingPlayer as any).setActiveForLockScreen(false);
+          }
+        } catch (e) {
+          // ignore
+        }
+        try {
           existingPlayer.pause();
           existingPlayer.remove();
         } catch (e) {
@@ -115,6 +122,29 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
       });
 
       player.play();
+
+      // Bind to Native AudioControlsService for background playback & lock screen notification
+      try {
+        if (typeof (player as any).setActiveForLockScreen === "function") {
+          (player as any).setActiveForLockScreen(
+            true,
+            {
+              title: track.title,
+              artist: track.subtitle || "منصة أَثَر — بث مباشر 24/7",
+              albumTitle: "أَثَر",
+              artworkUrl: track.image || undefined,
+            },
+            {
+              showSeekForward: !track.isLive,
+              showSeekBackward: !track.isLive,
+              isLiveStream: track.isLive ?? false,
+            }
+          );
+        }
+      } catch (e) {
+        console.warn("Failed to activate lock screen controls:", e);
+      }
+
       set({ player, isLoading: false, isPlaying: true });
     } catch (error) {
       console.error("Failed to play track:", error);
@@ -166,6 +196,13 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
     try {
       const { player } = get();
       if (player) {
+        try {
+          if (typeof (player as any).setActiveForLockScreen === "function") {
+            (player as any).setActiveForLockScreen(false);
+          }
+        } catch (e) {
+          // ignore
+        }
         player.pause();
         player.remove();
       }
