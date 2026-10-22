@@ -146,12 +146,12 @@ export async function getRadioStations(): Promise<RadioStation[]> {
     const data = await res.json();
     const list = (data.radios ?? data) as RadioStation[];
 
-    // Ensure Cairo Quran Radio uses official 24/7 Shoutcast stream
+    // Ensure Cairo Quran Radio uses verified Radiojar n13 stream
     return list.map((st) => {
       if (st.name.includes("القاهرة") || st.id === 19) {
         return {
           ...st,
-          url: "http://live.mp3quran.net:9972/",
+          url: "https://n13.radiojar.com/8s5u5tpdtwzuv",
         };
       }
       return st;
@@ -162,12 +162,12 @@ export async function getRadioStations(): Promise<RadioStation[]> {
       {
         id: 19,
         name: "إذاعة القرآن الكريم من القاهرة",
-        url: "http://live.mp3quran.net:9972/",
+        url: "https://n13.radiojar.com/8s5u5tpdtwzuv",
         img: "https://apkdownmod.com/thumbnail?src=images/appsicon/2020/08/app-image-5f42ba68a61b1.jpg",
       },
       {
         id: 20,
-        name: "إذاعة القرآن الكريم - السعودية",
+        name: "إذاعة القرآن الكريم - السعودية (مكة المكرمة)",
         url: "https://stream.radiojar.com/0tpy1h0kxtzuv",
         img: "https://i.pinimg.com/564x/55/16/ab/5516abd3744c3d0b0a7b28bedd5474c0.jpg",
       },
