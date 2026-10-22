@@ -61,14 +61,19 @@ const EXTRA_STATIONS: RadioStation[] = [
   },
   {
     id: 101,
-    name: "إذاعة القرآن الكريم - السعودية",
+    name: "إذاعة القرآن الكريم - السعودية (مكة المكرمة)",
     url: "https://stream.radiojar.com/0tpy1h0kxtzuv",
     img: "https://i.pinimg.com/564x/55/16/ab/5516abd3744c3d0b0a7b28bedd5474c0.jpg",
   },
   {
     id: 102,
-    name: "إذاعة سورة البقرة",
+    name: "إذاعة سورة البقرة (بأصوات كبار القراء)",
     url: "https://backup.qurango.net/radio/albaqarah",
+  },
+  {
+    id: 103,
+    name: "إذاعة الفتاوى العامة",
+    url: "https://backup.qurango.net/radio/fatwa",
   },
   {
     id: 104,
@@ -81,9 +86,19 @@ const EXTRA_STATIONS: RadioStation[] = [
     url: "https://backup.qurango.net/radio/saheh-muslim",
   },
   {
+    id: 106,
+    name: "إذاعة في ظلال السيرة النبوية",
+    url: "https://backup.qurango.net/radio/fi_zilal_alsiyra",
+  },
+  {
     id: 107,
     name: "إذاعة قصص الأنبياء",
     url: "https://backup.qurango.net/radio/alanbiya",
+  },
+  {
+    id: 108,
+    name: "إذاعة الشمائل المحمدية",
+    url: "https://backup.qurango.net/radio/shmaeel",
   },
   {
     id: 109,
@@ -92,28 +107,68 @@ const EXTRA_STATIONS: RadioStation[] = [
   },
   {
     id: 110,
-    name: "إذاعة أحمد العجمي",
-    url: "https://backup.qurango.net/radio/ahmad_alajmy",
+    name: "إذاعة الرقية الشرعية",
+    url: "https://backup.qurango.net/radio/roqiah",
   },
   {
     id: 111,
-    name: "إذاعة سعد الغامدي",
-    url: "https://backup.qurango.net/radio/saad_alghamdi",
+    name: "إذاعة المختصر في تفسير القرآن الكريم",
+    url: "https://backup.qurango.net/radio/mukhtasartafsir",
   },
   {
     id: 112,
-    name: "إذاعة عبد الرحمن السديس",
-    url: "https://backup.qurango.net/radio/abdulrahman_alsudaes",
+    name: "إذاعة الشيخ أحمد العجمي",
+    url: "https://backup.qurango.net/radio/ahmad_alajmy",
   },
   {
     id: 113,
-    name: "إذاعة سعود الشريم",
-    url: "https://backup.qurango.net/radio/saud_alshuraim",
+    name: "إذاعة الشيخ سعد الغامدي",
+    url: "https://backup.qurango.net/radio/saad_alghamdi",
   },
   {
     id: 114,
-    name: "إذاعة علي جابر",
+    name: "إذاعة الشيخ عبد الرحمن السديس",
+    url: "https://backup.qurango.net/radio/abdulrahman_alsudaes",
+  },
+  {
+    id: 115,
+    name: "إذاعة الشيخ سعود الشريم",
+    url: "https://backup.qurango.net/radio/saud_alshuraim",
+  },
+  {
+    id: 116,
+    name: "إذاعة الشيخ علي جابر",
     url: "https://backup.qurango.net/radio/ali_jaber",
+  },
+  {
+    id: 117,
+    name: "إذاعة الشيخ إدريس أبكر",
+    url: "https://backup.qurango.net/radio/idrees_abkr",
+  },
+  {
+    id: 118,
+    name: "إذاعة الشيخ خالد الجليل",
+    url: "https://backup.qurango.net/radio/khalid_aljileel",
+  },
+  {
+    id: 119,
+    name: "إذاعة الشيخ صلاح بو خاطر",
+    url: "https://backup.qurango.net/radio/slaah_bukhatir",
+  },
+  {
+    id: 120,
+    name: "إذاعة الشيخ عادل ريان",
+    url: "https://backup.qurango.net/radio/adel_ryyan",
+  },
+  {
+    id: 121,
+    name: "إذاعة الشيخ أبو بكر الشاطري",
+    url: "https://backup.qurango.net/radio/shaik_abu_bakr_al_shatri",
+  },
+  {
+    id: 122,
+    name: "إذاعة الشيخ محمد الطبلاوي",
+    url: "https://backup.qurango.net/radio/mohammad_altablaway",
   },
 ];
 
