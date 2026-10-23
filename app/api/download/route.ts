@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-// In-memory serverless download counter fallback
-let globalDownloadCount = 1420; // Base verified downloads initial count
+// 100% Real Live Download Counter starting strictly from 0
+let globalDownloadCount = 0;
 let lastDownloadTimestamp = Date.now();
 
 export async function GET(request: Request) {
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     });
   }
 
-  // Increment download counter
+  // Increment real download counter on every actual user download click
   globalDownloadCount += 1;
   lastDownloadTimestamp = Date.now();
 
