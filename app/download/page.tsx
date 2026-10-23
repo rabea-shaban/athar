@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { APP_DOWNLOAD_CONFIG } from "@/lib/app-download";
+import { DownloadButtonWithCounter } from "@/components/DownloadCounter";
 
 export const metadata: Metadata = {
   title: "تحميل تطبيق أَثَر للأندرويد (APK / Stores) — ATHAR",
@@ -197,13 +198,8 @@ export default function DownloadPage() {
               </p>
             </div>
 
-            {cfg.downloads.directApk.available && cfg.downloads.directApk.url ? (
-              <a href={cfg.downloads.directApk.url} target="_blank" rel="noopener noreferrer">
-                <Button className="w-full font-arabic text-xs font-bold gap-2">
-                  <Download className="w-3.5 h-3.5" />
-                  <span>تنزيل APK</span>
-                </Button>
-              </a>
+            {cfg.downloads.directApk.available ? (
+              <DownloadButtonWithCounter />
             ) : (
               <Button disabled variant="outline" className="w-full font-arabic text-xs">
                 غير متاح حالياً
