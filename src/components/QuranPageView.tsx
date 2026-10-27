@@ -265,15 +265,14 @@ export const QuranPageView: React.FC<Props> = ({
         },
         onPanResponderRelease: (_, gestureState) => {
           const { dx, vx } = gestureState;
-          // Arabic Mushaf RTL:
-          // Swipe LEFT (dx < -40 or fast flick vx < -0.3) -> NEXT PAGE (e.g. Page 2 -> Page 3)
-          if (dx < -40 || (dx < -15 && vx < -0.3)) {
+          // Swipe RIGHT (dx > 40 or fast flick vx > 0.3) -> NEXT PAGE (e.g. Page 2 -> Page 3)
+          if (dx > 40 || (dx > 15 && vx > 0.3)) {
             if (currentPage < TOTAL_PAGES) {
               setCurrentPage((p) => Math.min(TOTAL_PAGES, p + 1));
             }
           }
-          // Swipe RIGHT (dx > 40 or fast flick vx > 0.3) -> PREVIOUS PAGE (e.g. Page 2 -> Page 1)
-          else if (dx > 40 || (dx > 15 && vx > 0.3)) {
+          // Swipe LEFT (dx < -40 or fast flick vx < -0.3) -> PREVIOUS PAGE (e.g. Page 2 -> Page 1)
+          else if (dx < -40 || (dx < -15 && vx < -0.3)) {
             if (currentPage > 1) {
               setCurrentPage((p) => Math.max(1, p - 1));
             }
