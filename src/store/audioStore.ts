@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from "expo-audio";
+import { getAyahAudioUrl } from "../api/islamic";
+import { toArabicNumber } from "../utils/arabic";
 
 export interface AudioTrack {
   id: string;
@@ -9,6 +11,9 @@ export interface AudioTrack {
   image?: string;
   isLive?: boolean;
   reciterId?: string;
+  globalAyahNumber?: number;
+  surahNumber?: number;
+  ayahNumberInSurah?: number;
 }
 
 let sleepTimerInterval: ReturnType<typeof setInterval> | null = null;
@@ -117,7 +122,28 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
         });
 
         if (status.didJustFinish && !track.isLive) {
-          set({ isPlaying: false, position: 0 });
+          if (
+            track.globalAyahNumber &&
+            track.globalAyahNumber > 0 &&
+            track.globalAyahNumber < 6236
+          ) {
+            const nextGlobal = track.globalAyahNumber + 1;
+            const reciter = track.reciterId || "ar.alafasy";
+            const nextAudioUrl = getAyahAudioUrl(nextGlobal, reciter);
+
+            const nextTrack: AudioTrack = {
+              id: `ayah_global_${nextGlobal}`,
+              title: `تلاوة قرآنية مباركة (آية ${toArabicNumber(nextGlobal)})`,
+              subtitle: track.subtitle || "منصة أَثَر — تلاوات متواصلة",
+              audioUrl: nextAudioUrl,
+              reciterId: reciter,
+              globalAyahNumber: nextGlobal,
+            };
+
+            get().playTrack(nextTrack);
+          } else {
+            set({ isPlaying: false, position: 0 });
+          }
         }
       });
 
@@ -130,7 +156,7 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
             true,
             {
               title: track.title,
-              artist: track.subtitle || "منصة أَثَر — بث مباشر 24/7",
+              artist: track.subtitle || "منصة أَثَر — تلاوات قرآنية",
               albumTitle: "أَثَر",
               artworkUrl: track.image || undefined,
             },

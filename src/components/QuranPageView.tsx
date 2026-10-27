@@ -176,6 +176,9 @@ export const QuranPageView: React.FC<Props> = ({
       subtitle: currentReciter.name,
       audioUrl,
       reciterId: preferredReciter,
+      globalAyahNumber: ayah.number,
+      surahNumber: ayah.surah.number,
+      ayahNumberInSurah: ayah.numberInSurah,
     });
   };
 

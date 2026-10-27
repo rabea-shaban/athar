@@ -153,6 +153,9 @@ export const SurahDetailScreen: React.FC = () => {
       subtitle: currentReciter.name,
       audioUrl,
       reciterId: preferredReciter,
+      globalAyahNumber: ayahGlobalNumber,
+      surahNumber,
+      ayahNumberInSurah,
     });
   };
 
