@@ -220,7 +220,7 @@ export const SurahDetailScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ─── View Mode Switcher & Font Controls Toolbar ─── */}
+      {/* ─── View Mode Switcher & Responsive Font Controls Toolbar ─── */}
       <View
         style={[
           styles.toolbarCard,
@@ -256,7 +256,7 @@ export const SurahDetailScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <AlignJustify
-              size={14}
+              size={13}
               color={viewMode === "ayah" ? theme.text : theme.textMuted}
             />
             <Text
@@ -268,6 +268,7 @@ export const SurahDetailScreen: React.FC = () => {
                   fontWeight: viewMode === "ayah" ? "bold" : "500",
                 },
               ]}
+              numberOfLines={1}
             >
               عرض الآيات
             </Text>
@@ -289,7 +290,7 @@ export const SurahDetailScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <BookOpen
-              size={14}
+              size={13}
               color={viewMode === "mushaf" ? theme.text : theme.textMuted}
             />
             <Text
@@ -301,13 +302,14 @@ export const SurahDetailScreen: React.FC = () => {
                   fontWeight: viewMode === "mushaf" ? "bold" : "500",
                 },
               ]}
+              numberOfLines={1}
             >
               صفحات المصحف
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Left side: Font Size Stepper (حجم الخط: - 3 +) */}
+        {/* Left side: Responsive Font Size Stepper */}
         <View style={styles.fontStepperRow}>
           <Text
             style={[
@@ -332,6 +334,7 @@ export const SurahDetailScreen: React.FC = () => {
               style={styles.stepBtn}
               onPress={() => setFontScale((s) => Math.max(1, s - 1))}
               disabled={fontScale <= 1}
+              activeOpacity={0.7}
             >
               <Minus
                 size={12}
@@ -354,6 +357,7 @@ export const SurahDetailScreen: React.FC = () => {
               style={styles.stepBtn}
               onPress={() => setFontScale((s) => Math.min(5, s + 1))}
               disabled={fontScale >= 5}
+              activeOpacity={0.7}
             >
               <Plus
                 size={12}
@@ -378,7 +382,7 @@ export const SurahDetailScreen: React.FC = () => {
           style={{ marginTop: 60 }}
         />
       ) : surahData ? (
-        /* ─── Mode 2: عرض الآيات (Clean Ayah Cards Matching Screenshot 2) ─── */
+        /* ─── Mode 2: عرض الآيات (Clean Ayah Cards) ─── */
         <FlatList
           data={surahData.ayahs}
           keyExtractor={(item) => String(item.number)}
@@ -447,7 +451,7 @@ export const SurahDetailScreen: React.FC = () => {
                   </View>
                 </View>
 
-                {/* Ayah Text in Center (with red Divine word highlighting) */}
+                {/* Ayah Text in Center */}
                 <View style={styles.cleanAyahTextContainer}>
                   <Text
                     style={[
@@ -480,7 +484,7 @@ export const SurahDetailScreen: React.FC = () => {
                   </Text>
                 </View>
 
-                {/* Bottom Action Row (وضع علامة | تشغيل | تفسير | نسخ | مشاركة | مفضلة) */}
+                {/* Bottom Action Row */}
                 <View style={styles.cardActionRow}>
                   {/* Left Action Icons */}
                   <View style={styles.actionIconsLeft}>
@@ -711,27 +715,30 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     alignItems: "center",
     justifyContent: "space-between",
-    marginHorizontal: 12,
-    marginTop: 8,
+    marginHorizontal: 10,
+    marginTop: 6,
     marginBottom: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1,
+    flexWrap: "wrap",
+    gap: 6,
   },
   segmentedContainer: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    padding: 3,
+    padding: 2,
     borderRadius: 10,
     borderWidth: 1,
-    gap: 4,
+    gap: 2,
+    flexShrink: 1,
   },
   segmentBtn: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
+    gap: 4,
+    paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 8,
   },
@@ -742,15 +749,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   segmentBtnText: {
-    fontSize: 12,
+    fontSize: 11,
   },
   fontStepperRow: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
+    flexShrink: 0,
   },
   fontLabel: {
-    fontSize: 12,
+    fontSize: 11,
   },
   stepperBox: {
     flexDirection: "row-reverse",
@@ -759,15 +767,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 4,
     paddingVertical: 2,
-    gap: 6,
+    gap: 4,
   },
   stepBtn: {
-    padding: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
     alignItems: "center",
     justifyContent: "center",
   },
   stepValue: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "bold",
     paddingHorizontal: 2,
   },
   listContent: {

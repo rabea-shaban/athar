@@ -10,6 +10,7 @@ import {
   Share,
   Dimensions,
   TextInput,
+  PanResponder,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import {
@@ -252,8 +253,38 @@ export const QuranPageView: React.FC<Props> = ({
     }
   };
 
+  // Horizontal Swipe Gesture (PanResponder) for Mushaf Page Turning
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          // Capture gesture only if horizontal movement is >20px and greater than 1.5x vertical movement
+          const { dx, dy } = gestureState;
+          return Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * 1.5;
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          const { dx, vx } = gestureState;
+          // Arabic Mushaf RTL:
+          // Swipe LEFT (dx < -40 or fast flick vx < -0.3) -> NEXT PAGE (e.g. Page 2 -> Page 3)
+          if (dx < -40 || (dx < -15 && vx < -0.3)) {
+            if (currentPage < TOTAL_PAGES) {
+              setCurrentPage((p) => Math.min(TOTAL_PAGES, p + 1));
+            }
+          }
+          // Swipe RIGHT (dx > 40 or fast flick vx > 0.3) -> PREVIOUS PAGE (e.g. Page 2 -> Page 1)
+          else if (dx > 40 || (dx > 15 && vx > 0.3)) {
+            if (currentPage > 1) {
+              setCurrentPage((p) => Math.max(1, p - 1));
+            }
+          }
+        },
+      }),
+    [currentPage]
+  );
+
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...panResponder.panHandlers}>
       {/* ─── Sub-Header Bar (Metadata + Bookmark Button) ─── */}
       <View style={styles.subHeaderBar}>
         <View style={styles.subHeaderLeft}>
