@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import Svg, { Rect, Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import {
@@ -38,6 +39,25 @@ import {
   NativeEngine,
   QiblaHeadingData,
 } from "../services/native/AtharNativeModule";
+
+// Authentic Vector SVG Kaaba Icon Component
+const KaabaSvgIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="3"
+      y="5"
+      width="18"
+      height="15"
+      rx="3"
+      fill="#1e293b"
+      stroke="#0f172a"
+      strokeWidth="1.5"
+    />
+    <Path d="M3 10H21" stroke="#f59e0b" strokeWidth="2.5" />
+    <Rect x="13" y="12" width="4" height="8" rx="1" fill="#f59e0b" />
+    <Path d="M4 6H20" stroke="#f1f5f9" strokeWidth="1" opacity="0.6" />
+  </Svg>
+);
 
 export const QiblaScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -217,7 +237,7 @@ export const QiblaScreen: React.FC = () => {
               {isLocating
                 ? "جاري ربط الـ GPS المباشر..."
                 : useGps && customCoords
-                ? `GPS حتّى الآن (${effectiveCoords.latitude.toFixed(4)}°, ${effectiveCoords.longitude.toFixed(4)}°)`
+                ? `موقعي (${effectiveCoords.latitude.toFixed(4)}°, ${effectiveCoords.longitude.toFixed(4)}°)`
                 : selectedCity.nameAr}
             </Text>
             <RefreshCw size={12} color={theme.textMuted} />
@@ -283,7 +303,7 @@ export const QiblaScreen: React.FC = () => {
                 </Text>
               </View>
 
-              {/* Kaaba Direction Marker on Dial */}
+              {/* Kaaba Direction Vector SVG Marker on Dial */}
               <View
                 style={[
                   styles.kaabaMarkerBox,
@@ -291,7 +311,7 @@ export const QiblaScreen: React.FC = () => {
                 ]}
               >
                 <View style={styles.kaabaIconBadge}>
-                  <Text style={styles.kaabaIconEmoji}>🕋</Text>
+                  <KaabaSvgIcon size={26} />
                 </View>
               </View>
             </Animated.View>
@@ -311,7 +331,7 @@ export const QiblaScreen: React.FC = () => {
             <View style={styles.alignedBanner}>
               <CheckCircle2 size={18} color="#10b981" />
               <Text style={styles.alignedBannerText}>
-                أنت الآن تتجه نحو الكعبة المشرفة مباشرة 🕋
+                أنت الآن تتجه نحو الكعبة المشرفة مباشرة
               </Text>
             </View>
           )}
@@ -583,11 +603,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   kaabaIconBadge: {
-    top: -12,
+    top: -14,
     padding: 2,
-  },
-  kaabaIconEmoji: {
-    fontSize: 22,
   },
   staticPhonePointer: {
     position: "absolute",
