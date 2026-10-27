@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from "expo-audio";
 import { getAyahAudioUrl } from "../api/islamic";
-import { toArabicNumber } from "../utils/arabic";
+import {
+  toArabicNumber,
+  getSurahAndAyahFromGlobal,
+  SURAH_NAMES_AR,
+} from "../utils/arabic";
 
 export interface AudioTrack {
   id: string;
@@ -131,13 +135,19 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
             const reciter = track.reciterId || "ar.alafasy";
             const nextAudioUrl = getAyahAudioUrl(nextGlobal, reciter);
 
+            const { surahNumber, ayahNumberInSurah } =
+              getSurahAndAyahFromGlobal(nextGlobal);
+            const surahName = SURAH_NAMES_AR[surahNumber - 1] || "";
+
             const nextTrack: AudioTrack = {
-              id: `ayah_global_${nextGlobal}`,
-              title: `تلاوة قرآنية مباركة (آية ${toArabicNumber(nextGlobal)})`,
+              id: `surah_${surahNumber}_ayah_${ayahNumberInSurah}`,
+              title: `سورة ${surahName} - آية ${toArabicNumber(ayahNumberInSurah)}`,
               subtitle: track.subtitle || "منصة أَثَر — تلاوات متواصلة",
               audioUrl: nextAudioUrl,
               reciterId: reciter,
               globalAyahNumber: nextGlobal,
+              surahNumber,
+              ayahNumberInSurah,
             };
 
             get().playTrack(nextTrack);
