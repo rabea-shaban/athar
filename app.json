@@ -1,11 +1,14 @@
 {
   "expo": {
-    "name": "أَثَر — منصة المعرفة الإسلامية",
+    "name": "ATHAR",
     "slug": "athar-islamic",
     "version": "2.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "locales": {
+      "ar": "./locales/ar.json"
+    },
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
@@ -15,6 +18,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.athar.islamic",
       "infoPlist": {
+        "CFBundleDisplayName": "ATHAR",
+        "CFBundleName": "ATHAR",
         "UIBackgroundModes": [
           "audio",
           "fetch",
