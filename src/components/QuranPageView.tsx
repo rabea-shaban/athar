@@ -111,6 +111,24 @@ export const QuranPageView: React.FC<Props> = ({
           if (data.ayahs && data.ayahs.length > 0) {
             const first = data.ayahs[0];
             onPageChanged?.(pageNumber, first.surah.number);
+
+            // Synchronize recitation with page turn if audio was currently playing
+            const { isPlaying, currentTrack } = useAudioStore.getState();
+            if (isPlaying && currentTrack?.id?.startsWith("surah_")) {
+              const audioUrl = getAyahAudioUrl(first.number, preferredReciter);
+              playTrack({
+                id: `surah_${first.surah.number}_ayah_${first.numberInSurah}`,
+                title: `سورة ${first.surah.name} - آية ${toArabicNumber(
+                  first.numberInSurah
+                )}`,
+                subtitle: currentReciter.name,
+                audioUrl,
+                reciterId: preferredReciter,
+                globalAyahNumber: first.number,
+                surahNumber: first.surah.number,
+                ayahNumberInSurah: first.numberInSurah,
+              });
+            }
           }
           setLoading(false);
         })
