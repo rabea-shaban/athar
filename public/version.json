@@ -1,9 +1,9 @@
 {
-  "latestVersion": "2.0.2",
+  "latestVersion": "2.0.3",
   "minimumVersion": "1.0.0",
   "storeUrl": "https://athar-library.vercel.app/download",
   "forceUpdate": false,
-  "releaseNotes": "تحديث v2.0.2: تلاوة قرآنية متواصلة، تظليل تفاعلي للآيات، تجاوب شريط الخط والنافذة مع كافة الشاشات، سحب أفقي لتقليب الصفحات، وبث خلفية متواصل.",
+  "releaseNotes": "تحديث v2.0.3: تلاوة قرآنية متواصلة من الآية المحددة للختام، تظليل تفاعلي للآيات مع الصوت، تجاوب الشاشات، وسحب أفقي لتقليب الصفحات.",
   "downloads": {
     "directApk": {
       "available": true,
