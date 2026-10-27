@@ -64,7 +64,7 @@ export async function GET(request: Request) {
   // Increment real cloud persistent download counter
   await incrementPersistentCount();
 
-  // Redirect directly to the official APK file download
-  const apkUrl = new URL("/downloads/ATHAR-v2-arm64.apk", request.url);
+  // Redirect directly to the clean official ATHAR.apk file
+  const apkUrl = new URL("/downloads/ATHAR.apk", request.url);
   return NextResponse.redirect(apkUrl.toString(), 307);
 }
