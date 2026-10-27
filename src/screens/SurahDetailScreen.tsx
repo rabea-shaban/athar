@@ -67,7 +67,8 @@ export const SurahDetailScreen: React.FC = () => {
   } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const { playTrack, currentTrack, isPlaying, togglePlay } = useAudioStore();
+  const { playTrack, currentTrack, isPlaying, isLoading, togglePlay } =
+    useAudioStore();
 
   // Mode: "mushaf" (صفحات المصحف) or "ayah" (عرض الآيات)
   const [viewMode, setViewMode] = useState<"mushaf" | "ayah">("mushaf");
@@ -98,6 +99,20 @@ export const SurahDetailScreen: React.FC = () => {
   }, [preferredReciter]);
 
   const currentFontSize = FONT_SCALES[fontScale - 1] || 25;
+
+  const isPlayingThisSurah = useMemo(() => {
+    return (
+      isPlaying &&
+      currentTrack?.id?.startsWith(`surah_${surahNumber}_`) === true
+    );
+  }, [isPlaying, currentTrack, surahNumber]);
+
+  const isBufferingThisSurah = useMemo(() => {
+    return (
+      isLoading &&
+      currentTrack?.id?.startsWith(`surah_${surahNumber}_`) === true
+    );
+  }, [isLoading, currentTrack, surahNumber]);
 
   useEffect(() => {
     setLoading(true);
@@ -139,6 +154,17 @@ export const SurahDetailScreen: React.FC = () => {
       audioUrl,
       reciterId: preferredReciter,
     });
+  };
+
+  const handleToggleSurahHeaderPlayback = () => {
+    if (isPlayingThisSurah) {
+      togglePlay();
+    } else {
+      const firstAyah = surahData?.ayahs[0];
+      const ayahGlobal = firstAyah?.number || 1;
+      const ayahNumInSurah = firstAyah?.numberInSurah || 1;
+      handlePlayAyah(ayahGlobal, ayahNumInSurah);
+    }
   };
 
   const handleBookmarkAyah = (
@@ -187,12 +213,39 @@ export const SurahDetailScreen: React.FC = () => {
           },
         ]}
       >
-        <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: theme.border }]}
-          onPress={() => setReciterModalOpen(true)}
-        >
-          <Mic size={17} color={theme.primary} />
-        </TouchableOpacity>
+        <View style={styles.headerControlsRight}>
+          {/* 1. Reciter Selection Button */}
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: theme.border }]}
+            onPress={() => setReciterModalOpen(true)}
+            activeOpacity={0.7}
+          >
+            <Mic size={17} color={theme.primary} />
+          </TouchableOpacity>
+
+          {/* 2. Top Header Play / Pause Audio Control Button */}
+          <TouchableOpacity
+            style={[
+              styles.iconButton,
+              {
+                backgroundColor: isPlayingThisSurah
+                  ? theme.primary
+                  : theme.border,
+              },
+            ]}
+            onPress={handleToggleSurahHeaderPlayback}
+            activeOpacity={0.8}
+            disabled={isBufferingThisSurah}
+          >
+            {isBufferingThisSurah ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : isPlayingThisSurah ? (
+              <Pause size={17} color="#ffffff" fill="#ffffff" />
+            ) : (
+              <Play size={17} color={theme.primary} />
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.navCenter}>
           <Text
@@ -693,6 +746,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
+  },
+  headerControlsRight: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
   },
   iconButton: {
     width: 36,
