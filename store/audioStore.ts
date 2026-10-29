@@ -1,11 +1,25 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type AudioType = "radio" | "quran" | "surah" | "lecture";
+export type AudioType = "radio" | "quran" | "surah" | "lecture" | "episode";
+
+export interface PlaylistItem {
+  src: string;
+  title: string;
+  subtitle: string;
+  audioType: AudioType;
+  meta?: AudioMeta;
+}
 
 export interface AudioMeta {
   surahNumber?: number;
   ayahNumber?: number;
+  programSlug?: string;
+  programTitle?: string;
+  episodeId?: string;
+  episodeOrder?: number;
+  playlist?: PlaylistItem[];
+  currentIndex?: number;
 }
 
 interface AudioState {
@@ -17,6 +31,7 @@ interface AudioState {
   volume: number;
   surahNumber: number | null;
   ayahNumber: number | null;
+  meta: AudioMeta | null;
   activeTabId: string | null;
   onEndedCallback: (() => void) | null;
   setAudio: (
@@ -32,8 +47,24 @@ interface AudioState {
   claimAudio: (tabId: string) => void;
   setVolume: (v: number) => void;
   stop: () => void;
+  playNextTrack: () => void;
+  playPrevTrack: () => void;
   setOnEnded: (fn: (() => void) | null) => void;
   triggerEnded: () => void;
+}
+
+export function getAtharTabId(): string {
+  if (typeof window === "undefined") return "tab_server";
+  try {
+    let tid = sessionStorage.getItem("athar_tab_id");
+    if (!tid) {
+      tid = "tab_" + Math.random().toString(36).slice(2, 9) + "_" + Date.now();
+      sessionStorage.setItem("athar_tab_id", tid);
+    }
+    return tid;
+  } catch {
+    return "tab_default";
+  }
 }
 
 // BroadcastChannel for real-time cross-tab synchronization
@@ -46,7 +77,7 @@ if (typeof window !== "undefined" && "BroadcastChannel" in window) {
   }
 }
 
-function broadcastAction(action: { type: string; payload?: any }) {
+function broadcastAction(action: { type: string; payload?: unknown }) {
   if (channel) {
     try {
       channel.postMessage(action);
@@ -65,32 +96,36 @@ export const useAudioStore = create<AudioState>()(
       volume: 0.8,
       surahNumber: null,
       ayahNumber: null,
+      meta: null,
       activeTabId: null,
       onEndedCallback: null,
 
       setAudio: (src, title, subtitle, audioType, meta, tabId) => {
+        const tid = tabId || getAtharTabId();
         const nextState = {
           src,
           title,
           subtitle,
           audioType,
           isPlaying: true,
-          activeTabId: tabId || null,
+          activeTabId: tid,
           surahNumber: meta?.surahNumber ?? null,
           ayahNumber: meta?.ayahNumber ?? null,
+          meta: meta ?? null,
         };
         set(nextState);
         broadcastAction({ type: "SET_AUDIO", payload: nextState });
       },
 
-      claimAudio: (tabId: string) => {
-        set({ activeTabId: tabId, isPlaying: true });
-        broadcastAction({ type: "CLAIM_AUDIO", payload: { activeTabId: tabId } });
+      claimAudio: (tabId?: string) => {
+        const tid = tabId || getAtharTabId();
+        set({ activeTabId: tid, isPlaying: true });
+        broadcastAction({ type: "CLAIM_AUDIO", payload: { activeTabId: tid } });
       },
 
       togglePlay: (tabId?: string) => {
         const nextIsPlaying = !get().isPlaying;
-        const currentTabId = tabId || get().activeTabId;
+        const currentTabId = tabId || (nextIsPlaying ? getAtharTabId() : get().activeTabId);
         set({ isPlaying: nextIsPlaying, activeTabId: nextIsPlaying ? currentTabId : get().activeTabId });
         broadcastAction({
           type: "TOGGLE_PLAY",
@@ -99,10 +134,11 @@ export const useAudioStore = create<AudioState>()(
       },
 
       setIsPlaying: (isPlaying, tabId) => {
-        set({ isPlaying, activeTabId: isPlaying ? (tabId || get().activeTabId) : get().activeTabId });
+        const tid = tabId || (isPlaying ? getAtharTabId() : get().activeTabId);
+        set({ isPlaying, activeTabId: isPlaying ? tid : get().activeTabId });
         broadcastAction({
           type: "SET_IS_PLAYING",
-          payload: { isPlaying, activeTabId: tabId || get().activeTabId },
+          payload: { isPlaying, activeTabId: tid },
         });
       },
 
@@ -120,10 +156,51 @@ export const useAudioStore = create<AudioState>()(
           audioType: null,
           surahNumber: null,
           ayahNumber: null,
+          meta: null,
           activeTabId: null,
         };
         set(stoppedState);
         broadcastAction({ type: "STOP" });
+      },
+
+      playNextTrack: () => {
+        const currentMeta = get().meta;
+        if (!currentMeta?.playlist || currentMeta.currentIndex === undefined) return;
+        const nextIndex = currentMeta.currentIndex + 1;
+        if (nextIndex < currentMeta.playlist.length) {
+          const nextItem = currentMeta.playlist[nextIndex];
+          get().setAudio(
+            nextItem.src,
+            nextItem.title,
+            nextItem.subtitle,
+            nextItem.audioType,
+            {
+              ...nextItem.meta,
+              playlist: currentMeta.playlist,
+              currentIndex: nextIndex,
+            }
+          );
+        }
+      },
+
+      playPrevTrack: () => {
+        const currentMeta = get().meta;
+        if (!currentMeta?.playlist || currentMeta.currentIndex === undefined) return;
+        const prevIndex = currentMeta.currentIndex - 1;
+        if (prevIndex >= 0) {
+          const prevItem = currentMeta.playlist[prevIndex];
+          get().setAudio(
+            prevItem.src,
+            prevItem.title,
+            prevItem.subtitle,
+            prevItem.audioType,
+            {
+              ...prevItem.meta,
+              playlist: currentMeta.playlist,
+              currentIndex: prevIndex,
+            }
+          );
+        }
       },
 
       setOnEnded: (onEndedCallback) => set({ onEndedCallback }),
@@ -144,6 +221,7 @@ export const useAudioStore = create<AudioState>()(
         volume: state.volume,
         surahNumber: state.surahNumber,
         ayahNumber: state.ayahNumber,
+        meta: state.meta,
       }),
     }
   )
@@ -163,6 +241,7 @@ if (typeof window !== "undefined" && channel) {
         activeTabId: payload.activeTabId,
         surahNumber: payload.surahNumber,
         ayahNumber: payload.ayahNumber,
+        meta: payload.meta,
       });
     } else if (type === "CLAIM_AUDIO") {
       useAudioStore.setState({
@@ -190,6 +269,7 @@ if (typeof window !== "undefined" && channel) {
         audioType: null,
         surahNumber: null,
         ayahNumber: null,
+        meta: null,
         activeTabId: null,
       });
     }

@@ -30,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import Container from "@/components/layout/Container";
 import { getAzkar, type AzkarCategory, type Zikr } from "@/lib/api/islamic";
 import { cn, toArabicNumber } from "@/lib/utils";
+import PageHero from "@/components/layout/PageHero";
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
   "أذكار الصباح": Sunrise,
@@ -148,59 +149,56 @@ export default function AdhkarPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-muted/10 to-background pb-20">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background to-muted/20 py-10 md:py-12">
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[var(--athar-green)]/10 blur-3xl rounded-full" />
+    <div className="min-h-screen bg-background pb-20 text-right" dir="rtl">
+      {/* Unified Luxury Islamic PageHero */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "الأذكار والأدعية النبوية" },
+        ]}
+        title="الأذكار والأدعية النبوية"
+        subtitle="أذكار الصباح والمساء، أدعية بعد الصلوات، والتسابيح المأثورة من القرآن الكريم والسنة النبوية المطهرة مع عداد تفاعلي ذكي."
+        badges={[
+          { label: "حصن المسلم اليومي", icon: Heart, variant: "emerald" },
+          { label: `${toArabicNumber(categories.length)} أبواب للأذكار`, icon: Layers, variant: "gold" },
+          { label: "سبحة وعداد إلكتروني تفاعلي", icon: CircleDot, variant: "default" },
+        ]}
+        theme="emerald"
+      >
+        {/* Categories Pill Selector (Horizontal Scroll) */}
+        <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto pt-2">
+          {categories.map((cat) => {
+            const isSelected = selectedCategory?.category === cat.category;
+            const Icon = CATEGORY_ICONS[cat.category] || CircleDot;
 
-        <Container size="2xl" className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--athar-green)]/10 text-[var(--athar-green)] text-xs md:text-sm font-medium mb-4 border border-[var(--athar-green)]/20 shadow-xs">
-            <Heart className="h-4 w-4" />
-            <span>حصن المسلم والأذكار اليومية</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3 font-arabic">
-            الأذكار والأدعية النبوية
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            أذكار الصباح والمساء، أدعية بعد الصلوات، والتسابيح المأثورة من القرآن الكريم والسنة النبوية المطهرة مع عداد تفاعلي ذكي.
-          </p>
-
-          {/* Categories Pill Selector (Horizontal Scroll) */}
-          <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto">
-            {categories.map((cat) => {
-              const isSelected = selectedCategory?.category === cat.category;
-              const Icon = CATEGORY_ICONS[cat.category] || CircleDot;
-
-              return (
-                <button
-                  key={cat.category}
-                  onClick={() => handleSelectCategory(cat)}
+            return (
+              <button
+                key={cat.category}
+                onClick={() => handleSelectCategory(cat)}
+                className={cn(
+                  "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 flex items-center gap-2 shadow-xs cursor-pointer font-arabic",
+                  isSelected
+                    ? "bg-amber-400 text-slate-950 border-amber-300 font-bold scale-[1.03] shadow-md ring-2 ring-amber-300/40"
+                    : "bg-white/10 hover:bg-white/15 text-white/90 border border-white/15"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{cat.category}</span>
+                <span
                   className={cn(
-                    "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 flex items-center gap-2 shadow-xs",
+                    "text-[10px] px-1.5 py-0.2 rounded-full font-mono",
                     isSelected
-                      ? "bg-[var(--athar-green)] text-white border-[var(--athar-green)] shadow-md font-bold scale-[1.03]"
-                      : "bg-card hover:bg-muted/80 border-border/70 text-muted-foreground hover:text-foreground hover:border-border"
+                      ? "bg-amber-950/20 text-slate-950"
+                      : "bg-white/20 text-white"
                   )}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{cat.category}</span>
-                  <span
-                    className={cn(
-                      "text-[10px] px-1.5 py-0.2 rounded-full",
-                      isSelected
-                        ? "bg-white/20 text-white"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {toArabicNumber(cat.count)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Container>
-      </section>
+                  {toArabicNumber(cat.count)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </PageHero>
 
       {/* Main Content Area */}
       <Container size="2xl" className="py-8">

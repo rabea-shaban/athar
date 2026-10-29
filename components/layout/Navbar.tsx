@@ -17,8 +17,9 @@ import {
   Heart,
   RotateCcw,
   Scroll,
-  GraduationCap,
   Library,
+  FileText,
+  Video,
   ChevronLeft,
   Clock,
   Compass,
@@ -49,22 +50,24 @@ const navLinks: NavItem[] = [
   { href: "/adhkar", label: "الأذكار", icon: Heart },
   { href: "/tasbeeh", label: "التسابيح", icon: RotateCcw },
   { href: "/hadith", label: "الحديث", icon: Scroll },
-  { href: "/lectures", label: "الشروحات", icon: GraduationCap },
+  { href: "/programs", label: "البرامج والشروحات", icon: Video },
+  { href: "/articles", label: "المقالات", icon: FileText },
   { href: "/library", label: "المكتبة", icon: Library },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("athar-theme") === "dark";
+  });
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("athar-theme");
-    if (saved === "dark") {
+    if (dark) {
       document.documentElement.classList.add("dark");
-      setDark(true);
     }
-  }, []);
+  }, [dark]);
 
   function toggleTheme() {
     const next = !dark;
@@ -75,6 +78,7 @@ export default function Navbar() {
 
   const isLinkActive = (href: string) => {
     if (href === "/") return pathname === "/";
+    if (href === "/programs") return pathname.startsWith("/programs") || pathname.startsWith("/lectures") || pathname.startsWith("/program");
     return pathname.startsWith(href);
   };
 

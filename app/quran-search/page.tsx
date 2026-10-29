@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
 import { searchQuran, type QuranSearchResult } from "@/lib/api/islamic";
 import { cn, toArabicNumber, normalizeArabic, isDivineWord } from "@/lib/utils";
 import { toArabicNumerals } from "@/components/quran/QuranTextRenderer";
@@ -212,97 +213,93 @@ export default function QuranSearchPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-muted/10 to-background">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background to-muted/20 py-10 md:py-14">
-        {/* Subtle Decorative Background Circles */}
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[var(--athar-green)]/10 blur-3xl rounded-full" />
-
-        <Container size="xl" className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--athar-green)]/10 text-[var(--athar-green)] text-xs md:text-sm font-medium mb-4 border border-[var(--athar-green)]/20 shadow-xs">
-            <Compass className="h-4 w-4" />
-            <span>البحث الدقيق في المصحف الشريف</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            البحث في القرآن الكريم
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            ابحث في جميع آيات القرآن الكريم وسوره عن أي كلمة، جزء من آية، أو موضوع بدقة فائقة وربط فوري مع التفسير الميسر.
-          </p>
-
-          {/* Search Box */}
-          <div className="max-w-2xl mx-auto">
-            <form
-              onSubmit={handleFormSubmit}
-              className="relative flex items-center shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-2xl bg-card border border-border/80 p-1.5 focus-within:border-[var(--athar-green)] focus-within:ring-2 focus-within:ring-[var(--athar-green)]/20"
-            >
-              <div className="relative flex-1 flex items-center">
-                <Search className="absolute right-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="اكتب كلمة أو جزءاً من آية (مثال: الصبر، إن مع العسر...)"
-                  className="pr-11 pl-10 h-12 text-sm sm:text-base border-none shadow-none focus-visible:ring-0 bg-transparent"
-                  dir="rtl"
-                  autoFocus
-                />
-                {query && (
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="absolute left-2 text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted transition-colors"
-                    title="مسح البحث"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                disabled={loading || !query.trim()}
-                className="h-12 px-6 rounded-xl bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white font-medium shadow-sm transition-all duration-200 shrink-0 gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>جاري البحث...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4" />
-                    <span>بحث</span>
-                  </>
-                )}
-              </Button>
-            </form>
-
-            {/* Popular / Suggestion Tags */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-              <span className="text-xs text-muted-foreground ml-1 font-medium">كلمات شائعة:</span>
-              {POPULAR_SEARCHES.map((tag) => {
-                const Icon = tag.icon;
-                return (
-                  <button
-                    key={tag.label}
-                    type="button"
-                    onClick={() => handleQuickTagClick(tag.label)}
-                    className={cn(
-                      "text-xs px-2.5 py-1 rounded-lg border transition-all duration-150 flex items-center gap-1",
-                      activeQuery === tag.label
-                        ? "bg-[var(--athar-green)] text-white border-[var(--athar-green)] shadow-xs"
-                        : "bg-background/80 hover:bg-muted border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{tag.label}</span>
-                  </button>
-                );
-              })}
+      {/* ─── Unified Luxury Islamic PageHero ─── */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "البحث في آيات القرآن الكريم" },
+        ]}
+        title="البحث في آيات القرآن الكريم"
+        subtitle="ابحث في جميع آيات القرآن الكريم وسوره عن أي كلمة، جزء من آية، أو موضوع بدقة فائقة وربط فوري مع التفسير الميسر."
+        badges={[
+          { label: "محرك بحث قرآني دقيق", icon: Compass, variant: "emerald" },
+          { label: "ربط فوري بالتفسير الميسر", icon: BookOpen, variant: "gold" },
+          { label: "مطابقة التشكيل والرسم العثماني", icon: FileText, variant: "default" },
+        ]}
+        theme="emerald"
+      >
+        {/* Search Box */}
+        <div className="max-w-2xl mx-auto pt-2 space-y-4">
+          <form
+            onSubmit={handleFormSubmit}
+            className="relative flex items-center shadow-xl rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-1.5 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20"
+          >
+            <div className="relative flex-1 flex items-center">
+              <Search className="absolute right-3.5 h-5 w-5 text-white/60 pointer-events-none" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="اكتب كلمة أو جزءاً من آية (مثال: الصبر، إن مع العسر...)"
+                className="pr-11 pl-10 h-12 text-sm sm:text-base border-none shadow-none focus-visible:ring-0 bg-transparent text-white placeholder:text-white/60 font-arabic"
+                dir="rtl"
+                autoFocus
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="absolute left-2 text-white/70 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                  title="مسح البحث"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+
+            <Button
+              type="submit"
+              disabled={loading || !query.trim()}
+              className="h-12 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-sm transition-all duration-200 shrink-0 gap-2 cursor-pointer font-arabic"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>جاري البحث...</span>
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  <span>بحث</span>
+                </>
+              )}
+            </Button>
+          </form>
+
+          {/* Popular / Suggestion Tags */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-1 font-arabic">
+            <span className="text-xs text-emerald-200/80 ml-1 font-medium">كلمات شائعة:</span>
+            {POPULAR_SEARCHES.map((tag) => {
+              const Icon = tag.icon;
+              return (
+                <button
+                  key={tag.label}
+                  type="button"
+                  onClick={() => handleQuickTagClick(tag.label)}
+                  className={cn(
+                    "text-xs px-2.5 py-1 rounded-xl border transition-all duration-150 flex items-center gap-1 cursor-pointer",
+                    activeQuery === tag.label
+                      ? "bg-amber-400 text-slate-950 border-amber-300 font-bold shadow-xs scale-105"
+                      : "bg-white/10 hover:bg-white/15 text-white/90 border-white/15"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tag.label}</span>
+                </button>
+              );
+            })}
           </div>
-        </Container>
-      </section>
+        </div>
+      </PageHero>
 
       {/* Main Content Area */}
       <Container size="xl" className="py-8">

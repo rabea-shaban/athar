@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
 import { Clock, MapPin, Compass, Navigation, Calendar, CheckCircle2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -106,19 +107,25 @@ export default function PrayerTimesPage() {
   ];
 
   return (
-    <Container size="xl" className="py-10 space-y-10">
-      {/* Header */}
-      <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <div className="w-12 h-12 rounded-2xl bg-[var(--athar-green)]/15 text-[var(--athar-green)] flex items-center justify-center mx-auto">
-          <Clock className="w-6 h-6" />
-        </div>
-        <h1 className="text-3xl font-bold font-arabic text-foreground">
-          مواقيت الصلاة | <span className="text-[var(--athar-green)]">أَثَر</span>
-        </h1>
-        <p className="text-muted-foreground font-arabic text-sm leading-relaxed">
-          مواقيت الصلوات الخمس والشروق حسب الهيئة العامة للمساحة والتقويم الإسلامي المعتمد.
-        </p>
-      </div>
+    <div className="min-h-screen pb-20 space-y-8 text-right" dir="rtl">
+      {/* ─── Unified Luxury Islamic PageHero ─── */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "مواقيت الصلاة" },
+        ]}
+        title="مواقيت الصلاة الدقيقة"
+        subtitle="حساب دقيق لمواقيت الصلوات الخمس والشروق في جميع مدن العالم وفق الحسابات الفلكية المعتمدة مع التنبيه بالصلاة القادمة."
+        badges={[
+          { label: "حساب فلكي دقيق ومعتمد", icon: Clock, variant: "emerald" },
+          { label: `${selectedCity.nameAr} — ${selectedCity.countryAr}`, icon: MapPin, variant: "gold" },
+          { label: "تحديد الموقع التلقائي GPS", icon: Navigation, variant: "default" },
+        ]}
+        theme="emerald"
+      />
+
+      <Container size="xl" className="space-y-8">
+
 
       {/* City & Location Selector */}
       <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-xs max-w-3xl mx-auto space-y-4">
@@ -191,5 +198,6 @@ export default function PrayerTimesPage() {
         })}
       </div>
     </Container>
+    </div>
   );
 }

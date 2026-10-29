@@ -1,0 +1,201 @@
+{
+  "id": "tdhwq-al-abadat-d-ahmd-al-arby-bwdkasat-fahm",
+  "titleAr": "سلسلة تذوق العبادات - د. أحمد العربي - بودكاسات فاهم",
+  "categoryAr": "سلاسل إيمانية",
+  "playlistType": "بودكاست مرئي",
+  "hostAr": "الشيخ احمد العربي",
+  "hostRole": "داعية ومحاضر إسلامي",
+  "hostAvatar": "data/programs/images/program_1790921455866_ahmed-al-arabi.webp",
+  "duration": "2",
+  "image": "https://img.youtube.com/vi/63_AOCldyXo/hqdefault.jpg",
+  "episodesCount": 18,
+  "episodes": 18,
+  "descAr": "سلسلة تذوق العبادات من بودكاست فاهم، يقدمها د. أحمد العربي، وتتناول العبادات من زاوية مختلفة تساعد المسلم على فهم معانيها واستشعار أثرها في القلب والحياة اليومية. تأخذك السلسلة في رحلة للتعرف على المعاني الإيمانية وراء الصلاة والصيام والذكر وغيرها من العبادات، وكيف يمكن الانتقال من أداء العبادة بصورة معتادة إلى الشعور بمعانيها والتفاعل معها بوعي وخشوع. استمع إلى حلقات تذوق العبادات – د. أحمد العربي عبر منصة الفتح، واكتشف المزيد من البرامج والبودكاستات الإسلامية الهادفة.",
+  "suggestedProgramIds": [
+    "lazm-tthrr",
+    "khwatr-al-shykh-mhmd-mtwly-al-sharawy",
+    "bwdkast-way"
+  ],
+  "playlist": [
+    {
+      "id": "ep-1",
+      "number": "001",
+      "title": "فاهم 36 | سلسلة تذوق العبادات - (1) الصلاة | مع د. أحمد العربي",
+      "youtubeId": "63_AOCldyXo",
+      "youtubeUrl": "https://youtu.be/63_AOCldyXo",
+      "duration": "2:12:48",
+      "thumb": "https://img.youtube.com/vi/63_AOCldyXo/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 1. فاهم 36 | سلسلة تذوق العبادات - (1) الصلاة | مع د. أحمد العربي"
+    },
+    {
+      "id": "ep-2",
+      "number": "002",
+      "title": "فاهم 37 | سلسلة تذوق العبادات - (2) القرآن | مع د. أحمد العربي",
+      "youtubeId": "hK-9Be0prrA",
+      "youtubeUrl": "https://youtu.be/hK-9Be0prrA",
+      "duration": "1:49:16",
+      "thumb": "https://img.youtube.com/vi/hK-9Be0prrA/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 2. فاهم 37 | سلسلة تذوق العبادات - (2) القرآن | مع د. أحمد العربي"
+    },
+    {
+      "id": "ep-3",
+      "number": "003",
+      "title": "فاهم 38 | سلسلة تذوق العبادات - (3) الدعاء | مع د. أحمد العربي",
+      "youtubeId": "si994Z9BAr8",
+      "youtubeUrl": "https://youtu.be/si994Z9BAr8",
+      "duration": "1:25:49",
+      "thumb": "https://img.youtube.com/vi/si994Z9BAr8/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 3. فاهم 38 | سلسلة تذوق العبادات - (3) الدعاء | مع د. أحمد العربي"
+    },
+    {
+      "id": "ep-4",
+      "number": "004",
+      "title": "فاهم 42 | سلسلة تذوق العبادات - (4) الذكر | مع د. أحمد العربي",
+      "youtubeId": "nkil1U1GxdA",
+      "youtubeUrl": "https://youtu.be/nkil1U1GxdA",
+      "duration": "1:42:26",
+      "thumb": "https://img.youtube.com/vi/nkil1U1GxdA/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 4. فاهم 42 | سلسلة تذوق العبادات - (4) الذكر | مع د. أحمد العربي"
+    },
+    {
+      "id": "ep-5",
+      "number": "005",
+      "title": "كيف نصل إلى القلب السليم؟ | د.أحمد العربي | بودكاست بدون ورق",
+      "youtubeId": "ZWraKKwNfpE",
+      "youtubeUrl": "https://youtu.be/ZWraKKwNfpE",
+      "duration": "1:40:44",
+      "thumb": "https://img.youtube.com/vi/ZWraKKwNfpE/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 5. كيف نصل إلى القلب السليم؟ | د.أحمد العربي | بودكاست بدون ورق"
+    },
+    {
+      "id": "ep-6",
+      "number": "006",
+      "title": "فاهم 30 | ماذا لو رأى الصحابة أحداث غزة؟ - سلسلة فلسطين 3 | مع د. أحمد العربي",
+      "youtubeId": "3gX4kZkcNf0",
+      "youtubeUrl": "https://youtu.be/3gX4kZkcNf0",
+      "duration": "1:36:49",
+      "thumb": "https://img.youtube.com/vi/3gX4kZkcNf0/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 6. فاهم 30 | ماذا لو رأى الصحابة أحداث غزة؟ - سلسلة فلسطين 3 | مع د. أحمد العربي"
+    },
+    {
+      "id": "ep-7",
+      "number": "007",
+      "title": "لقاء عرفة | الشيخ نبيل العوضي مع د. أحمد العربي @TelfaznetTV",
+      "youtubeId": "iCclGTtq2Bc",
+      "youtubeUrl": "https://youtu.be/iCclGTtq2Bc",
+      "duration": "1:34:47",
+      "thumb": "https://img.youtube.com/vi/iCclGTtq2Bc/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 7. لقاء عرفة | الشيخ نبيل العوضي مع د. أحمد العربي @TelfaznetTV"
+    },
+    {
+      "id": "ep-8",
+      "number": "008",
+      "title": "إشكالية الهوية لدى الشباب المسلم || د. أحمد العربي",
+      "youtubeId": "dbkOoTc29rM",
+      "youtubeUrl": "https://youtu.be/dbkOoTc29rM",
+      "duration": "58:13",
+      "thumb": "https://img.youtube.com/vi/dbkOoTc29rM/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 8. إشكالية الهوية لدى الشباب المسلم || د. أحمد العربي"
+    },
+    {
+      "id": "ep-9",
+      "number": "009",
+      "title": "الليالي المباركات - الليلة الأولى || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "TtFhOjHygRw",
+      "youtubeUrl": "https://youtu.be/TtFhOjHygRw",
+      "duration": "17:57",
+      "thumb": "https://img.youtube.com/vi/TtFhOjHygRw/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 9. الليالي المباركات - الليلة الأولى || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-10",
+      "number": "010",
+      "title": "الليالي المباركات - الليلة الثانية || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "bhP23MpuNHg",
+      "youtubeUrl": "https://youtu.be/bhP23MpuNHg",
+      "duration": "14:14",
+      "thumb": "https://img.youtube.com/vi/bhP23MpuNHg/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 10. الليالي المباركات - الليلة الثانية || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-11",
+      "number": "011",
+      "title": "الليالي المباركات - الليلة الثالثة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "-HwcbrYW9bg",
+      "youtubeUrl": "https://youtu.be/-HwcbrYW9bg",
+      "duration": "16:27",
+      "thumb": "https://img.youtube.com/vi/-HwcbrYW9bg/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 11. الليالي المباركات - الليلة الثالثة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-12",
+      "number": "012",
+      "title": "الليالي المباركات - الليلة الرابعة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "ERQiQyJlI5A",
+      "youtubeUrl": "https://youtu.be/ERQiQyJlI5A",
+      "duration": "18:21",
+      "thumb": "https://img.youtube.com/vi/ERQiQyJlI5A/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 12. الليالي المباركات - الليلة الرابعة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-13",
+      "number": "013",
+      "title": "الليالي المباركات - الليلة الخامسة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "ze_V4akUojw",
+      "youtubeUrl": "https://youtu.be/ze_V4akUojw",
+      "duration": "22:56",
+      "thumb": "https://img.youtube.com/vi/ze_V4akUojw/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 13. الليالي المباركات - الليلة الخامسة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-14",
+      "number": "014",
+      "title": "الليالي المباركات - الليلة السادسة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "uBVW9GZrhEU",
+      "youtubeUrl": "https://youtu.be/uBVW9GZrhEU",
+      "duration": "22:31",
+      "thumb": "https://img.youtube.com/vi/uBVW9GZrhEU/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 14. الليالي المباركات - الليلة السادسة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-15",
+      "number": "015",
+      "title": "الليالي المباركات - الليلة السابعة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "E7jqAXw-oSE",
+      "youtubeUrl": "https://youtu.be/E7jqAXw-oSE",
+      "duration": "21:20",
+      "thumb": "https://img.youtube.com/vi/E7jqAXw-oSE/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 15. الليالي المباركات - الليلة السابعة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-16",
+      "number": "016",
+      "title": "الليالي المباركات - الليلة الثامنة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "wNyfsU8qNiM",
+      "youtubeUrl": "https://youtu.be/wNyfsU8qNiM",
+      "duration": "22:14",
+      "thumb": "https://img.youtube.com/vi/wNyfsU8qNiM/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 16. الليالي المباركات - الليلة الثامنة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-17",
+      "number": "017",
+      "title": "الليالي المباركات - الليلة التاسعة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "BzjiAN0qlTY",
+      "youtubeUrl": "https://youtu.be/BzjiAN0qlTY",
+      "duration": "24:05",
+      "thumb": "https://img.youtube.com/vi/BzjiAN0qlTY/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 17. الليالي المباركات - الليلة التاسعة || مع د. نبيل العوضي د. أحمد العربي"
+    },
+    {
+      "id": "ep-18",
+      "number": "018",
+      "title": "الليالي المباركات - الليلة العاشرة || مع د. نبيل العوضي د. أحمد العربي",
+      "youtubeId": "LinTMs7hxio",
+      "youtubeUrl": "https://youtu.be/LinTMs7hxio",
+      "duration": "15:53",
+      "thumb": "https://img.youtube.com/vi/LinTMs7hxio/hqdefault.jpg",
+      "desc": "سلسلة تذوق العبادات - د. أحمد العربي من بودكاست فاهم - الحلقة 18. الليالي المباركات - الليلة العاشرة || مع د. نبيل العوضي د. أحمد العربي"
+    }
+  ]
+}

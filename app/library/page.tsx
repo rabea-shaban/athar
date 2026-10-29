@@ -22,6 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { BOOKS, CATEGORIES, Book } from "@/data/books";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
+import { toArabicNumber } from "@/lib/utils";
 
 export default function LibraryPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,48 +122,24 @@ export default function LibraryPage() {
   };
 
   return (
-    <Container size="2xl" className="py-8 space-y-8">
-      {/* ─── Hero Header ─── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950/40 via-card/70 to-card border border-border/80 p-6 md:p-10 shadow-lg text-center">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[var(--athar-green)]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen pb-20 space-y-8 text-right" dir="rtl">
+      {/* ─── Unified Luxury Islamic PageHero ─── */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "المكتبة الإسلامية الجامعة" },
+        ]}
+        title="المكتبة الإسلامية الجامعة"
+        subtitle="مجموعة منتقاة من أمهات الكتب ومتون العلم الشرعي في العقيدة، الحديث، التفسير، والفقه، مع روابط تصفح وقراءة رقمية ميسرة."
+        badges={[
+          { label: "أمهات الكتب والمتون", icon: Library, variant: "emerald" },
+          { label: `${toArabicNumber(BOOKS.length)} مصنفاً إسلامياً معتمداً`, icon: BookOpen, variant: "gold" },
+          { label: `${toArabicNumber(CATEGORIES.length)} أبواب وتصنيفات علمية`, icon: Scroll, variant: "default" },
+        ]}
+        theme="emerald"
+      />
 
-        <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--athar-green)]/15 border border-[var(--athar-green)]/30 text-[var(--athar-green)] text-xs font-semibold shadow-sm">
-            <Library className="w-3.5 h-3.5" />
-            <span>مكتبة أَثَر الرقمية الموثقة</span>
-          </div>
-
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight font-arabic text-foreground">
-            المكتبة الإسلامية الجامعة
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-            مجموعة منتقاة من أمهات الكتب ومتون العلم الشرعي في العقيدة، الحديث، التفسير، والفقه، مع روابط تصفح وقراءة رقمية ميسرة.
-          </p>
-
-          {/* Quick Stats Banner */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 max-w-2xl mx-auto">
-            <div className="p-3 rounded-2xl bg-card/60 backdrop-blur border border-border/50 shadow-sm">
-              <div className="text-xl md:text-2xl font-bold text-[var(--athar-green)] font-arabic">{BOOKS.length}</div>
-              <div className="text-xs text-muted-foreground">أمهات الكتب والمتون</div>
-            </div>
-            <div className="p-3 rounded-2xl bg-card/60 backdrop-blur border border-border/50 shadow-sm">
-              <div className="text-xl md:text-2xl font-bold text-amber-500 font-arabic">{CATEGORIES.length}</div>
-              <div className="text-xs text-muted-foreground">أقسام وتصنيفات</div>
-            </div>
-            <div className="p-3 rounded-2xl bg-card/60 backdrop-blur border border-border/50 shadow-sm">
-              <div className="text-xl md:text-2xl font-bold text-teal-500 font-arabic">
-                {BOOKS.reduce((acc, b) => acc + b.pages, 0).toLocaleString("ar-EG")}
-              </div>
-              <div className="text-xs text-muted-foreground">صفحة علمية مؤصلة</div>
-            </div>
-            <div className="p-3 rounded-2xl bg-card/60 backdrop-blur border border-border/50 shadow-sm">
-              <div className="text-xl md:text-2xl font-bold text-purple-400 font-arabic">{savedBooks.length}</div>
-              <div className="text-xs text-muted-foreground">كتبك المحفوظة</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Container size="2xl" className="space-y-8">
 
       {/* ─── Search & Controls Bar ─── */}
       <div className="space-y-4">
@@ -569,6 +547,7 @@ export default function LibraryPage() {
         </div>
       )}
     </Container>
+    </div>
   );
 }
 

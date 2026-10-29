@@ -18,7 +18,9 @@ import {
   Volume2,
   X,
   ChevronDown,
+  Layers,
 } from "lucide-react";
+import PageHero from "@/components/layout/PageHero";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,24 +155,26 @@ function TafsirContent() {
   ];
 
   return (
-    <Container size="2xl" className="py-6">
-      {/* 1. Hero Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 mb-8 border border-border/70 bg-gradient-to-br from-[var(--athar-green)]/10 via-amber-500/5 to-card text-center shadow-xs">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[var(--athar-green)]/10 text-[var(--athar-green)] text-xs font-bold font-arabic mb-3 border border-[var(--athar-green)]/20">
-          <BookOpen className="h-3.5 w-3.5" />
-          <span>نُورُ البَيَانِ • التَّفْسِيرُ المُيَسَّرُ</span>
-        </div>
-
-        <h1 className="text-2xl md:text-4xl font-bold font-arabic text-foreground mb-2">
-          تفسير القرآن الكريم
-        </h1>
-        <p className="text-muted-foreground text-xs md:text-sm max-w-xl mx-auto leading-relaxed font-arabic">
-          بيان معاني الآيات الكريمة وإيضاح دلالاتها بأسلوب ميسر وموجز من «التفسير الميسر» المعتمد لنخبة من كبار علماء التفسير.
-        </p>
-      </div>
+    <div className="min-h-screen pb-20 space-y-6 text-right" dir="rtl">
+      {/* 1. Unified Luxury Islamic PageHero */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "التفسير وعلوم القرآن" },
+        ]}
+        title="تفسير القرآن الكريم"
+        subtitle="بيان معاني الآيات الكريمة وإيضاح دلالاتها بأسلوب ميسر وموجز من «التفسير الميسر» المعتمد لنخبة من كبار علماء التفسير."
+        badges={[
+          { label: "التفسير الميسر المعتمد", icon: BookOpen, variant: "emerald" },
+          { label: "١١٤ سورة مباركة", icon: Layers, variant: "gold" },
+          { label: "استماع فوري ومطابقة الآيات", icon: Volume2, variant: "default" },
+        ]}
+        theme="emerald"
+      />
 
       {/* 2. Main Two-Column Layout */}
-      <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
+      <Container size="2xl">
+        <div className="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
         {/* RIGHT (in RTL): Surah List Sidebar */}
         <aside className="w-full">
           {/* Mobile Surah Toggle Button */}
@@ -592,6 +596,7 @@ function TafsirContent() {
         </main>
       </div>
     </Container>
+    </div>
   );
 }
 

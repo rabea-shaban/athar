@@ -19,14 +19,16 @@ import {
   Scroll,
   Star,
   Landmark,
-  Layers,
-  Sun
+  Sun,
+  Info
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { getSurahList, type Surah } from "@/lib/api/islamic";
 import { useReadingStore } from "@/store/readingStore";
 import { cn, normalizeArabic, toArabicNumber } from "@/lib/utils";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
+import { VERIFIED_RECITERS } from "@/data/reciters";
+import ReciterCard from "@/components/quran/ReciterCard";
 
 // Approximate Madani Mushaf page numbers for each Surah
 const SURAH_PAGES: Record<number, { page: number; juz: number }> = {
@@ -82,6 +84,22 @@ export default function QuranPage() {
   const [sortBy, setSortBy] = useState<"mushaf" | "ayahsDesc" | "ayahsAsc" | "name">("mushaf");
   const [loading, setLoading] = useState(true);
 
+  const [reciterSearch, setReciterSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"reciters" | "mushaf">("reciters");
+
+  const filteredReciters = useMemo(() => {
+    if (!reciterSearch.trim()) return VERIFIED_RECITERS;
+    const q = normalizeArabic(reciterSearch.trim().toLowerCase());
+    return VERIFIED_RECITERS.filter((r) => {
+      const matchName = normalizeArabic(r.name.toLowerCase()).includes(q);
+      const matchBio = normalizeArabic(r.bio.toLowerCase()).includes(q);
+      const matchStyle = normalizeArabic(r.styleBadge.toLowerCase()).includes(q);
+      const matchType = r.style ? normalizeArabic(r.style.toLowerCase()).includes(q) : false;
+      const matchRiwayah = r.riwayah ? normalizeArabic(r.riwayah.toLowerCase()).includes(q) : false;
+      return matchName || matchBio || matchStyle || matchType || matchRiwayah;
+    });
+  }, [reciterSearch]);
+
   const { readingMarker } = useReadingStore();
 
   useEffect(() => {
@@ -128,77 +146,194 @@ export default function QuranPage() {
   }, [surahs, query, activeJuz, revelationFilter, sortBy]);
 
   return (
-    <div className="min-h-screen pb-16 space-y-8">
-      {/* ─── Hero Header ─── */}
-      <div className="relative overflow-hidden border-b border-border/80 bg-gradient-to-b from-emerald-950/40 via-card/70 to-background py-10 px-4">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[var(--athar-green)]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen pb-20 space-y-10 text-right" dir="rtl">
+      {/* ─── Hero Header (Unified Luxury Islamic PageHero) ─── */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "المكتبة القرآنية الشاملة" },
+        ]}
+        title="المكتبة القرآنية الشاملة"
+        subtitle="استمع وتدبر في آيات الذكر الحكيم بسور القرآن الكريم الـ 114 كاملة بروايات متعددة وبأعذب الأصوات لنخبة من كبار قراء العالم الإسلامي."
+        tabs={[
+          {
+            id: "reciters",
+            label: "كبار القراء والتلاوات",
+            icon: Headphones,
+            count: toArabicNumber(VERIFIED_RECITERS.length),
+          },
+          {
+            id: "mushaf",
+            label: "فهرس سور المصحف (١١٤ سورة)",
+            icon: BookOpen,
+          },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(tabId) => setActiveTab(tabId as "reciters" | "mushaf")}
+        theme="emerald"
+        showOrnament={false}
+      >
+        {readingMarker && (
+          <div className="max-w-xl mx-auto pt-2 animate-in fade-in slide-in-from-bottom-2">
+            <Link
+              href={`/quran/${readingMarker.surahNumber}#ayah-${readingMarker.ayahNumber}`}
+              className="flex items-center justify-between p-3 px-4 sm:px-5 rounded-2xl bg-amber-500/15 border border-amber-500/35 hover:bg-amber-500/25 transition-all group shadow-sm text-right"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-amber-950 flex items-center justify-center font-bold shadow-xs">
+                  <BookmarkCheck className="w-4 h-4 fill-current" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-amber-300 font-medium font-arabic">
+                    متابعة التلاوة من آخر علامة وقوف:
+                  </div>
+                  <div className="text-xs sm:text-sm font-bold text-white font-arabic">
+                    سورة {readingMarker.surahName} — آية {toArabicNumber(readingMarker.ayahNumber)} (صفحة {toArabicNumber(readingMarker.pageNumber)})
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-bold text-amber-300 group-hover:-translate-x-1 transition-transform font-arabic">
+                <span>متابعة</span>
+                <ChevronLeft className="w-4 h-4" />
+              </div>
+            </Link>
+          </div>
+        )}
+      </PageHero>
 
-        <Container size="xl" className="relative z-10 text-center space-y-5">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--athar-green)]/15 border border-[var(--athar-green)]/30 text-[var(--athar-green)] text-xs font-semibold shadow-sm">
-            <BookMarked className="w-3.5 h-3.5" />
-            <span>المصحف الشريف المرتل والمجود</span>
+      {/* ─── SECTION 1: أصوات تخشع لها القلوب (Matching Screenshot 1 & 2) ─── */}
+      {activeTab === "reciters" && (
+        <Container size="2xl" className="space-y-8 animate-in fade-in">
+          {/* Section Heading & Subtitle */}
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black font-arabic text-foreground tracking-tight">
+              أصوات تخشع لها القلوب
+            </h2>
+
+            {/* Subtle Golden Separator */}
+            <div className="flex items-center justify-center gap-3 text-amber-500/80">
+              <span className="w-12 h-px bg-gradient-to-r from-transparent to-amber-500/50" />
+              <span className="text-xs">◆</span>
+              <span className="w-12 h-px bg-gradient-to-l from-transparent to-amber-500/50" />
+            </div>
+
+            <p className="text-xs sm:text-sm text-muted-foreground font-arabic leading-relaxed">
+              استمع وتدبر في آيات الذكر الحكيم بأصوات نخبة من كبار قراء العالم الإسلامي، بجودة صوت فائقة ونقاء استثنائي.
+            </p>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-extrabold font-arabic text-foreground tracking-tight">
-            فهرس سُوَر القرآن الكريم
-          </h1>
+          {/* Search Bar + Stats Pill Row (Screenshot 1) */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+            {/* Search Input on Right (RTL) */}
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={reciterSearch}
+                onChange={(e) => setReciterSearch(e.target.value)}
+                placeholder="ابحث باسم القارئ، الشيخ، أو الرواية..."
+                className="w-full pr-11 pl-10 h-11 text-xs sm:text-sm rounded-2xl bg-card border border-border/80 focus:border-[var(--athar-green)] focus:ring-2 focus:ring-[var(--athar-green)]/20 outline-hidden font-arabic transition-all shadow-xs"
+              />
+              {reciterSearch && (
+                <button
+                  type="button"
+                  onClick={() => setReciterSearch("")}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
 
-          <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-            تصفح وقراءة آيات الذكر الحكيم بالرسم العثماني المعتمد، مع التفسير الميسر والتلاوات العطبة بأصوات كبار القراء.
-          </p>
+            {/* Info Badge on Left (RTL) */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-card border border-border/80 text-xs text-muted-foreground font-arabic shadow-xs shrink-0">
+              <Info className="h-4 w-4 text-amber-500 shrink-0" />
+              <span>
+                عرض {toArabicNumber(filteredReciters.length)} من أصل {toArabicNumber(VERIFIED_RECITERS.length)} قارئاً معتمداً
+              </span>
+            </div>
+          </div>
+
+          {/* Golden Center Star Ornament (Screenshot 1 & 2) */}
+          <div className="text-center py-1">
+            <div className="inline-flex items-center justify-center gap-2 text-amber-500/80 select-none">
+              <span className="text-xs">✦</span>
+              <span className="text-base font-bold">❖</span>
+              <span className="text-xs">✦</span>
+            </div>
+          </div>
+
+          {/* 3-Column Reciters Grid (Matching Screenshot 2) */}
+          {filteredReciters.length === 0 ? (
+            <div className="text-center py-16 rounded-3xl border border-dashed border-border/80 bg-card p-8 max-w-md mx-auto space-y-3">
+              <Headphones className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+              <h3 className="font-bold text-base font-arabic">لا يوجد قارئ مطابق للبحث</h3>
+              <p className="text-xs text-muted-foreground font-arabic">
+                جرّب البحث بكلمة أخرى مثل &quot;عبد الباسط&quot; أو &quot;المنشاوي&quot; أو &quot;الحصري&quot;.
+              </p>
+              <button
+                type="button"
+                onClick={() => setReciterSearch("")}
+                className="px-4 py-2 rounded-xl bg-muted text-xs font-semibold font-arabic"
+              >
+                إلغاء البحث
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+              {filteredReciters.map((reciter) => (
+                <ReciterCard key={reciter.id} reciter={reciter} />
+              ))}
+            </div>
+          )}
+
+          {/* Quick Bridge to Mushaf Surahs */}
+          <div className="pt-8 text-center">
+            <button
+              type="button"
+              onClick={() => setActiveTab("mushaf")}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-card border border-border/80 hover:border-[var(--athar-green)] text-xs sm:text-sm font-bold font-arabic text-foreground transition-all shadow-xs group"
+            >
+              <BookOpen className="h-4 w-4 text-[var(--athar-green)]" />
+              <span>تصفح وقراءة سور المصحف الشريف كاملة (١١٤ سورة)</span>
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            </button>
+          </div>
+        </Container>
+      )}
+
+      {/* ─── SECTION 2: فهرس سور القرآن الكريم (١١٤ سورة) ─── */}
+      {activeTab === "mushaf" && (
+        <Container size="2xl" className="space-y-6 animate-in fade-in">
+          {/* Section Heading */}
+          <div className="text-center max-w-2xl mx-auto space-y-2 mb-2">
+            <h2 className="text-2xl sm:text-3xl font-black font-arabic text-foreground tracking-tight">
+              فهرس سُوَر القرآن الكريم
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-arabic">
+              تصفح وقراءة آيات الذكر الحكيم بالرسم العثماني المعتمد مع التفسير الميسر وإمكانية الاستماع.
+            </p>
+          </div>
 
           {/* Quick Islamic Statistics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 max-w-2xl mx-auto">
-            <div className="p-3 rounded-2xl bg-card/70 backdrop-blur border border-border/60 shadow-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+            <div className="p-3 rounded-2xl bg-card/70 border border-border/60 text-center shadow-xs">
               <div className="text-xl md:text-2xl font-extrabold text-[var(--athar-green)] font-arabic">١١٤</div>
               <div className="text-xs text-muted-foreground">سورة كريمة</div>
             </div>
-            <div className="p-3 rounded-2xl bg-card/70 backdrop-blur border border-border/60 shadow-xs">
+            <div className="p-3 rounded-2xl bg-card/70 border border-border/60 text-center shadow-xs">
               <div className="text-xl md:text-2xl font-extrabold text-amber-500 font-arabic">٣٠</div>
               <div className="text-xs text-muted-foreground">جزءاً شريفاً</div>
             </div>
-            <div className="p-3 rounded-2xl bg-card/70 backdrop-blur border border-border/60 shadow-xs">
+            <div className="p-3 rounded-2xl bg-card/70 border border-border/60 text-center shadow-xs">
               <div className="text-xl md:text-2xl font-extrabold text-teal-500 font-arabic">٦,٢٣٦</div>
               <div className="text-xs text-muted-foreground">آية محكمة</div>
             </div>
-            <div className="p-3 rounded-2xl bg-card/70 backdrop-blur border border-border/60 shadow-xs">
+            <div className="p-3 rounded-2xl bg-card/70 border border-border/60 text-center shadow-xs">
               <div className="text-xl md:text-2xl font-extrabold text-purple-400 font-arabic">٦٠٤</div>
               <div className="text-xs text-muted-foreground">صفحة بالمصحف</div>
             </div>
           </div>
-
-          {/* ─── Reading Marker Resume Banner (If Exists) ─── */}
-          {readingMarker && (
-            <div className="max-w-xl mx-auto pt-2 animate-in fade-in slide-in-from-bottom-2">
-              <Link
-                href={`/quran/${readingMarker.surahNumber}#ayah-${readingMarker.ayahNumber}`}
-                className="flex items-center justify-between p-3.5 px-5 rounded-2xl bg-amber-500/15 border border-amber-500/35 hover:bg-amber-500/25 transition-all group shadow-sm"
-              >
-                <div className="flex items-center gap-3 text-right">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500 text-amber-950 flex items-center justify-center font-bold shadow-xs">
-                    <BookmarkCheck className="w-5 h-5 fill-current" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                      متابعة التلاوة من آخر علامة وقوف:
-                    </div>
-                    <div className="text-sm font-bold text-foreground font-arabic">
-                      سورة {readingMarker.surahName} — آية {toArabicNumber(readingMarker.ayahNumber)} (صفحة {toArabicNumber(readingMarker.pageNumber)})
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:-translate-x-1 transition-transform">
-                  <span>متابعة</span>
-                  <ChevronLeft className="w-4 h-4" />
-                </div>
-              </Link>
-            </div>
-          )}
-        </Container>
-      </div>
-
-      <Container size="2xl" className="space-y-6">
         {/* ─── Quick Virtuous Surahs ─── */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground px-1">
@@ -300,7 +435,11 @@ export default function QuranPage() {
                 <ArrowUpDown className="w-3.5 h-3.5 ml-2 text-[var(--athar-green)]" />
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) =>
+                    setSortBy(
+                      e.target.value as "mushaf" | "ayahsDesc" | "ayahsAsc" | "name"
+                    )
+                  }
                   aria-label="ترتيب السور"
                   className="bg-transparent border-none focus:outline-none text-foreground cursor-pointer text-xs font-medium"
                 >
@@ -475,6 +614,7 @@ export default function QuranPage() {
           </div>
         )}
       </Container>
+      )}
     </div>
   );
 }

@@ -16,7 +16,9 @@ import {
   BookMarked,
   Layers,
   ArrowUpDown,
+  Library,
 } from "lucide-react";
+import PageHero from "@/components/layout/PageHero";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,47 +177,44 @@ export default function HadithPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-muted/10 to-background pb-20">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background to-muted/20 py-10 md:py-12">
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[var(--athar-green)]/10 blur-3xl rounded-full" />
-
-        <Container size="2xl" className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--athar-green)]/10 text-[var(--athar-green)] text-xs md:text-sm font-medium mb-4 border border-[var(--athar-green)]/20 shadow-xs">
-            <BookMarked className="h-4 w-4" />
-            <span>السنة النبوية ودواوين الحديث المعتمدة</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3 font-arabic">
-            الحديث النبوي الشريف
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            تصفح وابحث في آلاف الأحاديث النبوية الشريفة من كتب الصحاح والسنن والمسانيد برواياتها المعتمدة وترقيمها الدقيق.
-          </p>
-
-          {/* Books Selection Horizontal Carousel / Pills */}
-          <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto">
-            {HADITH_BOOKS.map((book) => {
-              const isSelected = selectedBook.slug === book.slug;
-              return (
-                <button
-                  key={book.slug}
-                  onClick={() => handleSelectBook(book)}
-                  className={cn(
-                    "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 font-arabic flex items-center gap-2 shadow-xs",
-                    isSelected
-                      ? "bg-[var(--athar-green)] text-white border-[var(--athar-green)] shadow-md font-bold scale-[1.03]"
-                      : "bg-card hover:bg-muted/80 border-border/70 text-muted-foreground hover:text-foreground hover:border-border"
-                  )}
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>{book.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Container>
-      </section>
+    <div className="min-h-screen bg-background pb-20 text-right" dir="rtl">
+      {/* Unified Luxury Islamic PageHero */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "الحديث النبوي الشريف" },
+        ]}
+        title="الحديث النبوي الشريف"
+        subtitle="تصفح وابحث في آلاف الأحاديث النبوية الشريفة من كتب الصحاح والسنن والمسانيد برواياتها المعتمدة وترقيمها الدقيق."
+        badges={[
+          { label: "السنة النبوية الشريفة", icon: BookMarked, variant: "emerald" },
+          { label: `${toArabicNumber(HADITH_BOOKS.length)} دواوين معتمدة`, icon: Library, variant: "gold" },
+          { label: "بحث نصي وترقيم دقيق", icon: Search, variant: "default" },
+        ]}
+        theme="emerald"
+      >
+        {/* Books Selection Horizontal Carousel / Pills */}
+        <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto pt-2">
+          {HADITH_BOOKS.map((book) => {
+            const isSelected = selectedBook.slug === book.slug;
+            return (
+              <button
+                key={book.slug}
+                onClick={() => handleSelectBook(book)}
+                className={cn(
+                  "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 font-arabic flex items-center gap-2 shadow-xs cursor-pointer",
+                  isSelected
+                    ? "bg-amber-400 text-slate-950 border-amber-300 font-bold scale-[1.03] shadow-md ring-2 ring-amber-300/40"
+                    : "bg-white/10 hover:bg-white/15 text-white/90 border border-white/15"
+                )}
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>{book.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </PageHero>
 
       {/* Main Content Area */}
       <Container size="xl" className="py-8">

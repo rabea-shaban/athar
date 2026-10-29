@@ -21,10 +21,11 @@ import { getRadioStations, type RadioStation } from "@/lib/api/islamic";
 import { useAudioStore } from "@/store/audioStore";
 import { cn, toArabicNumber } from "@/lib/utils";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
 
 // Stable replacements for token-based or HTTP URLs
 const STABLE_URLS: Record<number, string> = {
-  7: "https://backup.qurango.net/radio/abdulbasit_abdulsamad", // عبدالباسط عبدالصمد
+  7: "https://qurango.net/radio/abdulbasit_abdulsamad", // عبدالباسط عبدالصمد
   19: "https://stream.radiojar.com/8s5u5tpdtwzuv", // إذاعة القرآن الكريم من القاهرة
   20: "/api/radio-proxy?url=" + encodeURIComponent("http://live.mp3quran.net:9972/"), // إذاعة السنة النبوية
 };
@@ -55,67 +56,67 @@ const EXTRA_STATIONS: RadioStation[] = [
   {
     id: 102,
     name: "إذاعة سورة البقرة (بأصوات كبار القراء)",
-    url: "https://backup.qurango.net/radio/albaqarah",
+    url: "https://qurango.net/radio/albaqarah",
   },
   {
     id: 103,
     name: "إذاعة الفتاوى العامة",
-    url: "https://backup.qurango.net/radio/fatwa",
+    url: "https://qurango.net/radio/fatwa",
   },
   {
     id: 104,
     name: "إذاعة صحيح البخاري",
-    url: "https://backup.qurango.net/radio/saheh-bokharee",
+    url: "https://qurango.net/radio/saheh-bokharee",
   },
   {
     id: 105,
     name: "إذاعة صحيح مسلم",
-    url: "https://backup.qurango.net/radio/saheh-muslim",
+    url: "https://qurango.net/radio/saheh-muslim",
   },
   {
     id: 106,
     name: "إذاعة في ظلال السيرة النبوية",
-    url: "https://backup.qurango.net/radio/fi_zilal_alsiyra",
+    url: "https://qurango.net/radio/fi_zilal_alsiyra",
   },
   {
     id: 107,
     name: "إذاعة قصص الأنبياء",
-    url: "https://backup.qurango.net/radio/alanbiya",
+    url: "https://qurango.net/radio/alanbiya",
   },
   {
     id: 108,
     name: "إذاعة الشمائل المحمدية",
-    url: "https://backup.qurango.net/radio/shmaeel",
+    url: "https://qurango.net/radio/shmaeel",
   },
   {
     id: 109,
     name: "إذاعة أذكار الصباح والمساء",
-    url: "https://backup.qurango.net/radio/athkar_sabah",
+    url: "https://qurango.net/radio/athkar_sabah",
   },
   {
     id: 110,
     name: "إذاعة الشيخ أحمد العجمي",
-    url: "https://backup.qurango.net/radio/ahmad_alajmy",
+    url: "https://qurango.net/radio/ahmad_alajmy",
   },
   {
     id: 111,
     name: "إذاعة الشيخ سعد الغامدي",
-    url: "https://backup.qurango.net/radio/saad_alghamdi",
+    url: "https://qurango.net/radio/saad_alghamdi",
   },
   {
     id: 112,
     name: "إذاعة الشيخ عبد الرحمن السديس",
-    url: "https://backup.qurango.net/radio/abdulrahman_alsudaes",
+    url: "https://qurango.net/radio/abdulrahman_alsudaes",
   },
   {
     id: 113,
     name: "إذاعة الشيخ سعود الشريم",
-    url: "https://backup.qurango.net/radio/saud_alshuraim",
+    url: "https://qurango.net/radio/saud_alshuraim",
   },
   {
     id: 114,
     name: "إذاعة الشيخ علي جابر",
-    url: "https://backup.qurango.net/radio/ali_jaber",
+    url: "https://qurango.net/radio/ali_jaber",
   },
 ];
 
@@ -222,36 +223,34 @@ export default function RadioPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-muted/10 to-background pb-20">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background to-muted/20 py-10 md:py-12">
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-red-500/10 blur-3xl rounded-full" />
-
-        <Container size="2xl" className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 text-xs md:text-sm font-medium mb-4 border border-red-500/20 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-            <Signal className="h-4 w-4" />
-            <span>بث مباشر على مدار الساعة (24/7)</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            إذاعات القرآن الكريم
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-6 leading-relaxed">
-            استمع مباشرة إلى كبرى إذاعات القرآن الكريم، إذاعة القاهرة، السنة النبوية، ومحطات نخبة من كبار القراء بدقة وجودة عالية.
-          </p>
-
-          {/* Active Broadcast Highlight if playing */}
-          {currentStation && (
-            <div className="max-w-lg mx-auto mb-6 p-3.5 rounded-2xl bg-card border border-[var(--athar-green)]/40 shadow-md flex items-center justify-between gap-3 text-right">
+      {/* Unified Luxury Islamic PageHero */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "الإذاعات القرآنية" },
+        ]}
+        title="إذاعات القرآن الكريم"
+        subtitle="استمع مباشرة إلى كبرى إذاعات القرآن الكريم، إذاعة القاهرة، السنة النبوية، ومحطات نخبة من كبار القراء بدقة وجودة عالية على مدار الساعة."
+        badges={[
+          { label: "بث مباشر 24/7", icon: Signal, variant: "emerald" },
+          { label: `${toArabicNumber(stations.length)} محطة إذاعية متخصصة`, icon: RadioIcon, variant: "gold" },
+          { label: "إذاعات القاهرة ومكة والمدينة", icon: Globe, variant: "default" },
+        ]}
+        theme="emerald"
+      >
+        {/* Active Broadcast Highlight if playing */}
+        {currentStation && (
+          <div className="max-w-xl mx-auto pt-2 text-right">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[var(--athar-green)] text-white flex items-center justify-center shrink-0">
+                <div className="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 shadow-md">
                   <RadioIcon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[10px] text-[var(--athar-green)] font-bold block">
+                  <span className="text-[11px] text-amber-300 font-bold block">
                     {isPlaying ? "● تستمع الآن إلى:" : "متوقف مؤقتاً:"}
                   </span>
-                  <p className="font-bold text-sm text-foreground truncate">
+                  <p className="font-bold text-sm sm:text-base text-white truncate font-arabic">
                     {currentStation.name}
                   </p>
                 </div>
@@ -260,15 +259,15 @@ export default function RadioPage() {
               <Button
                 size="sm"
                 onClick={() => handleStation(currentStation)}
-                className="rounded-xl h-9 px-3.5 bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white gap-1.5 shrink-0"
+                className="rounded-xl h-10 px-4 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold gap-1.5 shrink-0 shadow-sm cursor-pointer"
               >
-                {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 <span className="text-xs">{isPlaying ? "إيقاف" : "استئناف"}</span>
               </Button>
             </div>
-          )}
-        </Container>
-      </section>
+          </div>
+        )}
+      </PageHero>
 
       {/* Main Content: Search & Filters & Stations Grid */}
       <Container size="2xl" className="py-8">

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
 import { cn, toArabicNumber } from "@/lib/utils";
 
 interface TasbeehItem {
@@ -247,53 +248,50 @@ export default function TasbeehPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-muted/10 to-background pb-20 select-none">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background to-muted/20 py-10 md:py-12">
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[var(--athar-green)]/10 blur-3xl rounded-full" />
-
-        <Container size="2xl" className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--athar-green)]/10 text-[var(--athar-green)] text-xs md:text-sm font-medium mb-4 border border-[var(--athar-green)]/20 shadow-xs">
-            <Heart className="h-4 w-4" />
-            <span>السبحة الإلكترونية الذكية</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3 font-arabic">
-            التسابيح والأذكار
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            سبحة تفاعلية حديثة مع دعم المؤثرات الصوتية والاهتزاز، وتتبع عدد التسبيحات اليومية مع فضل كل ذكر.
-          </p>
-
-          {/* Quick Zikr Selector Carousel */}
-          <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto">
-            {DEFAULT_TASBEEH_OPTIONS.map((opt) => {
-              const isSelected = selected.id === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => handleSelectOption(opt)}
+      {/* ─── Unified Luxury Islamic PageHero ─── */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "المسبحة الإلكترونية" },
+        ]}
+        title="المسبحة الإلكترونية الذكية"
+        subtitle="سبحة تفاعلية حديثة مع دعم المؤثرات الصوتية والاهتزاز، وتتبع عدد التسبيحات اليومية مع فضل كل ذكر."
+        badges={[
+          { label: "أذكار وتسابيح مأثورة", icon: Heart, variant: "emerald" },
+          { label: `${toArabicNumber(DEFAULT_TASBEEH_OPTIONS.length)} تسبيحات مأثورة`, icon: Layers, variant: "gold" },
+          { label: "عداد وتتبع إلكتروني ذكي", icon: Clock, variant: "default" },
+        ]}
+        theme="emerald"
+      >
+        {/* Quick Zikr Selector Carousel inside PageHero children */}
+        <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto pt-2">
+          {DEFAULT_TASBEEH_OPTIONS.map((opt) => {
+            const isSelected = selected.id === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => handleSelectOption(opt)}
+                className={cn(
+                  "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 font-arabic flex items-center gap-2 shadow-xs cursor-pointer",
+                  isSelected
+                    ? "bg-amber-400 text-slate-950 border-amber-300 font-bold scale-[1.03] shadow-md ring-2 ring-amber-300/40"
+                    : "bg-white/10 hover:bg-white/15 text-white/90 border border-white/15"
+                )}
+              >
+                <span>{opt.label}</span>
+                <span
                   className={cn(
-                    "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 font-arabic flex items-center gap-2 shadow-xs",
-                    isSelected
-                      ? "bg-[var(--athar-green)] text-white border-[var(--athar-green)] shadow-md font-bold scale-[1.03]"
-                      : "bg-card hover:bg-muted/80 border-border/70 text-muted-foreground hover:text-foreground hover:border-border"
+                    "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
+                    isSelected ? "bg-amber-950/20 text-slate-950" : "bg-white/15 text-white"
                   )}
                 >
-                  <span>{opt.label}</span>
-                  <span
-                    className={cn(
-                      "text-[10px] px-1.5 py-0.2 rounded-full",
-                      isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {toArabicNumber(opt.target)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Container>
-      </section>
+                  {toArabicNumber(opt.target)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </PageHero>
 
       {/* Main Masbaha Area */}
       <Container size="lg" className="py-8">

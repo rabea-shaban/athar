@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Play,
   Pause,
@@ -9,15 +11,11 @@ import {
   Check,
   Search,
   Headphones,
-  Volume2,
   BookOpen,
   FileText,
   Download,
-  Filter,
   X,
   User,
-  Radio,
-  Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,20 +24,21 @@ import Container from "@/components/layout/Container";
 import { getSurahList, getQuranAudio, type Surah, type QuranAudioFile } from "@/lib/api/islamic";
 import { useAudioStore } from "@/store/audioStore";
 import { cn, toArabicNumber } from "@/lib/utils";
+import PageHero from "@/components/layout/PageHero";
 
 const RECITERS = [
-  { id: 2,  name: "عبد الباسط عبد الصمد",     style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 1,  name: "عبد الباسط عبد الصمد",     style: "مجود", riwayah: "حفص عن عاصم" },
-  { id: 6,  name: "محمود خليل الحصري",         style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 12, name: "محمود خليل الحصري",         style: "معلم", riwayah: "حفص عن عاصم" },
-  { id: 9,  name: "محمد صديق المنشاوي",        style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 8,  name: "محمد صديق المنشاوي",        style: "مجود", riwayah: "حفص عن عاصم" },
-  { id: 7,  name: "مشاري راشد العفاسي",        style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 3,  name: "عبد الرحمن السديس",         style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 10, name: "سعود الشريم",               style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 4,  name: "أبو بكر الشاطري",           style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 5,  name: "هاني الرفاعي",              style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 11, name: "عبد المحسن القاسم",         style: "مرتل", riwayah: "حفص عن عاصم" },
+  { id: 2,  name: "عبد الباسط عبد الصمد",     style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/abdulbasit.jpg" },
+  { id: 1,  name: "عبد الباسط عبد الصمد",     style: "مجود", riwayah: "حفص عن عاصم", avatar: "/images/reciters/abdulbasit.jpg" },
+  { id: 6,  name: "محمود خليل الحصري",         style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/hussary.jpg" },
+  { id: 12, name: "محمود خليل الحصري",         style: "معلم", riwayah: "حفص عن عاصم", avatar: "/images/reciters/hussary.jpg" },
+  { id: 9,  name: "محمد صديق المنشاوي",        style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/minshawi.jpg" },
+  { id: 8,  name: "محمد صديق المنشاوي",        style: "مجود", riwayah: "حفص عن عاصم", avatar: "/images/reciters/minshawi.jpg" },
+  { id: 7,  name: "مشاري راشد العفاسي",        style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/alafasy.jpg" },
+  { id: 3,  name: "عبد الرحمن السديس",         style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/sudais.jpg" },
+  { id: 10, name: "سعود الشريم",               style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/shuraim.jpg" },
+  { id: 4,  name: "أبو بكر الشاطري",           style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/shatri.jpg" },
+  { id: 5,  name: "هاني الرفاعي",              style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/rifai.jpg" },
+  { id: 11, name: "عبد المحسن القاسم",         style: "مرتل", riwayah: "حفص عن عاصم", avatar: "/images/reciters/qasim.jpg" },
 ];
 
 const STYLE_BADGES: Record<string, { bg: string; text: string; border: string }> = {
@@ -87,7 +86,10 @@ function AudioEqualizer({ isPlaying }: { isPlaying: boolean }) {
   );
 }
 
-export default function ListenPage() {
+function ListenContent() {
+  const searchParams = useSearchParams();
+  const reciterParam = searchParams.get("reciter");
+
   const [surahs, setSurahs] = useState<Surah[]>([]);
   const [audioFiles, setAudioFiles] = useState<QuranAudioFile[]>([]);
   const [selectedReciter, setSelectedReciter] = useState<Reciter>(RECITERS[0]);
@@ -99,6 +101,19 @@ export default function ListenPage() {
   const [revelationFilter, setRevelationFilter] = useState<"ALL" | "Meccan" | "Medinan">("ALL");
 
   const { setAudio, src, isPlaying, togglePlay } = useAudioStore();
+
+  useEffect(() => {
+    if (reciterParam) {
+      const match = RECITERS.find(
+        (r) =>
+          String(r.id) === reciterParam ||
+          r.name.includes(reciterParam)
+      );
+      if (match) {
+        setSelectedReciter(match);
+      }
+    }
+  }, [reciterParam]);
 
   useEffect(() => {
     getSurahList().then(setSurahs).catch(() => {});
@@ -166,104 +181,110 @@ export default function ListenPage() {
   }, [surahs, surahSearch, revelationFilter]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-muted/10 to-background pb-20">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-background to-muted/20 py-10 md:py-12">
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[var(--athar-green)]/10 blur-3xl rounded-full" />
-
-        <Container size="2xl" className="relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--athar-green)]/10 text-[var(--athar-green)] text-xs md:text-sm font-medium mb-4 border border-[var(--athar-green)]/20 shadow-xs">
-            <Headphones className="h-4 w-4" />
-            <span>تلاوات خاشعة بأصوات كبار القراء</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-3">
-            الاستماع إلى القرآن الكريم
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">
-            استمع إلى سور القرآن الكريم كاملة برواية حفص عن عاصم بمختلف أساليب التلاوة (مرتل، مجود، ومعلم) بصوت نخبة من أعلام التلاوة.
-          </p>
-
-          {/* Active Reciter Selector Box */}
-          <div className="max-w-2xl mx-auto">
-            <div
-              onClick={() => setIsReciterModalOpen(true)}
-              role="button"
-              tabIndex={0}
-              className="cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-border/80 hover:border-[var(--athar-green)] transition-all duration-200 bg-card shadow-md hover:shadow-lg group text-right"
-            >
-              {/* Reciter Details */}
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--athar-green)] to-[var(--athar-green-dark)] text-white flex items-center justify-center text-lg font-bold shadow-sm shrink-0">
-                  {selectedReciter.name.split(" ")[0][0]}
-                </div>
-                <div className="text-right min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                    <span className="text-xs text-muted-foreground font-medium">القارئ المختار:</span>
-                    <h3 className="font-bold text-base text-foreground truncate">
-                      الشيخ {selectedReciter.name}
-                    </h3>
+    <div className="min-h-screen bg-background pb-20 text-right" dir="rtl">
+      {/* Unified Luxury Islamic PageHero */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "الاستماع إلى القرآن الكريم" },
+        ]}
+        title="الاستماع إلى القرآن الكريم"
+        subtitle="استمع إلى سور القرآن الكريم كاملة برواية حفص عن عاصم بمختلف أساليب التلاوة (مرتل، مجود، ومعلم) بصوت نخبة من أعلام التلاوة."
+        badges={[
+          { label: "تلاوات خاشعة ومعتمدة", icon: Headphones, variant: "emerald" },
+          { label: `${toArabicNumber(RECITERS.length)} أسلوب وقارئ معتمد`, icon: BookOpen, variant: "gold" },
+          { label: "جودة صوت فائقة ومباشرة", icon: FileText, variant: "default" },
+        ]}
+        theme="emerald"
+      >
+        {/* Active Reciter Selector Box */}
+        <div className="max-w-2xl mx-auto pt-2">
+          <div
+            onClick={() => setIsReciterModalOpen(true)}
+            role="button"
+            tabIndex={0}
+            className="cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-white/15 hover:border-amber-400/50 transition-all duration-200 bg-white/10 backdrop-blur-md shadow-lg hover:shadow-xl group text-right"
+          >
+            {/* Reciter Details */}
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-2 ring-amber-400 shadow-md bg-muted">
+                {selectedReciter.avatar ? (
+                  <Image
+                    src={selectedReciter.avatar}
+                    alt={selectedReciter.name}
+                    fill
+                    sizes="48px"
+                    className="object-cover object-top"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center text-lg font-bold">
+                    {selectedReciter.name.split(" ")[0][0]}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "text-[11px] px-2 py-0.5 rounded-md font-semibold border",
-                        STYLE_BADGES[selectedReciter.style]?.bg,
-                        STYLE_BADGES[selectedReciter.style]?.text,
-                        STYLE_BADGES[selectedReciter.style]?.border
-                      )}
-                    >
-                      {selectedReciter.style}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{selectedReciter.riwayah}</span>
-                  </div>
-                </div>
+                )}
               </div>
-
-              {/* Change Button */}
-              <div className="flex items-center gap-2 pl-1 shrink-0">
-                <span className="hidden sm:inline-block text-xs font-semibold text-[var(--athar-green)] group-hover:underline">
-                  قائمة القراء ({toArabicNumber(RECITERS.length)})
-                </span>
-                <div className="w-8 h-8 rounded-full bg-muted/70 group-hover:bg-[var(--athar-green)]/10 text-muted-foreground group-hover:text-[var(--athar-green)] flex items-center justify-center transition-colors">
-                  <ChevronDown className="h-4 w-4" />
+              <div className="text-right min-w-0">
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className="text-xs text-emerald-200/80 font-medium">القارئ المختار:</span>
+                  <h3 className="font-bold text-base text-white truncate">
+                    الشيخ {selectedReciter.name}
+                  </h3>
                 </div>
-              </div>
-            </div>
-
-            {/* Quick Horizontal Reciter Switcher */}
-            <div className="mt-4 flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground ml-1 font-medium hidden sm:inline">أبرز القراء:</span>
-              {RECITERS.slice(0, 6).map((r) => {
-                const isSelected = selectedReciter.id === r.id && selectedReciter.style === r.style;
-                return (
-                  <button
-                    key={`${r.id}-${r.style}`}
-                    type="button"
-                    onClick={() => selectReciter(r)}
+                <div className="flex items-center gap-2">
+                  <span
                     className={cn(
-                      "text-xs px-2.5 py-1 rounded-xl border transition-all duration-150 flex items-center gap-1.5",
-                      isSelected
-                        ? "bg-[var(--athar-green)] text-white border-[var(--athar-green)] shadow-xs"
-                        : "bg-background/80 hover:bg-muted border-border/60 text-muted-foreground hover:text-foreground"
+                      "text-[11px] px-2 py-0.5 rounded-md font-semibold border bg-white/15 text-white border-white/20"
                     )}
                   >
-                    <span>{r.name.split(" ")[0]} {r.name.split(" ")[1] ?? ""}</span>
-                    <span className="opacity-75 text-[10px]">({r.style})</span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setIsReciterModalOpen(true)}
-                className="text-xs px-2.5 py-1 rounded-xl border border-dashed border-[var(--athar-green)]/50 text-[var(--athar-green)] hover:bg-[var(--athar-green)]/10 transition-colors font-medium"
-              >
-                + المزيد
-              </button>
+                    {selectedReciter.style}
+                  </span>
+                  <span className="text-xs text-emerald-200/70">{selectedReciter.riwayah}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Change Button */}
+            <div className="flex items-center gap-2 pl-1 shrink-0">
+              <span className="hidden sm:inline-block text-xs font-semibold text-amber-300 group-hover:underline">
+                قائمة القراء ({toArabicNumber(RECITERS.length)})
+              </span>
+              <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-amber-400 group-hover:text-slate-950 text-white flex items-center justify-center transition-colors">
+                <ChevronDown className="h-4 w-4" />
+              </div>
             </div>
           </div>
-        </Container>
-      </section>
+
+          {/* Quick Horizontal Reciter Switcher */}
+          <div className="mt-4 flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
+            <span className="text-xs text-emerald-200/80 ml-1 font-medium hidden sm:inline">أبرز القراء:</span>
+            {RECITERS.slice(0, 6).map((r) => {
+              const isSelected = selectedReciter.id === r.id && selectedReciter.style === r.style;
+              return (
+                <button
+                  key={`${r.id}-${r.style}`}
+                  type="button"
+                  onClick={() => selectReciter(r)}
+                  className={cn(
+                    "text-xs px-2.5 py-1 rounded-xl border transition-all duration-150 flex items-center gap-1.5 cursor-pointer font-arabic",
+                    isSelected
+                      ? "bg-amber-400 text-slate-950 border-amber-300 font-bold shadow-xs scale-105"
+                      : "bg-white/10 hover:bg-white/15 text-white/90 border border-white/15"
+                  )}
+                >
+                  <span>{r.name.split(" ")[0]} {r.name.split(" ")[1] ?? ""}</span>
+                  <span className="opacity-75 text-[10px]">({r.style})</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setIsReciterModalOpen(true)}
+              className="text-xs px-2.5 py-1 rounded-xl border border-dashed border-amber-400/50 text-amber-300 hover:bg-amber-400/10 transition-colors font-medium cursor-pointer"
+            >
+              + المزيد
+            </button>
+          </div>
+        </div>
+      </PageHero>
 
       {/* Reciters Modal / Dialog */}
       {isReciterModalOpen && (
@@ -373,13 +394,32 @@ export default function ListenPage() {
                         <div className="flex items-center gap-3 min-w-0">
                           <div
                             className={cn(
-                              "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 transition-colors",
+                              "relative w-11 h-11 rounded-full overflow-hidden shrink-0 border-2 transition-transform duration-200 group-hover:scale-105",
                               isSelected
-                                ? "bg-[var(--athar-green)] text-white shadow-xs"
-                                : "bg-muted text-muted-foreground group-hover:bg-[var(--athar-green)]/10 group-hover:text-[var(--athar-green)]"
+                                ? "border-[var(--athar-green)] ring-2 ring-[var(--athar-green)]/30"
+                                : "border-border/70"
                             )}
                           >
-                            {r.name.split(" ")[0][0]}
+                            {r.avatar ? (
+                              <Image
+                                src={r.avatar}
+                                alt={r.name}
+                                fill
+                                sizes="44px"
+                                className="object-cover object-top"
+                              />
+                            ) : (
+                              <div
+                                className={cn(
+                                  "w-full h-full flex items-center justify-center text-sm font-bold",
+                                  isSelected
+                                    ? "bg-[var(--athar-green)] text-white"
+                                    : "bg-muted text-muted-foreground"
+                                )}
+                              >
+                                {r.name.split(" ")[0][0]}
+                              </div>
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-bold text-sm text-foreground truncate">
@@ -645,6 +685,23 @@ export default function ListenPage() {
         )}
       </Container>
     </div>
+  );
+}
+
+export default function ListenPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen py-24 text-center font-arabic text-muted-foreground flex items-center justify-center">
+          <div className="space-y-3">
+            <div className="w-10 h-10 border-4 border-[var(--athar-green)] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm">جاري تحميل تلاوات القرآن الكريم...</p>
+          </div>
+        </div>
+      }
+    >
+      <ListenContent />
+    </Suspense>
   );
 }
 

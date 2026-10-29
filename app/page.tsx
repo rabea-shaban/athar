@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Search, BookOpen, Headphones, Radio, Heart, RotateCcw, BookMarked, GraduationCap, Library } from "lucide-react";
+import { Search, BookOpen, Headphones, Radio, Heart, RotateCcw, BookMarked, GraduationCap, Library, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import DailyContent from "@/components/layout/DailyContent";
@@ -15,7 +15,8 @@ const quickLinks = [
   { href: "/adhkar", icon: Heart, label: "الأذكار", color: "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400" },
   { href: "/tasbeeh", icon: RotateCcw, label: "التسابيح", color: "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" },
   { href: "/hadith", icon: BookMarked, label: "الحديث", color: "bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400" },
-  { href: "/lectures", icon: GraduationCap, label: "الشروحات", color: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400" },
+  { href: "/programs", icon: GraduationCap, label: "البرامج والشروحات", color: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400" },
+  { href: "/articles", icon: FileText, label: "المقالات", color: "bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-400" },
   { href: "/library", icon: Library, label: "المكتبة", color: "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400" },
 ];
 
@@ -40,8 +41,8 @@ export default function HomePage() {
             />
           </div>
 
-          <p className="text-sm md:text-base text-muted-foreground mb-8 max-w-lg mx-auto font-arabic">
-            القرآن الكريم · التفسير الميسر · الأذكار والتسابيح · الحديث النبوي · المكتبة الإسلامية
+          <p className="text-sm md:text-base text-muted-foreground mb-8 max-w-xl mx-auto font-arabic">
+            القرآن الكريم · التفسير الميسر · الأذكار والتسابيح · الحديث النبوي · الشروحات والبرامج · المقالات · المكتبة
           </p>
 
           {/* Search */}
@@ -61,7 +62,7 @@ export default function HomePage() {
       {/* Quick Links */}
       <Container as="section" size="2xl" className="py-10">
         <h2 className="text-lg font-semibold mb-5 text-muted-foreground">الأقسام</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3">
           {quickLinks.map(({ href, icon: Icon, label, color }) => (
             <Link
               key={href}

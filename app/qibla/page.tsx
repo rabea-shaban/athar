@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Container from "@/components/layout/Container";
+import PageHero from "@/components/layout/PageHero";
 import { Compass, Navigation, MapPin, CheckCircle2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -55,19 +56,24 @@ export default function QiblaPage() {
   };
 
   return (
-    <Container size="xl" className="py-10 space-y-10">
-      {/* Header */}
-      <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <div className="w-12 h-12 rounded-2xl bg-[var(--athar-green)]/15 text-[var(--athar-green)] flex items-center justify-center mx-auto">
-          <Compass className="w-6 h-6" />
-        </div>
-        <h1 className="text-3xl font-bold font-arabic text-foreground">
-          تحديد اتجاه القبلة | <span className="text-[var(--athar-green)]">أَثَر</span>
-        </h1>
-        <p className="text-muted-foreground font-arabic text-sm leading-relaxed">
-          بوصلة إلكترونية حية لحساب اتجاه القبلة نحو الكعبة المشرفة بمكة المكرمة بدقة.
-        </p>
-      </div>
+    <div className="min-h-screen pb-20 space-y-8 text-right" dir="rtl">
+      {/* ─── Unified Luxury Islamic PageHero ─── */}
+      <PageHero
+        breadcrumbs={[
+          { label: "الرئيسية", href: "/" },
+          { label: "اتجاه القبلة" },
+        ]}
+        title="تحديد اتجاه القبلة المشرفة"
+        subtitle="بوصلة إلكترونية حية لحساب اتجاه القبلة نحو الكعبة المشرفة بمكة المكرمة بدقة فائقة من أي مكان في العالم."
+        badges={[
+          { label: "حساب جغرافي دقيق للكعبة المشرفة", icon: Compass, variant: "emerald" },
+          { label: qiblaDegree !== null ? `${qiblaDegree}° عن الشمال الجغرافي` : "مكة المكرمة", icon: Navigation, variant: "gold" },
+          { label: "تحديد الموقع الحي GPS", icon: MapPin, variant: "default" },
+        ]}
+        theme="emerald"
+      />
+
+      <Container size="xl" className="space-y-8">
 
       {/* Compass UI */}
       <div className="max-w-md mx-auto p-8 rounded-3xl bg-card border border-border/80 shadow-xs text-center space-y-6">
@@ -106,5 +112,6 @@ export default function QiblaPage() {
         </Button>
       </div>
     </Container>
+    </div>
   );
 }

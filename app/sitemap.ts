@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { BOOKS } from "@/data/books";
+import { PROGRAMS } from "@/data/programs";
+import { ARTICLES } from "@/data/articles";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://athar-library.vercel.app";
@@ -15,7 +17,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/tasbeeh",
     "/hadith",
     "/tafsir",
+    "/programs",
     "/lectures",
+    "/articles",
     "/library",
   ].map((route) => ({
     url: `${baseUrl}${route}`,
@@ -40,5 +44,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...surahRoutes, ...bookRoutes];
+  // Programs & Series
+  const programRoutes: MetadataRoute.Sitemap = PROGRAMS.map((p) => ({
+    url: `${baseUrl}/lectures/${p.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  // Articles
+  const articleRoutes: MetadataRoute.Sitemap = ARTICLES.map((a) => ({
+    url: `${baseUrl}/articles/${a.slug}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
+
+  return [...staticRoutes, ...surahRoutes, ...bookRoutes, ...programRoutes, ...articleRoutes];
 }

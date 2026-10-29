@@ -25,7 +25,7 @@ import {
   SkipForward,
   Check,
 } from "lucide-react";
-import { useAudioStore } from "@/store/audioStore";
+import { useAudioStore, getAtharTabId } from "@/store/audioStore";
 import { cn, toArabicNumber } from "@/lib/utils";
 
 function formatTime(seconds: number): string {
@@ -51,18 +51,20 @@ export default function GlobalAudioPlayer() {
     volume,
     audioType,
     surahNumber,
+    meta,
     activeTabId,
     togglePlay,
     claimAudio,
     setVolume,
     stop,
+    playNextTrack,
+    playPrevTrack,
   } = useAudioStore();
 
   const [hasMounted, setHasMounted] = useState(false);
   const myTabIdRef = useRef<string>("");
   if (!myTabIdRef.current) {
-    myTabIdRef.current =
-      "tab_" + Math.random().toString(36).slice(2, 9) + "_" + Date.now();
+    myTabIdRef.current = getAtharTabId();
   }
   const myTabId = myTabIdRef.current;
 
@@ -99,7 +101,16 @@ export default function GlobalAudioPlayer() {
     };
     const handleEnded = () => {
       if (!isLooping) {
-        useAudioStore.getState().triggerEnded();
+        const state = useAudioStore.getState();
+        if (
+          state.meta?.playlist &&
+          typeof state.meta.currentIndex === "number" &&
+          state.meta.currentIndex < state.meta.playlist.length - 1
+        ) {
+          state.playNextTrack();
+        } else {
+          state.triggerEnded();
+        }
       }
     };
     const handleError = (e: Event) => {
@@ -277,8 +288,24 @@ export default function GlobalAudioPlayer() {
           <div className="flex items-center justify-between md:justify-start gap-3 w-full md:w-auto min-w-0 md:min-w-[260px] md:max-w-[340px] order-1">
             {/* Playlist Drawer Button */}
             <Link
-              href="/radio"
-              title="قائمة الإذاعات"
+              href={
+                audioType === "episode" && meta?.programSlug
+                  ? `/lectures/${meta.programSlug}`
+                  : audioType === "radio"
+                  ? "/radio"
+                  : audioType === "lecture"
+                  ? "/lectures"
+                  : "/listen"
+              }
+              title={
+                audioType === "episode"
+                  ? "قائمة حلقات البرنامج"
+                  : audioType === "radio"
+                  ? "قائمة الإذاعات"
+                  : audioType === "lecture"
+                  ? "قائمة الشروحات"
+                  : "قائمة التلاوات"
+              }
               className="p-2 rounded-lg text-slate-400 hover:text-sky-400 hover:bg-slate-800/80 transition-colors shrink-0"
             >
               <ListMusic className="h-5 w-5" />
@@ -330,9 +357,15 @@ export default function GlobalAudioPlayer() {
               {/* Previous / Skip Back (In RTL layout: Previous) */}
               <button
                 type="button"
-                onClick={() => handleSkip(-30)}
+                onClick={() => {
+                  if (meta?.playlist && typeof meta.currentIndex === "number" && meta.currentIndex > 0) {
+                    playPrevTrack();
+                  } else {
+                    handleSkip(-30);
+                  }
+                }}
                 disabled={isLive}
-                title="السابق"
+                title={meta?.playlist && typeof meta.currentIndex === "number" && meta.currentIndex > 0 ? "الحلقة السابقة" : "السابق"}
                 className="p-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
               >
                 <SkipForward className="h-4 w-4" />
@@ -383,9 +416,15 @@ export default function GlobalAudioPlayer() {
               {/* Next / Skip Forward */}
               <button
                 type="button"
-                onClick={() => handleSkip(30)}
+                onClick={() => {
+                  if (meta?.playlist && typeof meta.currentIndex === "number" && meta.currentIndex < meta.playlist.length - 1) {
+                    playNextTrack();
+                  } else {
+                    handleSkip(30);
+                  }
+                }}
                 disabled={isLive}
-                title="التالي"
+                title={meta?.playlist && typeof meta.currentIndex === "number" && meta.currentIndex < meta.playlist.length - 1 ? "الحلقة التالية" : "التالي"}
                 className="p-1 text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
               >
                 <SkipBack className="h-4 w-4" />
