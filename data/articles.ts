@@ -335,7 +335,7 @@ export const ARTICLES: Article[] = [
     title: "أسرار سورة الفاتحة وعلاقتها بمناجاة الصلاة",
     summary:
       "تأملات في أعظم سورة في كتاب الله، وبيان كيف تجسد الفاتحة حواراً حياً بين العبد وخالقه في كل ركعة، ولماذا لا تصح الصلاة إلا بها.",
-    coverImage: "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=800&q=80",
+    coverImage: "/images/articles/asrar-al-fatihah.jpg",
     author: "د. عبد الله المحسن",
     authorRole: "أستاذ الدراسات الإسلامية",
     publishedAt: "2026-10-18",
@@ -370,7 +370,7 @@ export const ARTICLES: Article[] = [
     title: "معادلة الإخلاص في عصر الضجيج الرقمي",
     summary:
       "كيف تحافظ على سلامة نيتك وبصيرة قلبك وأنت محاط بمنصات التواصل، ومغريات الشهرة السريعة، وأرقام المتابعات والإعجابات الخادعة؟",
-    coverImage: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+    coverImage: "/images/articles/ikhlas-digital-age.jpg",
     author: "أحمد عامر",
     authorRole: "باحث وكاتب في الفكر والتربية",
     publishedAt: "2026-10-15",
@@ -410,7 +410,7 @@ export const ARTICLES: Article[] = [
     title: "الصحبة الصالحة وحماية الهوية الإيمانية في عالم مفتوح",
     summary:
       "تأثير الرفقة والبيئة المحيطة على ثبات المسلم وتشكيل وعيه، وكيف تختار من يعينك على أمر دينك ودنياك في عصر السيولة الثقافية.",
-    coverImage: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=80",
+    coverImage: "/images/articles/righteous-companionship.jpg",
     author: "حازم الصديق",
     authorRole: "مقدم برامج وباحث تربوي",
     publishedAt: "2026-10-12",
@@ -445,7 +445,7 @@ export const ARTICLES: Article[] = [
     title: "دروس خالدة من الهجرة النبوية لبناء المجتمعات",
     summary:
       "قراءة استراتيجية وإيمانية في أعظم حدث غيّر مسار التاريخ البشري، والجمع المحكم بين الأخذ بالأسباب الدنيوية والتوكل المطلق على الله.",
-    coverImage: "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=800&q=80",
+    coverImage: "/images/articles/hijrah-lessons.jpg",
     author: "د. راغب السرجاني",
     authorRole: "مؤرخ وباحث في الحضارة الإسلامية",
     publishedAt: "2026-10-10",
@@ -480,7 +480,7 @@ export const ARTICLES: Article[] = [
     title: "الشمائل المحمدية: كيف كان خلقه القرآن؟",
     summary:
       "استعراض للجوانب الإنسانية والأخلاقية الرفيعة في شخصية النبي الأعظم ﷺ، وكيف جسد تعاليم الوحي واقعاً حياً يمشي بين الناس بالرحمة والعدل.",
-    coverImage: "https://images.unsplash.com/photo-1507692049790-de58290a4334?auto=format&fit=crop&w=800&q=80",
+    coverImage: "/images/articles/prophetic-character.jpg",
     author: "فريق التحرير العلمي — أَثَر",
     authorRole: "قسم السيرة والتاريخ",
     publishedAt: "2026-10-08",
@@ -550,7 +550,7 @@ export const ARTICLES: Article[] = [
     title: "التوبة الصادقة وتجديد شريان الحياة الروحية",
     summary:
       "كيف تفتح صفحة جديدة مع الله بعد كل زلة، وتتخلص من حيل الشيطان في غرس اليأس من المغفرة، وتجعل من توبتك انطلاقة لمقام أعلى.",
-    coverImage: "https://images.unsplash.com/photo-1507692049790-de58290a4334?auto=format&fit=crop&w=800&q=80",
+    coverImage: "/images/articles/tawbah-renewal.jpg",
     author: "د. أحمد عبد المنعم",
     authorRole: "طبيب واستشاري تربوي ونفسي",
     publishedAt: "2026-10-01",
