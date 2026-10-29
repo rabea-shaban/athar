@@ -99,18 +99,132 @@ export async function getTafsir(surahNumber: number): Promise<TafsirAyah[]> {
   return data.result as TafsirAyah[];
 }
 
+export function isEgyptianWinterTime(d: Date = new Date()): boolean {
+  const month = d.getMonth(); // 0 = Jan ... 9 = Oct, 10 = Nov
+  // Nov, Dec, Jan, Feb, Mar are always Winter Time in Egypt (UTC+2)
+  if (month < 3 || month > 9) return true;
+  // April: DST starts on the last Friday of April at 00:00
+  if (month === 3) {
+    const lastDay = new Date(d.getFullYear(), 4, 0).getDate();
+    let lastFriday = lastDay;
+    while (new Date(d.getFullYear(), 3, lastFriday).getDay() !== 5) lastFriday--;
+    return d.getDate() < lastFriday;
+  }
+  // October: DST ends on the last Thursday of October at 24:00 (shifts back to 23:00)
+  if (month === 9) {
+    const lastDay = new Date(d.getFullYear(), 10, 0).getDate();
+    let lastThursday = lastDay;
+    while (new Date(d.getFullYear(), 9, lastThursday).getDay() !== 4) lastThursday--;
+    if (d.getDate() > lastThursday) return true;
+    if (d.getDate() === lastThursday && d.getHours() >= 23) return true;
+    return false;
+  }
+  // May, June, July, Aug, Sep are always Summer Time (UTC+3)
+  return false;
+}
+
+export function shiftTimeString(timeStr: string, minutesDiff: number): string {
+  if (!timeStr || !timeStr.includes(":")) return timeStr;
+  const parts = timeStr.split(":");
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  let totalMin = h * 60 + m + minutesDiff;
+  if (totalMin < 0) totalMin += 24 * 60;
+  totalMin = totalMin % (24 * 60);
+  const newH = Math.floor(totalMin / 60).toString().padStart(2, "0");
+  const newM = (totalMin % 60).toString().padStart(2, "0");
+  return `${newH}:${newM}`;
+}
+
+export function ensureEgyptianWinterTimings(
+  timings: PrayerTimings,
+  mode: "auto" | "winter" | "summer" = "auto"
+): PrayerTimings {
+  if (!timings || !timings.Dhuhr) return timings;
+  const [dh, dm] = timings.Dhuhr.split(":").map(Number);
+  const dhuhrMin = dh * 60 + dm;
+
+  const shouldBeWinter = mode === "winter" || (mode === "auto" && isEgyptianWinterTime());
+  const shouldBeSummer = mode === "summer" || (mode === "auto" && !isEgyptianWinterTime());
+
+  // In Cairo/Egypt Winter Time (UTC+2), Dhuhr is around 11:35 - 12:05.
+  // If Dhuhr is >= 12:20, the API delivered Summer Time (UTC+3), so shift back -60 min.
+  if (shouldBeWinter && dhuhrMin >= 12 * 60 + 20) {
+    const adjusted: Record<string, string> = {};
+    for (const [k, v] of Object.entries(timings)) {
+      adjusted[k] = typeof v === "string" && v.includes(":") ? shiftTimeString(v, -60) : v;
+    }
+    return adjusted as PrayerTimings;
+  }
+
+  // If summer time is requested but timings are in winter time (Dhuhr < 12:15), shift +60 min.
+  if (shouldBeSummer && dhuhrMin < 12 * 60 + 15) {
+    const adjusted: Record<string, string> = {};
+    for (const [k, v] of Object.entries(timings)) {
+      adjusted[k] = typeof v === "string" && v.includes(":") ? shiftTimeString(v, 60) : v;
+    }
+    return adjusted as PrayerTimings;
+  }
+
+  return timings;
+}
+
+export function formatArabic12Hour(time24: string): string {
+  if (!time24 || !time24.includes(":")) return "";
+  const [hours, minutes] = time24.split(":");
+  let h = parseInt(hours, 10);
+  const m = minutes.padStart(2, "0");
+  const isPM = h >= 12;
+  h = h % 12 || 12;
+  return `${h}:${m} ${isPM ? "م" : "ص"}`;
+}
+
 export async function getPrayerTimes(
   city = "cairo",
   country = "egypt",
-  coords?: { latitude: number; longitude: number }
+  coords?: { latitude: number; longitude: number },
+  dateStr?: string,
+  mode: "auto" | "winter" | "summer" = "auto"
 ): Promise<PrayerTimings> {
-  let url = `${PRAYER_API}/timingsByCity?city=${city}&country=${country}&method=8`;
+  const cLower = country.toLowerCase();
+  const cityLower = city.toLowerCase();
+  const isEgypt =
+    cLower.includes("egypt") ||
+    cLower.includes("مصر") ||
+    cityLower.includes("cairo") ||
+    cityLower.includes("alexandria") ||
+    cityLower.includes("giza") ||
+    (coords && coords.latitude >= 21.5 && coords.latitude <= 32.5 && coords.longitude >= 24.5 && coords.longitude <= 37.0);
+
+  const isGulf =
+    cLower.includes("saudi") ||
+    cLower.includes("uae") ||
+    cityLower.includes("makkah") ||
+    cityLower.includes("madinah") ||
+    cityLower.includes("riyadh") ||
+    cityLower.includes("dubai");
+
+  // Method 5: Egyptian General Authority of Survey (الهيئة المصرية العامة للمساحة)
+  // Method 4: Umm Al-Qura University, Makkah
+  // Method 3: Muslim World League
+  const method = isEgypt ? 5 : isGulf ? 4 : 3;
+
+  const datePath = dateStr ? `/${dateStr}` : "";
+  let url = `${PRAYER_API}/timingsByCity${datePath}?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${method}`;
   if (coords) {
-    url = `${PRAYER_API}/timings?latitude=${coords.latitude}&longitude=${coords.longitude}&method=8`;
+    url = `${PRAYER_API}/timings${datePath}?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${method}`;
   }
+
   const res = await fetch(url);
   const data = await res.json();
-  return data.data.timings as PrayerTimings;
+  const timings = data?.data?.timings as PrayerTimings;
+
+  if (isEgypt && timings) {
+    return ensureEgyptianWinterTimings(timings, mode);
+  }
+
+  return timings;
 }
 
 export async function getHadiths(
