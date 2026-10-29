@@ -65,6 +65,7 @@ export interface Article {
   relatedProgramIds?: string[];
   suggestedArticleIds?: string[];
   featured?: boolean;
+  trending?: boolean;
   published: boolean;
 }
 
