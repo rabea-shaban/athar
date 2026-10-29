@@ -63,7 +63,7 @@ export default function SectionHeading({
         aria-hidden="true"
       >
         <span className="w-12 h-px bg-gradient-to-r from-transparent to-amber-500/60" />
-        <span className="text-xs">◆</span>
+        <span className="w-1.5 h-1.5 rotate-45 bg-amber-500/80 rounded-[0.5px]" />
         <span className="w-12 h-px bg-gradient-to-l from-transparent to-amber-500/60" />
       </div>
 

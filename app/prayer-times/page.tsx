@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Sparkles,
   Sun,
+  Snowflake,
   Sunrise as SunriseIcon,
   Sunset as SunsetIcon,
   Moon,
@@ -300,8 +301,8 @@ export default function PrayerTimesPage() {
           { label: "حساب فلكي معتمد", icon: Clock, variant: "emerald" },
           { label: `${selectedCity.nameAr} — ${selectedCity.countryAr}`, icon: MapPin, variant: "gold" },
           {
-            label: isWinterActive ? "❄️ التوقيت الشتوي (UTC+2) معتمد" : "☀️ التوقيت الصيفي (UTC+3)",
-            icon: Sparkles,
+            label: isWinterActive ? "التوقيت الشتوي (UTC+2) معتمد" : "التوقيت الصيفي (UTC+3)",
+            icon: isWinterActive ? Snowflake : Sun,
             variant: "default",
           },
         ]}
@@ -314,7 +315,7 @@ export default function PrayerTimesPage() {
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-l from-blue-500/10 via-card to-background border border-blue-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                <span className="text-xl">❄️</span>
+                <Snowflake className="w-5 h-5 text-blue-500" />
               </div>
               <div>
                 <h4 className="font-bold text-sm sm:text-base font-arabic text-foreground flex items-center gap-2">
@@ -425,13 +426,13 @@ export default function PrayerTimesPage() {
                     onClick={() => setDstMode("winter")}
                     title="التوقيت الشتوي (تأخير ساعة - UTC+2)"
                     className={cn(
-                      "px-3 py-1.5 rounded-xl transition-all font-medium flex items-center gap-1",
+                      "px-3 py-1.5 rounded-xl transition-all font-medium flex items-center gap-1.5",
                       isWinterActive
                         ? "bg-blue-500 text-white shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <span>❄️</span>
+                    <Snowflake className="w-3.5 h-3.5" />
                     <span>شتوي</span>
                   </button>
                   <button
@@ -439,13 +440,13 @@ export default function PrayerTimesPage() {
                     onClick={() => setDstMode("summer")}
                     title="التوقيت الصيفي (تقديم ساعة - UTC+3)"
                     className={cn(
-                      "px-3 py-1.5 rounded-xl transition-all font-medium flex items-center gap-1",
+                      "px-3 py-1.5 rounded-xl transition-all font-medium flex items-center gap-1.5",
                       dstMode === "summer"
                         ? "bg-amber-500 text-white shadow-xs font-bold"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <span>☀️</span>
+                    <Sun className="w-3.5 h-3.5" />
                     <span>صيفي</span>
                   </button>
                 </div>
@@ -620,7 +621,7 @@ export default function PrayerTimesPage() {
           {/* Card 1: Winter Time Guide */}
           <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-xs space-y-3 text-right">
             <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <span className="text-xl">❄️</span>
+              <Snowflake className="w-5 h-5 text-blue-500" />
             </div>
             <h4 className="font-bold text-base font-arabic text-foreground">
               التوقيت الشتوي في مصر (UTC+2)

@@ -242,11 +242,11 @@ function ProgramsCatalogInner({
       </section>
 
       {/* ─── Decorative Golden Star Ornament ─── */}
-      <div className="pt-6 pb-2 text-center">
+      <div className="pt-6 pb-2 text-center" aria-hidden="true">
         <div className="inline-flex items-center justify-center gap-2 text-amber-500/80 select-none">
-          <span className="text-xs">✦</span>
-          <span className="text-base font-bold">❖</span>
-          <span className="text-xs">✦</span>
+          <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
+          <span className="w-2 h-2 rotate-45 bg-amber-500 rounded-[1px]" />
+          <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
         </div>
       </div>
 

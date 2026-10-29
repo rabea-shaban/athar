@@ -6,6 +6,21 @@ import PageHero from "@/components/layout/PageHero";
 import { Compass, Navigation, MapPin, CheckCircle2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+function KaabaIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="5" y="6" width="14" height="14" rx="2" fill="currentColor" />
+      <rect x="5" y="10" width="14" height="2.5" fill="#eab308" />
+      <rect x="7" y="13.5" width="3" height="5" rx="0.5" fill="#eab308" />
+    </svg>
+  );
+}
+
 export default function QiblaPage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [qiblaDegree, setQiblaDegree] = useState<number | null>(null);
@@ -85,9 +100,12 @@ export default function QiblaPage() {
               transform: `rotate(${qiblaDegree || 0}deg)`,
             }}
           >
-            <div className="absolute top-2 text-xs font-bold text-[var(--athar-green)] font-arabic flex flex-col items-center">
-              <span>🕋 الكعبة</span>
-              <div className="w-2 h-2 rounded-full bg-[var(--athar-green)] mt-1" />
+            <div className="absolute top-2 text-xs font-bold text-[var(--athar-green)] font-arabic flex flex-col items-center gap-1">
+              <span className="flex items-center gap-1.5">
+                <KaabaIcon className="w-3.5 h-3.5 text-foreground" />
+                <span>الكعبة المشرفة</span>
+              </span>
+              <div className="w-2 h-2 rounded-full bg-[var(--athar-green)] mt-0.5" />
             </div>
             <Navigation className="w-16 h-16 text-[var(--athar-green)] transform -rotate-45" />
           </div>

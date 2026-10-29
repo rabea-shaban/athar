@@ -20,7 +20,8 @@ import {
   Star,
   Landmark,
   Sun,
-  Info
+  Info,
+  Sparkles
 } from "lucide-react";
 import { getSurahList, type Surah } from "@/lib/api/islamic";
 import { useReadingStore } from "@/store/readingStore";
@@ -211,9 +212,9 @@ export default function QuranPage() {
             </h2>
 
             {/* Subtle Golden Separator */}
-            <div className="flex items-center justify-center gap-3 text-amber-500/80">
+            <div className="flex items-center justify-center gap-3 text-amber-500/80" aria-hidden="true">
               <span className="w-12 h-px bg-gradient-to-r from-transparent to-amber-500/50" />
-              <span className="text-xs">◆</span>
+              <span className="w-1.5 h-1.5 rotate-45 bg-amber-500/80 rounded-[0.5px]" />
               <span className="w-12 h-px bg-gradient-to-l from-transparent to-amber-500/50" />
             </div>
 
@@ -255,11 +256,11 @@ export default function QuranPage() {
           </div>
 
           {/* Golden Center Star Ornament (Screenshot 1 & 2) */}
-          <div className="text-center py-1">
+          <div className="text-center py-1" aria-hidden="true">
             <div className="inline-flex items-center justify-center gap-2 text-amber-500/80 select-none">
-              <span className="text-xs">✦</span>
-              <span className="text-base font-bold">❖</span>
-              <span className="text-xs">✦</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
+              <span className="w-2 h-2 rotate-45 bg-amber-500 rounded-[1px]" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
             </div>
           </div>
 

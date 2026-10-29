@@ -247,8 +247,11 @@ export default function RadioPage() {
                   <RadioIcon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] text-amber-300 font-bold block">
-                    {isPlaying ? "● تستمع الآن إلى:" : "متوقف مؤقتاً:"}
+                  <span className="text-[11px] text-amber-300 font-bold flex items-center gap-1.5">
+                    {isPlaying && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    )}
+                    <span>{isPlaying ? "تستمع الآن إلى:" : "متوقف مؤقتاً:"}</span>
                   </span>
                   <p className="font-bold text-sm sm:text-base text-white truncate font-arabic">
                     {currentStation.name}

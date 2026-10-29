@@ -281,9 +281,10 @@ export default function ArticlesClientList({
             {selectedTag && (
               <button
                 onClick={() => setSelectedTag(null)}
-                className="text-[11px] text-red-500 hover:underline shrink-0"
+                className="text-[11px] text-red-500 hover:underline shrink-0 inline-flex items-center gap-1 font-arabic"
               >
-                إلغاء تصفية الوسم ✕
+                <span>إلغاء تصفية الوسم</span>
+                <X className="w-3 h-3" />
               </button>
             )}
           </div>
