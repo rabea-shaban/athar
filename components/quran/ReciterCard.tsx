@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Check, ChevronLeft, Play, Sparkles } from "lucide-react";
+import { Check, ChevronLeft, Play, Award } from "lucide-react";
 import { QuranReciter } from "@/types/content";
 
 interface ReciterCardProps {
@@ -80,7 +80,7 @@ export default function ReciterCard({ reciter, onSelect }: ReciterCardProps) {
         {/* Style Badge (Screenshot 4) */}
         <div className="flex items-center justify-center gap-1.5 flex-wrap">
           <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 border border-amber-500/25 px-3 py-0.5 rounded-full font-arabic inline-flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+            <Award className="w-3 h-3 text-amber-500 shrink-0" />
             <span>{reciter.styleBadge}</span>
           </span>
         </div>

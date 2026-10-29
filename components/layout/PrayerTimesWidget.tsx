@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Clock, MapPin, ArrowLeft, Sparkles, Snowflake, Lightbulb } from "lucide-react";
+import { Clock, MapPin, ArrowLeft, Snowflake, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -232,7 +232,7 @@ export default function PrayerTimesWidget() {
                   variant="secondary"
                   className="text-xs bg-[var(--athar-green)]/15 text-[var(--athar-green)] border border-[var(--athar-green)]/30 py-1.5 px-3 flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Clock className="w-3.5 h-3.5" />
                   <span>
                     الصلاة القادمة: <strong className="mx-0.5 font-bold">{nextPrayer.label}</strong> ({nextPrayer.timeStr})
                   </span>

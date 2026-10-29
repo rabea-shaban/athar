@@ -14,7 +14,6 @@ import {
   Check,
   Headphones,
   FileText,
-  Sparkles,
   ChevronLeft,
   Volume2,
 } from "lucide-react";

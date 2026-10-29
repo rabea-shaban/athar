@@ -8,7 +8,7 @@ import {
   Clock,
   User,
   Search,
-  Sparkles,
+  Award,
   ArrowRight,
   BookOpen,
   Bookmark,
@@ -44,7 +44,7 @@ const TRENDING_TOPICS = [
   { label: "اليقين والثبات", query: "اليقين", icon: ShieldCheck },
   { label: "السكينة النفسية", query: "سكينة", icon: Heart },
   { label: "الكسب الحلال", query: "كسب", icon: Briefcase },
-  { label: "سيكولوجية الدعاء", query: "دعاء", icon: Sparkles },
+  { label: "سيكولوجية الدعاء", query: "دعاء", icon: Compass },
   { label: "تدبر القرآن", query: "تدبر", icon: BookOpen },
   { label: "بر الوالدين", query: "والدين", icon: Users },
 ];
@@ -237,7 +237,7 @@ export default function ArticlesClientList({
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-full font-arabic border border-amber-500/20">
-                    <Sparkles className="h-3 w-3" />
+                    <Award className="h-3 w-3" />
                     <span>مقال مميز</span>
                   </span>
                 </div>

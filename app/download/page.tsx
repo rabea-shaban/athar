@@ -5,7 +5,7 @@ import Container from "@/components/layout/Container";
 import {
   Download,
   Smartphone,
-  Sparkles,
+  Zap,
   ShieldCheck,
   Globe,
   Clock,
@@ -104,7 +104,7 @@ export default function DownloadPage() {
         </div>
 
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--athar-green)]/15 text-[var(--athar-green)] text-xs font-bold font-arabic">
-          <Sparkles className="w-3.5 h-3.5" />
+          <Smartphone className="w-3.5 h-3.5" />
           <span>تطبيق الهواتف الذكية للأندرويد</span>
         </div>
 
@@ -287,7 +287,7 @@ export default function DownloadPage() {
       <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-xs max-w-3xl mx-auto space-y-3">
         <div className="flex items-center justify-between border-b border-border/50 pb-3">
           <h3 className="font-bold text-base font-arabic">ما الجديد في الإصدار v{cfg.latestVersion}؟</h3>
-          <Sparkles className="w-4 h-4 text-[var(--athar-green)]" />
+          <Zap className="w-4 h-4 text-[var(--athar-green)]" />
         </div>
         <p className="text-sm text-muted-foreground font-arabic leading-relaxed">
           {cfg.releaseNotes}

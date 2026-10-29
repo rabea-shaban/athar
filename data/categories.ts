@@ -48,6 +48,6 @@ export const CONTENT_CATEGORIES: ContentCategory[] = [
     slug: "contemporary",
     name: "الفكر والوعي المعاصر",
     description: "حوارات فكرية وتربوية تعالج تحديات الواقع وشبهات العصر بوعي إسلامي متزن.",
-    iconName: "Sparkles",
+    iconName: "Compass",
   },
 ];

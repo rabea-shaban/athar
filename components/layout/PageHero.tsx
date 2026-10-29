@@ -2,9 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import { LucideIcon, Sparkles } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 import Container from "@/components/layout/Container";
 import { cn } from "@/lib/utils";
+import { IslamicDivider } from "@/components/ui/IslamicOrnament";
 
 export interface BreadcrumbItem {
   label: string;
@@ -207,11 +208,7 @@ export default function PageHero({
       {/* ─── Golden Islamic Star Ornament Below Hero ─── */}
       {showOrnament && (
         <div className="pt-6 pb-2 text-center select-none" aria-hidden="true">
-          <div className="inline-flex items-center justify-center gap-2 text-amber-500/80">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
-            <span className="w-2 h-2 rotate-45 bg-amber-500 rounded-[1px]" />
-            <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
-          </div>
+          <IslamicDivider />
         </div>
       )}
     </>

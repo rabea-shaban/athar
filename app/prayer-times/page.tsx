@@ -12,7 +12,6 @@ import {
   Calendar,
   CheckCircle2,
   ChevronDown,
-  Sparkles,
   Sun,
   Snowflake,
   Sunrise as SunriseIcon,

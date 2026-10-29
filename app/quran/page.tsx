@@ -21,8 +21,8 @@ import {
   Landmark,
   Sun,
   Info,
-  Sparkles
 } from "lucide-react";
+import { IslamicDivider } from "@/components/ui/IslamicOrnament";
 import { getSurahList, type Surah } from "@/lib/api/islamic";
 import { useReadingStore } from "@/store/readingStore";
 import { cn, normalizeArabic, toArabicNumber } from "@/lib/utils";
@@ -255,13 +255,9 @@ export default function QuranPage() {
             </div>
           </div>
 
-          {/* Golden Center Star Ornament (Screenshot 1 & 2) */}
+          {/* Golden Center Islamic Star Ornament */}
           <div className="text-center py-1" aria-hidden="true">
-            <div className="inline-flex items-center justify-center gap-2 text-amber-500/80 select-none">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
-              <span className="w-2 h-2 rotate-45 bg-amber-500 rounded-[1px]" />
-              <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
-            </div>
+            <IslamicDivider />
           </div>
 
           {/* 3-Column Reciters Grid (Matching Screenshot 2) */}

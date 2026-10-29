@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Download, Sparkles } from "lucide-react";
+import { Download, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function DownloadButtonWithCounter() {
@@ -40,7 +40,7 @@ export function DownloadButtonWithCounter() {
 
       {downloadCount !== null && (
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-[var(--athar-green)] font-bold font-arabic bg-[var(--athar-green)]/10 py-1.5 px-3 rounded-xl border border-[var(--athar-green)]/20">
-          <Sparkles className="w-3 h-3" />
+          <TrendingUp className="w-3.5 h-3.5" />
           <span>إجمالي التنزيلات المباشرة: {downloadCount.toLocaleString("ar-EG")} تنزيل</span>
         </div>
       )}

@@ -2,19 +2,46 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/layout/Container";
-import { ShieldCheck, Heart, Globe, Mail, GitBranch, BookOpen, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  ShieldCheck,
+  Heart,
+  Globe,
+  Mail,
+  GitBranch,
+  BookOpen,
+  Compass,
+  Library,
+  CheckCircle2,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "عن المنصة وحقوق الملكية | أَثَر — ATHAR",
-  description: "تعرّف على رسالة منصة أَثَر الإسلامية، الأهداف، وبنية التراث العلمي، مع توثيق حقوق الملكية والتطوير.",
+  description:
+    "تعرّف على رسالة منصة أَثَر الإسلامية، الأهداف، وبنية التراث العلمي، مع توثيق حقوق الملكية والتطوير.",
 };
 
 export default function AboutPage() {
   const platformFeatures = [
-    { title: "المصحف الشريف والتفسير", desc: "تلاوات عذبة بصوت كبار القراء مع التفسير الميسر لكل آية." },
-    { title: "مواقيت الصلاة والقبلة", desc: "حساب دقيق لمواقيت الصلاة حسب الهيئات الإسلامية وتحديد القبلة." },
-    { title: "الأذكار والسبحة الذكية", desc: "حصن المسلم اليومي مع سبحة إلكترونية متطورة للاستغفار والتسبيح." },
-    { title: "المكتبة والدروس العلمية", desc: "أمهات كتب التراث والسلاسل الصوتية العلمية لكبار العلماء." },
+    {
+      title: "المصحف الشريف والتفسير",
+      desc: "تلاوات عذبة بصوت كبار القراء مع التفسير الميسر لكل آية.",
+      icon: BookOpen,
+    },
+    {
+      title: "مواقيت الصلاة والقبلة",
+      desc: "حساب دقيق لمواقيت الصلاة حسب الهيئات الإسلامية وتحديد القبلة.",
+      icon: Compass,
+    },
+    {
+      title: "الأذكار والسبحة الذكية",
+      desc: "حصن المسلم اليومي مع سبحة إلكترونية متطورة للاستغفار والتسبيح.",
+      icon: Heart,
+    },
+    {
+      title: "المكتبة والدروس العلمية",
+      desc: "أمهات كتب التراث والسلاسل الصوتية العلمية لكبار العلماء.",
+      icon: Library,
+    },
   ];
 
   return (
@@ -41,20 +68,23 @@ export default function AboutPage() {
 
       {/* Features Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {platformFeatures.map((feat, idx) => (
-          <div
-            key={idx}
-            className="p-6 rounded-2xl bg-card border border-border/70 shadow-xs space-y-3"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[var(--athar-green)]/15 text-[var(--athar-green)] flex items-center justify-center">
-              <Sparkles className="w-5 h-5" />
+        {platformFeatures.map((feat, idx) => {
+          const Icon = feat.icon;
+          return (
+            <div
+              key={idx}
+              className="p-6 rounded-2xl bg-card border border-border/70 shadow-xs space-y-3"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[var(--athar-green)]/15 text-[var(--athar-green)] flex items-center justify-center">
+                <Icon className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-base font-arabic">{feat.title}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed font-arabic">
+                {feat.desc}
+              </p>
             </div>
-            <h3 className="font-bold text-base font-arabic">{feat.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed font-arabic">
-              {feat.desc}
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Developer & Ownership Card */}
@@ -66,7 +96,9 @@ export default function AboutPage() {
             </div>
             <div>
               <h2 className="text-lg font-bold font-arabic">الملكية والتطوير</h2>
-              <p className="text-xs text-muted-foreground font-arabic">إشعار حقوق الملكية الفكرية والنسبة المباشرة</p>
+              <p className="text-xs text-muted-foreground font-arabic">
+                إشعار حقوق الملكية الفكرية والنسبة المباشرة
+              </p>
             </div>
           </div>
         </div>

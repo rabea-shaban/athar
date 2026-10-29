@@ -19,7 +19,7 @@ import {
   Star,
   X,
   Pause,
-  Sparkles,
+  Lightbulb,
   Library,
   Scroll,
   ShieldCheck,
@@ -30,6 +30,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 import Container from "@/components/layout/Container";
+import { IslamicDivider } from "@/components/ui/IslamicOrnament";
 import ProgramCard from "@/components/programs/ProgramCard";
 import { Program } from "@/types/content";
 import { Lecture, LECTURES_DATA, LECTURE_CATEGORIES, LECTURE_MEDIA_TYPES } from "@/data/lectures";
@@ -241,13 +242,9 @@ function ProgramsCatalogInner({
         </Container>
       </section>
 
-      {/* ─── Decorative Golden Star Ornament ─── */}
+      {/* ─── Decorative Golden Islamic Star Ornament ─── */}
       <div className="pt-6 pb-2 text-center" aria-hidden="true">
-        <div className="inline-flex items-center justify-center gap-2 text-amber-500/80 select-none">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
-          <span className="w-2 h-2 rotate-45 bg-amber-500 rounded-[1px]" />
-          <Sparkles className="w-3.5 h-3.5 text-amber-500/70" />
-        </div>
+        <IslamicDivider />
       </div>
 
       <Container size="2xl" className="pt-4">
@@ -706,7 +703,7 @@ function ProgramsCatalogInner({
             {activeLecture.benefits && activeLecture.benefits.length > 0 && (
               <div className="mb-6 space-y-2.5">
                 <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
                   <span>الفوائد الإيمانية والتربوية المستنبطة:</span>
                 </h4>
                 <div className="grid gap-2 pr-2">

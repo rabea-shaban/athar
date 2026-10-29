@@ -6,7 +6,6 @@ import {
   Check,
   Headphones,
   User,
-  Sparkles,
   X,
 } from "lucide-react";
 import { QURAN_RECITERS, type QuranReciter } from "@/lib/api/islamic";
