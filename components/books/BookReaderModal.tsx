@@ -21,7 +21,8 @@ import {
   Trash2,
   CheckCircle2,
   Calendar,
-  Layers
+  Layers,
+  Sparkles as SparklesIcon
 } from "lucide-react";
 import { Book } from "@/data/books";
 import { toArabicNumber, cn } from "@/lib/utils";
@@ -41,7 +42,18 @@ interface NoteItem {
   createdAt: string;
 }
 
-type TabType = "read" | "tracker" | "notes" | "dossier";
+type TabType = "read" | "pdf" | "tracker" | "notes" | "dossier";
+
+// List of books that have local, high-quality, verified PDFs hosted locally
+const LOCAL_PDF_SLUGS = [
+  "abqariyyat-muhammad",
+  "al-aqeedah-al-wasitiyyah",
+  "al-arbaun-al-nawawiyyah",
+  "al-rahiq-al-makhtum",
+  "al-shamail-al-muhammadiyyah",
+  "kitab-al-tawhid",
+  "riyadh-al-salihin",
+];
 
 export default function BookReaderModal({
   book,
@@ -62,6 +74,9 @@ export default function BookReaderModal({
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [newNoteText, setNewNoteText] = useState("");
   const [newNotePage, setNewNotePage] = useState<string>("");
+
+  // Check if book has a local PDF available
+  const hasLocalPdf = book ? LOCAL_PDF_SLUGS.includes(book.slug) : false;
 
   // Load progress and notes for this book
   useEffect(() => {
@@ -232,6 +247,9 @@ export default function BookReaderModal({
     return book.originalSource || "المستودع الرقمي";
   };
 
+  // Resolve best download URL
+  const effectiveDownloadUrl = hasLocalPdf ? `/books/pdf/${book.slug}.pdf` : book.downloadUrl;
+
   return (
     <div
       role="dialog"
@@ -259,6 +277,12 @@ export default function BookReaderModal({
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 font-medium">
                   {book.category}
                 </span>
+                {hasLocalPdf && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>نسخة PDF مدمجة</span>
+                  </span>
+                )}
                 {book.rightsStatus && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium hidden sm:inline-block">
                     {book.rightsStatus === "PUBLIC_DOMAIN" ? "ملك عام" : "قراءة مصرح بها"}
@@ -346,6 +370,23 @@ export default function BookReaderModal({
               <span>بوابة القراءة والتحميل</span>
             </button>
 
+            {hasLocalPdf && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("pdf")}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
+                  activeTab === "pdf"
+                    ? "bg-amber-500 text-slate-950 font-bold shadow-xs"
+                    : "hover:bg-muted text-amber-700 dark:text-amber-300"
+                )}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>القارئ المصور المدمج (PDF)</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setActiveTab("tracker")}
@@ -418,7 +459,7 @@ export default function BookReaderModal({
                       مركز المطالعة والتحقيق الرقمي المعتمد
                     </h3>
                     <p className="text-xs sm:text-sm text-muted-foreground font-arabic mt-1 leading-relaxed">
-                      اختر أسلوب القراءة الأنسب لك: القراءة النصية الكاملة المفهرسة للبحث وتصفح الأبواب، أو تحميل النسخة المصورة المحققة (PDF) بصفحاتها الأصلية.
+                      اختر أسلوب القراءة الأنسب لك: القراءة النصية الكاملة المفهرسة للبحث وتصفح الأبواب، أو تحميل ومطالعة النسخة المصورة المحققة (PDF) بصفحاتها الأصلية.
                     </p>
                   </div>
                 </div>
@@ -492,7 +533,7 @@ export default function BookReaderModal({
                         <Download className="w-6 h-6" />
                       </div>
                       <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                        النسخة المصورة الأصلية
+                        النسخة المصورة المعتمدة
                       </span>
                     </div>
 
@@ -522,25 +563,45 @@ export default function BookReaderModal({
                   </div>
 
                   <div className="pt-6 mt-4 border-t border-border/60 space-y-2">
-                    {book.downloadUrl && (
-                      <a
-                        href={book.downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm shadow-md shadow-amber-500/20 transition-all text-center cursor-pointer"
+                    {/* If local PDF exists, show In-App Reader button */}
+                    {hasLocalPdf && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("pdf")}
+                        className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-sm shadow-md shadow-amber-500/25 transition-all text-center cursor-pointer"
                       >
-                        <Download className="w-4 h-4" />
-                        <span>تحميل نسخة PDF المحققة {book.fileSize ? `(${book.fileSize})` : ""}</span>
-                        <ExternalLink className="w-4 h-4 opacity-70" />
+                        <FileText className="w-4 h-4" />
+                        <span>مطالعة وثيقة الكتاب مباشرة داخل المنصة</span>
+                      </button>
+                    )}
+
+                    {effectiveDownloadUrl && (
+                      <a
+                        href={effectiveDownloadUrl}
+                        download={hasLocalPdf ? `${book.slug}.pdf` : undefined}
+                        target={hasLocalPdf ? undefined : "_blank"}
+                        rel="noopener noreferrer"
+                        className={cn(
+                          "w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-center cursor-pointer",
+                          hasLocalPdf
+                            ? "bg-white/10 hover:bg-white/20 text-foreground border border-border/80"
+                            : "bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20"
+                        )}
+                      >
+                        <Download className="w-3.5 h-3.5 text-amber-500" />
+                        <span>
+                          {hasLocalPdf ? "تنزيل النسخة المحلية السريعة (PDF)" : `تحميل نسخة PDF المحققة ${book.fileSize ? `(${book.fileSize})` : ""}`}
+                        </span>
+                        {!hasLocalPdf && <ExternalLink className="w-3.5 h-3.5 opacity-70" />}
                       </a>
                     )}
 
-                    {book.sourceUrl && (
+                    {book.sourceUrl && !hasLocalPdf && (
                       <a
                         href={book.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs transition-colors text-center cursor-pointer"
+                        className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs transition-colors text-center cursor-pointer"
                       >
                         <Library className="w-3.5 h-3.5 text-muted-foreground" />
                         <span>صفحة الكتاب في {book.originalSource || "المصدر الأصلي"}</span>
@@ -602,6 +663,58 @@ export default function BookReaderModal({
                     لوحة المتابعة الكاملة
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════ TAB: NATIVE IN-APP PDF VIEWER ═════════ */}
+          {activeTab === "pdf" && hasLocalPdf && (
+            <div className="h-full flex flex-col space-y-3">
+              {/* PDF Viewer Top Controls Bar */}
+              <div className="p-3 sm:p-4 rounded-2xl bg-[#031d13] border border-emerald-900/60 text-white flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs sm:text-sm font-arabic text-white">
+                      القارئ المصور المعتمد (PDF المدمج)
+                    </h4>
+                    <span className="text-[11px] text-emerald-300/80 font-arabic">
+                      نسخة محققة رسمية معتمدة ومحملة محلياً على جهازك
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`/books/pdf/${book.slug}.pdf`}
+                    download={`${book.slug}.pdf`}
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5 text-amber-300" />
+                    <span>تنزيل النسخة ({book.fileSize || "مباشر"})</span>
+                  </a>
+
+                  <a
+                    href={`/books/pdf/${book.slug}.pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-colors flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>فتح في نافذة كاملة</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Native In-App PDF Iframe Viewer */}
+              <div className="flex-1 w-full min-h-[580px] rounded-2xl overflow-hidden border border-border/80 bg-slate-900 shadow-inner">
+                <iframe
+                  src={`/books/pdf/${book.slug}.pdf#toolbar=1&navpanes=1`}
+                  title={`المطالعة المصورة لكتاب ${book.title}`}
+                  className="w-full h-full min-h-[580px] border-none"
+                />
               </div>
             </div>
           )}
@@ -1010,6 +1123,17 @@ export default function BookReaderModal({
           </div>
 
           <div className="flex items-center gap-3">
+            {hasLocalPdf && activeTab !== "pdf" && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("pdf")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>القارئ المصور (PDF)</span>
+              </button>
+            )}
+
             <a
               href={book.readUrl || book.sourceUrl}
               target="_blank"

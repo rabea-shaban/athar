@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "download:books": "node scripts/download_all_books.js",
     "lint": "eslint"
   },
   "dependencies": {
