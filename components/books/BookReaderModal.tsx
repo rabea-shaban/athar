@@ -6,7 +6,6 @@ import {
   Maximize2, 
   Minimize2, 
   Download, 
-  ExternalLink, 
   BookOpen, 
   Bookmark, 
   BookmarkCheck, 
@@ -21,8 +20,7 @@ import {
   Trash2,
   CheckCircle2,
   Calendar,
-  Layers,
-  Sparkles as SparklesIcon
+  Layers
 } from "lucide-react";
 import { Book } from "@/data/books";
 import { toArabicNumber, cn } from "@/lib/utils";
@@ -42,17 +40,27 @@ interface NoteItem {
   createdAt: string;
 }
 
-type TabType = "read" | "pdf" | "tracker" | "notes" | "dossier";
+type TabType = "reader" | "tracker" | "notes" | "dossier";
 
-// List of books that have local, high-quality, verified PDFs hosted locally
+// List of books that have verified, high-quality, local PDFs hosted inside the platform
 const LOCAL_PDF_SLUGS = [
   "abqariyyat-muhammad",
+  "al-adab-al-mufrad",
+  "al-aqeedah-al-tahawiyyah",
   "al-aqeedah-al-wasitiyyah",
   "al-arbaun-al-nawawiyyah",
+  "al-daa-wad-dawaa",
+  "al-muqaddimah-al-jazariyyah",
   "al-rahiq-al-makhtum",
   "al-shamail-al-muhammadiyyah",
+  "al-wabil-al-sayyib",
+  "bulugh-al-maram",
+  "hisn-al-muslim",
   "kitab-al-tawhid",
+  "matn-al-ajrumiyyah",
+  "nukhbat-al-fikar",
   "riyadh-al-salihin",
+  "sayd-al-khatir",
 ];
 
 export default function BookReaderModal({
@@ -63,7 +71,7 @@ export default function BookReaderModal({
   isBookmarked = false,
 }: BookReaderModalProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>("read");
+  const [activeTab, setActiveTab] = useState<TabType>("reader");
   const [progressPage, setProgressPage] = useState<number>(1);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -111,7 +119,7 @@ export default function BookReaderModal({
       setNotes([]);
     }
 
-    setActiveTab("read");
+    setActiveTab("reader");
   }, [book]);
 
   // Handle escape key
@@ -237,24 +245,13 @@ export default function BookReaderModal({
     setTimeout(() => setCopiedNotes(false), 2000);
   };
 
-  // Format reading source name
-  const getReadSourceName = () => {
-    if (!book.readUrl) return "المصدر المعتمد";
-    if (book.readUrl.includes("shamela.ws")) return "المكتبة الشاملة";
-    if (book.readUrl.includes("ksu.edu.sa")) return "مشروع المصحف (جامعة الملك سعود)";
-    if (book.readUrl.includes("hindawi.org")) return "مؤسسة هنداوي";
-    if (book.readUrl.includes("waqfeya.net")) return "المكتبة الوقفية";
-    return book.originalSource || "المستودع الرقمي";
-  };
-
-  // Resolve best download URL
-  const effectiveDownloadUrl = hasLocalPdf ? `/books/pdf/${book.slug}.pdf` : book.downloadUrl;
+  const pdfUrl = `/books/pdf/${book.slug}.pdf`;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200"
       dir="rtl"
     >
       <div
@@ -262,30 +259,29 @@ export default function BookReaderModal({
           "bg-card border border-border/80 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 w-full",
           isFullscreen
             ? "fixed inset-0 rounded-none border-none h-screen max-h-screen"
-            : "max-w-5xl h-[92vh] max-h-[920px]"
+            : "max-w-6xl h-[94vh] max-h-[960px]"
         )}
       >
-        {/* ─── 1. Header: Islamic Theme & Controls ─── */}
-        <div className="bg-gradient-to-r from-[#031d13] via-[#062c1e] to-[#041c14] border-b border-emerald-900/60 text-white px-4 sm:px-6 py-4 flex items-center justify-between gap-3 shrink-0">
+        {/* ─── 1. Header: Islamic Identity & Pure In-App Controls ─── */}
+        <div className="bg-gradient-to-r from-[#031d13] via-[#062c1e] to-[#041c14] border-b border-emerald-900/60 text-white px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0">
           {/* Right: Book Title & Identity */}
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/25 to-emerald-500/15 border border-amber-400/40 text-amber-300 flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/25 to-emerald-500/15 border border-amber-400/40 text-amber-300 flex items-center justify-center shrink-0 shadow-xs">
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 font-medium">
                   {book.category}
                 </span>
-                {hasLocalPdf && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>نسخة PDF مدمجة</span>
+                {hasLocalPdf ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-200 border border-amber-400/40 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>القارئ المصور المعتمد</span>
                   </span>
-                )}
-                {book.rightsStatus && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 font-medium hidden sm:inline-block">
-                    {book.rightsStatus === "PUBLIC_DOMAIN" ? "ملك عام" : "قراءة مصرح بها"}
+                ) : (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 font-medium">
+                    مطالعة وتوثيق
                   </span>
                 )}
                 {book.authorEra && (
@@ -300,9 +296,22 @@ export default function BookReaderModal({
             </div>
           </div>
 
-          {/* Left: Interactive Controls */}
+          {/* Left: Pure In-App Interactive Controls */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Share / Copy */}
+            {/* Direct Local Download Button */}
+            {hasLocalPdf && (
+              <a
+                href={pdfUrl}
+                download={`${book.slug}.pdf`}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors shadow-xs cursor-pointer"
+                title="تنزيل نسخة PDF إلى جهازك"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>تحميل {book.fileSize ? `(${book.fileSize})` : "PDF"}</span>
+              </a>
+            )}
+
+            {/* Share / Copy Link */}
             <button
               type="button"
               onClick={handleShare}
@@ -346,46 +355,30 @@ export default function BookReaderModal({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 transition-colors cursor-pointer"
-              title="إغلاق مركز المطالعة"
+              title="إغلاق القارئ"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ─── 2. Tab Navigation Bar ─── */}
+        {/* ─── 2. Internal Tab Navigation Bar ─── */}
         <div className="bg-muted/70 border-b border-border/80 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 text-xs font-arabic overflow-x-auto shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
-              onClick={() => setActiveTab("read")}
+              onClick={() => setActiveTab("reader")}
               className={cn(
                 "px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
-                activeTab === "read"
+                activeTab === "reader"
                   ? "bg-[var(--athar-green)] text-white shadow-xs"
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>بوابة القراءة والتحميل</span>
+              <span>القارئ الرقمي المدمج</span>
+              {hasLocalPdf && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
             </button>
-
-            {hasLocalPdf && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("pdf")}
-                className={cn(
-                  "px-3.5 py-1.5 rounded-xl font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
-                  activeTab === "pdf"
-                    ? "bg-amber-500 text-slate-950 font-bold shadow-xs"
-                    : "hover:bg-muted text-amber-700 dark:text-amber-300"
-                )}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>القارئ المصور المدمج (PDF)</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              </button>
-            )}
 
             <button
               type="button"
@@ -443,285 +436,142 @@ export default function BookReaderModal({
           </div>
         </div>
 
-        {/* ─── 3. Main Body Scrollable Area ─── */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6">
-          {/* ═════════ TAB 1: READ & DOWNLOAD HUB ═════════ */}
-          {activeTab === "read" && (
-            <div className="space-y-6 max-w-4xl mx-auto">
-              {/* Introduction Banner */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-amber-500/5 to-transparent border border-emerald-500/20">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-[var(--athar-green)] flex items-center justify-center shrink-0 mt-0.5">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm sm:text-base text-foreground font-arabic">
-                      مركز المطالعة والتحقيق الرقمي المعتمد
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground font-arabic mt-1 leading-relaxed">
-                      اختر أسلوب القراءة الأنسب لك: القراءة النصية الكاملة المفهرسة للبحث وتصفح الأبواب، أو تحميل ومطالعة النسخة المصورة المحققة (PDF) بصفحاتها الأصلية.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Two Primary Action Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* CARD 1: Full Online Text Reader */}
-                <div className="rounded-3xl border-2 border-emerald-600/30 bg-gradient-to-b from-emerald-500/5 to-transparent p-6 flex flex-col justify-between hover:border-emerald-500 transition-all shadow-sm">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-[var(--athar-green)] flex items-center justify-center">
-                        <BookOpen className="w-6 h-6" />
-                      </div>
-                      <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-[var(--athar-green)] border border-emerald-500/30">
-                        موصى به للمطالعة والبحث
-                      </span>
+        {/* ─── 3. Main Body Scrollable Area (100% In-App) ─── */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 flex flex-col">
+          {/* ═════════ TAB 1: NATIVE IN-APP READER (DEFAULT) ═════════ */}
+          {activeTab === "reader" && (
+            <div className="w-full flex-1 flex flex-col min-h-0 space-y-3">
+              {hasLocalPdf ? (
+                /* Native In-App Embedded PDF Viewer (0 External Links) */
+                <div className="flex-1 w-full flex flex-col min-h-[580px] rounded-2xl overflow-hidden border border-border/80 bg-slate-950 shadow-inner">
+                  {/* Top Bar for PDF Viewer */}
+                  <div className="bg-[#051c14] px-4 py-2 border-b border-emerald-900/60 text-white flex items-center justify-between text-xs shrink-0">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-bold font-arabic">وثيقة الكتاب المعتمدة:</span>
+                      <span className="text-emerald-300 font-arabic truncate max-w-[280px]">{book.title}</span>
                     </div>
 
-                    <div>
-                      <h4 className="text-base sm:text-lg font-bold text-foreground font-arabic">
-                        القراءة النصية المفهرسة الكاملة
-                      </h4>
-                      <p className="text-xs text-muted-foreground font-arabic mt-1.5 leading-relaxed">
-                        تصفح إلكتروني محقق وشامل حسب الأجزاء والأبواب والصفحات، مع إمكانية البحث الفوري ونسخ المتون وتكبير الخط.
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={pdfUrl}
+                        download={`${book.slug}.pdf`}
+                        className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-colors flex items-center gap-1.5 cursor-pointer text-[11px]"
+                      >
+                        <Download className="w-3.5 h-3.5 text-amber-300" />
+                        <span>تحميل النسخة المحلية ({book.fileSize || "مباشر"})</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Embedded PDF iframe (Native Browser PDF Engine, Same-Origin) */}
+                  <iframe
+                    src={`${pdfUrl}#toolbar=1&navpanes=1`}
+                    title={`وثيقة كتاب ${book.title}`}
+                    className="w-full flex-1 min-h-[560px] border-none bg-slate-900"
+                  />
+                </div>
+              ) : (
+                /* In-App Study Deck for Books Being Prepared (Zero External Links) */
+                <div className="max-w-4xl mx-auto w-full space-y-5 py-4 font-arabic">
+                  {/* Header Deck Card */}
+                  <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-transparent border border-emerald-500/20 space-y-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="space-y-1">
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-[var(--athar-green)] border border-emerald-500/30">
+                          {book.category} • {book.subcategory || "أمهات الكتب"}
+                        </span>
+                        <h3 className="text-xl sm:text-2xl font-extrabold text-foreground pt-2">
+                          {book.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          المؤلف: <strong className="text-foreground">{book.author}</strong> {book.authorEra && `(${book.authorEra})`}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {book.downloadUrl && (
+                          <a
+                            href={book.downloadUrl}
+                            download
+                            className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>تنزيل نسخة الكتاب {book.fileSize ? `(${book.fileSize})` : "(PDF)"}</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-border/60">
+                      <h4 className="font-bold text-xs sm:text-sm text-foreground mb-1">عن منهج المصنف ومحتواه:</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                        {book.description}
                       </p>
                     </div>
 
-                    <div className="pt-2 border-t border-border/60 space-y-2 text-xs font-arabic text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>فهرس تفاعلي للأبواب والأجزاء</span>
+                    {book.topics && book.topics.length > 0 && (
+                      <div className="pt-2 flex flex-wrap gap-1.5">
+                        {book.topics.map((t) => (
+                          <span
+                            key={t}
+                            className="px-2.5 py-1 rounded-xl bg-background/80 text-[11px] text-foreground border border-border/60"
+                          >
+                            #{t}
+                          </span>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>بحث نصي فوري في كامل المتن</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>عزو الأجزاء والصفحات المطبوعة للباحثين</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>خط عربي محقق متوافق مع جميع الشاشات</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
-                  <div className="pt-6 mt-4 border-t border-border/60">
-                    <a
-                      href={book.readUrl || book.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white font-bold text-sm shadow-md shadow-[var(--athar-green)]/20 transition-all text-center cursor-pointer"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      <span>بدء القراءة في {getReadSourceName()}</span>
-                      <ExternalLink className="w-4 h-4 opacity-70" />
-                    </a>
-                    <p className="text-[11px] text-center text-muted-foreground/80 mt-2 font-arabic">
-                      تفتح القراءة في نافذة مستقلة نظيفة وسريعة
-                    </p>
-                  </div>
-                </div>
-
-                {/* CARD 2: High-Quality PDF Edition */}
-                <div className="rounded-3xl border-2 border-amber-600/30 bg-gradient-to-b from-amber-500/5 to-transparent p-6 flex flex-col justify-between hover:border-amber-500 transition-all shadow-sm">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                        <Download className="w-6 h-6" />
+                  {/* Study and Progress Controls Card */}
+                  <div className="p-6 rounded-3xl bg-card border border-border/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--athar-green)]/15 text-[var(--athar-green)] flex items-center justify-center shrink-0">
+                        <Clock className="w-5 h-5" />
                       </div>
-                      <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                        النسخة المصورة المعتمدة
-                      </span>
-                    </div>
-
-                    <div>
-                      <h4 className="text-base sm:text-lg font-bold text-foreground font-arabic">
-                        النسخة المصورة المعتمدة (PDF)
-                      </h4>
-                      <p className="text-xs text-muted-foreground font-arabic mt-1.5 leading-relaxed">
-                        النسخة الأصلية المصورة عن طبعة التحقيق المعتمدة بصفحاتها وهوامشها وفهارسها الكاملة للتحميل والمطالعة دون إنترنت.
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-border/60 grid grid-cols-2 gap-2 text-xs font-arabic">
-                      <div className="p-2.5 rounded-xl bg-background border border-border/70">
-                        <span className="text-muted-foreground text-[11px] block">حجم الملف</span>
-                        <strong className="text-foreground font-mono">{book.fileSize || "طبعة كاملة"}</strong>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-background border border-border/70">
-                        <span className="text-muted-foreground text-[11px] block">الصفحات الموثقة</span>
-                        <strong className="text-foreground">{toArabicNumber(book.pages)} صفحة</strong>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-background border border-border/70 col-span-2">
-                        <span className="text-muted-foreground text-[11px] block">دار النشر والتحقيق</span>
-                        <strong className="text-foreground truncate block">{book.publisher || "طبعة محققة معتمدة"}</strong>
+                      <div>
+                        <h5 className="font-bold text-sm text-foreground">
+                          سجل متابعة القراءة والمدارسة
+                        </h5>
+                        <p className="text-xs text-muted-foreground">
+                          أنت عند صفحة <strong className="text-foreground">{toArabicNumber(progressPage)}</strong> من أصل {toArabicNumber(totalPages)} ({toArabicNumber(currentPercentage)}%)
+                        </p>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="pt-6 mt-4 border-t border-border/60 space-y-2">
-                    {/* If local PDF exists, show In-App Reader button */}
-                    {hasLocalPdf && (
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setActiveTab("pdf")}
-                        className="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-sm shadow-md shadow-amber-500/25 transition-all text-center cursor-pointer"
+                        onClick={() => handleStepPage(5)}
+                        className="px-2.5 py-1 rounded-lg bg-muted hover:bg-muted/80 text-xs font-bold transition-colors cursor-pointer"
                       >
-                        <FileText className="w-4 h-4" />
-                        <span>مطالعة وثيقة الكتاب مباشرة داخل المنصة</span>
+                        +5 صفحات
                       </button>
-                    )}
-
-                    {effectiveDownloadUrl && (
-                      <a
-                        href={effectiveDownloadUrl}
-                        download={hasLocalPdf ? `${book.slug}.pdf` : undefined}
-                        target={hasLocalPdf ? undefined : "_blank"}
-                        rel="noopener noreferrer"
-                        className={cn(
-                          "w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all text-center cursor-pointer",
-                          hasLocalPdf
-                            ? "bg-white/10 hover:bg-white/20 text-foreground border border-border/80"
-                            : "bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20"
-                        )}
+                      <button
+                        type="button"
+                        onClick={() => handleStepPage(10)}
+                        className="px-2.5 py-1 rounded-lg bg-muted hover:bg-muted/80 text-xs font-bold transition-colors cursor-pointer"
                       >
-                        <Download className="w-3.5 h-3.5 text-amber-500" />
-                        <span>
-                          {hasLocalPdf ? "تنزيل النسخة المحلية السريعة (PDF)" : `تحميل نسخة PDF المحققة ${book.fileSize ? `(${book.fileSize})` : ""}`}
-                        </span>
-                        {!hasLocalPdf && <ExternalLink className="w-3.5 h-3.5 opacity-70" />}
-                      </a>
-                    )}
-
-                    {book.sourceUrl && !hasLocalPdf && (
-                      <a
-                        href={book.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs transition-colors text-center cursor-pointer"
+                        +10 صفحات
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("tracker")}
+                        className="px-3.5 py-1.5 rounded-xl bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white text-xs font-bold transition-all cursor-pointer"
                       >
-                        <Library className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>صفحة الكتاب في {book.originalSource || "المصدر الأصلي"}</span>
-                      </a>
-                    )}
+                        لوحة المتابعة الكاملة
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Quick Reading Tracker Strip */}
-              <div className="p-5 rounded-2xl bg-card border border-border/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--athar-green)]/10 text-[var(--athar-green)] flex items-center justify-center shrink-0">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-xs sm:text-sm text-foreground font-arabic">
-                      متابعة موضعك في القراءة
-                    </h5>
-                    <p className="text-[11px] text-muted-foreground font-arabic">
-                      أنت عند صفحة <strong className="text-foreground">{toArabicNumber(progressPage)}</strong> من أصل {toArabicNumber(totalPages)} ({toArabicNumber(currentPercentage)}%)
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleStepPage(5)}
-                      className="px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 text-[11px] font-bold font-arabic transition-colors cursor-pointer"
-                      title="تقدم 5 صفحات"
-                    >
-                      +5
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStepPage(10)}
-                      className="px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 text-[11px] font-bold font-arabic transition-colors cursor-pointer"
-                      title="تقدم 10 صفحات"
-                    >
-                      +10
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStepPage(25)}
-                      className="px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 text-[11px] font-bold font-arabic transition-colors cursor-pointer"
-                      title="تقدم 25 صفحة"
-                    >
-                      +25
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("tracker")}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white text-xs font-bold transition-all cursor-pointer"
-                  >
-                    لوحة المتابعة الكاملة
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ═════════ TAB: NATIVE IN-APP PDF VIEWER ═════════ */}
-          {activeTab === "pdf" && hasLocalPdf && (
-            <div className="h-full flex flex-col space-y-3">
-              {/* PDF Viewer Top Controls Bar */}
-              <div className="p-3 sm:p-4 rounded-2xl bg-[#031d13] border border-emerald-900/60 text-white flex flex-wrap items-center justify-between gap-3 shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center shrink-0">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs sm:text-sm font-arabic text-white">
-                      القارئ المصور المعتمد (PDF المدمج)
-                    </h4>
-                    <span className="text-[11px] text-emerald-300/80 font-arabic">
-                      نسخة محققة رسمية معتمدة ومحملة محلياً على جهازك
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <a
-                    href={`/books/pdf/${book.slug}.pdf`}
-                    download={`${book.slug}.pdf`}
-                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
-                  >
-                    <Download className="w-3.5 h-3.5 text-amber-300" />
-                    <span>تنزيل النسخة ({book.fileSize || "مباشر"})</span>
-                  </a>
-
-                  <a
-                    href={`/books/pdf/${book.slug}.pdf`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-colors flex items-center gap-1.5"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>فتح في نافذة كاملة</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* Native In-App PDF Iframe Viewer */}
-              <div className="flex-1 w-full min-h-[580px] rounded-2xl overflow-hidden border border-border/80 bg-slate-900 shadow-inner">
-                <iframe
-                  src={`/books/pdf/${book.slug}.pdf#toolbar=1&navpanes=1`}
-                  title={`المطالعة المصورة لكتاب ${book.title}`}
-                  className="w-full h-full min-h-[580px] border-none"
-                />
-              </div>
+              )}
             </div>
           )}
 
           {/* ═════════ TAB 2: PROGRESS & KHATMAH TRACKER ═════════ */}
           {activeTab === "tracker" && (
-            <div className="space-y-6 max-w-3xl mx-auto font-arabic">
+            <div className="space-y-6 max-w-3xl mx-auto font-arabic w-full py-4">
               {/* Progress Hero */}
               <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-b from-card to-muted/40 border border-border/80 text-center space-y-4">
                 <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-[var(--athar-green)] border border-emerald-500/30 inline-block">
@@ -886,7 +736,7 @@ export default function BookReaderModal({
 
           {/* ═════════ TAB 3: PERSONAL STUDY NOTES ═════════ */}
           {activeTab === "notes" && (
-            <div className="space-y-6 max-w-3xl mx-auto font-arabic">
+            <div className="space-y-6 max-w-3xl mx-auto font-arabic w-full py-4">
               {/* Note Creation Form */}
               <form onSubmit={handleAddNote} className="p-5 rounded-3xl bg-card border border-border/80 space-y-3 shadow-xs">
                 <div className="flex items-center justify-between gap-2">
@@ -1008,7 +858,7 @@ export default function BookReaderModal({
 
           {/* ═════════ TAB 4: ACADEMIC DOSSIER & CITATION ═════════ */}
           {activeTab === "dossier" && (
-            <div className="space-y-6 max-w-3xl mx-auto font-arabic">
+            <div className="space-y-6 max-w-3xl mx-auto font-arabic w-full py-4">
               {/* Academic Metadata Grid */}
               <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4 shadow-xs">
                 <h4 className="font-bold text-sm sm:text-base text-foreground flex items-center gap-2">
@@ -1108,8 +958,8 @@ export default function BookReaderModal({
           )}
         </div>
 
-        {/* ─── 4. Reader Bottom Progress Bar ─── */}
-        <div className="bg-card border-t border-border/70 px-4 sm:px-6 py-3 flex items-center justify-between gap-4 text-xs font-arabic shrink-0">
+        {/* ─── 4. Reader Bottom Progress Bar (Pure In-App, Zero External Links) ─── */}
+        <div className="bg-card border-t border-border/70 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 text-xs font-arabic shrink-0">
           <div className="flex items-center gap-2.5 flex-1 max-w-md">
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
               الإنجاز القرائي ({toArabicNumber(currentPercentage)}%):
@@ -1122,28 +972,10 @@ export default function BookReaderModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {hasLocalPdf && activeTab !== "pdf" && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("pdf")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>القارئ المصور (PDF)</span>
-              </button>
-            )}
-
-            <a
-              href={book.readUrl || book.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white font-bold text-xs transition-colors cursor-pointer"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>متابعة القراءة في {getReadSourceName()}</span>
-              <ExternalLink className="w-3 h-3 opacity-70" />
-            </a>
+          <div className="flex items-center gap-2 text-muted-foreground text-[11px]">
+            <span>
+              رخصة المحتوى: <strong className="text-foreground">{book.rightsStatus === "PUBLIC_DOMAIN" ? "ملك عام" : "إتاحة مصرح بها"}</strong>
+            </span>
           </div>
         </div>
       </div>
