@@ -24,6 +24,12 @@ import {
   ChevronLeft,
   SkipBack,
   SkipForward,
+  RotateCcw,
+  RotateCw,
+  Loader2,
+  Headphones,
+  Volume2,
+  AlertCircle,
 } from "lucide-react";
 import Container from "@/components/layout/Container";
 import { Button } from "@/components/ui/button";
@@ -35,6 +41,18 @@ import { cn, toArabicNumber } from "@/lib/utils";
 interface ProgramDetailClientProps {
   program: Program;
   relatedArticles: Article[];
+}
+
+function formatAudioTime(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) return "00:00";
+  const totalSeconds = Math.floor(seconds);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = Math.floor(totalSeconds % 60);
+  if (h > 0) {
+    return `${h}:${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${s}`;
+  }
+  return `${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
 export default function ProgramDetailClient({
@@ -50,6 +68,16 @@ export default function ProgramDetailClient({
   const [episodeSearch, setEpisodeSearch] = useState("");
   const playlistContainerRef = useRef<HTMLDivElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // HTML5 Audio element and playback state for true background / screen-off MP3 playback
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioStreamUrl, setAudioStreamUrl] = useState<string | null>(null);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioPlaybackRate, setAudioPlaybackRate] = useState(1);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   // When visiting a lecture series, stop any lingering radio broadcast from other pages
   useEffect(() => {
@@ -131,11 +159,123 @@ export default function ProgramDetailClient({
     }
   };
 
+  const switchToAudioMode = () => {
+    useAudioStore.getState().stop();
+    // Pause video iframe
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func: "pauseVideo", args: "" }),
+        "*"
+      );
+    }
+    setIsVideoPlaying(false);
+    setMediaMode("audio");
+  };
+
+  const switchToVideoMode = () => {
+    useAudioStore.getState().stop();
+    // Pause HTML5 audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsAudioPlaying(false);
+    setMediaMode("video");
+    // Resume video iframe
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func: "playVideo", args: "" }),
+        "*"
+      );
+      setIsVideoPlaying(true);
+    }
+  };
+
+  const toggleAudioPlayback = () => {
+    if (!audioRef.current) return;
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+      setIsAudioPlaying(false);
+    } else {
+      audioRef.current
+        .play()
+        .then(() => setIsAudioPlaying(true))
+        .catch((e) => console.error("Playback failed:", e));
+    }
+  };
+
+  const seekAudio = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+      setAudioCurrentTime(time);
+    }
+  };
+
+  const skipAudio = (seconds: number) => {
+    if (audioRef.current) {
+      const maxDuration = audioDuration || audioRef.current.duration || Infinity;
+      const newTime = Math.min(
+        maxDuration,
+        Math.max(0, audioRef.current.currentTime + seconds)
+      );
+      audioRef.current.currentTime = newTime;
+      setAudioCurrentTime(newTime);
+    }
+  };
+
+  const cyclePlaybackRate = () => {
+    const rates = [1, 1.25, 1.5, 1.75, 2];
+    const nextIdx = (rates.indexOf(audioPlaybackRate) + 1) % rates.length;
+    const newRate = rates[nextIdx];
+    setAudioPlaybackRate(newRate);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = newRate;
+    }
+  };
+
+  const handleAudioTimeUpdate = () => {
+    if (audioRef.current) {
+      setAudioCurrentTime(audioRef.current.currentTime);
+      if (
+        !isNaN(audioRef.current.duration) &&
+        audioRef.current.duration > 0 &&
+        audioRef.current.duration !== Infinity
+      ) {
+        setAudioDuration(audioRef.current.duration);
+      }
+    }
+  };
+
+  const handleAudioLoadedMetadata = () => {
+    if (audioRef.current) {
+      if (
+        !isNaN(audioRef.current.duration) &&
+        audioRef.current.duration > 0 &&
+        audioRef.current.duration !== Infinity
+      ) {
+        setAudioDuration(audioRef.current.duration);
+      }
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsAudioPlaying(false);
+    if (autoPlayNext) {
+      handleNextEpisode();
+    }
+  };
+
   const selectEpisode = (episode: Episode, index: number) => {
     if (index < 0 || index >= program.episodes.length) return;
     useAudioStore.getState().stop();
     setCurrentEpisodeIndex(index);
-    setIsVideoPlaying(true);
+    if (mediaMode === "video") {
+      setIsVideoPlaying(true);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setIsAudioPlaying(false);
+    }
   };
 
   const handleNextEpisode = () => {
@@ -151,6 +291,129 @@ export default function ProgramDetailClient({
       selectEpisode(program.episodes[prevIdx], prevIdx);
     }
   };
+
+  // Fetch real audio stream when entering audio mode or changing episodes in audio mode
+  useEffect(() => {
+    if (mediaMode !== "audio") return;
+    const ytId = currentEpisode?.youtubeId;
+    if (!ytId) {
+      setAudioError("لا يوجد رابط فيديو لاستخراج الصوت");
+      return;
+    }
+
+    let isCancelled = false;
+    setIsAudioLoading(true);
+    setAudioError(null);
+    setAudioCurrentTime(0);
+
+    fetch(`/api/program-audio?id=${encodeURIComponent(ytId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isCancelled) return;
+        if (data.success && data.streamUrl) {
+          setAudioStreamUrl(data.streamUrl);
+          if (data.duration) {
+            setAudioDuration(data.duration);
+          }
+        } else {
+          setAudioError(data.error || "تعذر استخراج ملف الصوت المباشر");
+        }
+      })
+      .catch(() => {
+        if (isCancelled) return;
+        setAudioError("حدث خطأ أثناء الاتصال بخادم الصوتيات");
+      })
+      .finally(() => {
+        if (!isCancelled) setIsAudioLoading(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [mediaMode, currentEpisode?.youtubeId]);
+
+  // When audio stream URL updates, load into HTML5 audio and play
+  useEffect(() => {
+    if (mediaMode === "audio" && audioStreamUrl && audioRef.current) {
+      audioRef.current.src = audioStreamUrl;
+      audioRef.current.playbackRate = audioPlaybackRate;
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsAudioPlaying(true);
+        })
+        .catch((err) => {
+          console.warn("Audio autoplay waiting for user interaction:", err);
+          setIsAudioPlaying(false);
+        });
+    }
+  }, [audioStreamUrl, mediaMode]);
+
+  // Sync with navigator.mediaSession for background audio and lock-screen playback controls
+  useEffect(() => {
+    if (typeof window === "undefined" || !("mediaSession" in navigator)) return;
+    if (mediaMode !== "audio") return;
+
+    const artwork =
+      currentEpisode?.thumb ||
+      (currentEpisode?.youtubeId
+        ? `https://img.youtube.com/vi/${currentEpisode.youtubeId}/hqdefault.jpg`
+        : program.coverImage);
+
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentEpisode?.title || program.title,
+        artist: program.presenter,
+        album: program.title,
+        artwork: [
+          { src: artwork, sizes: "512x512", type: "image/jpeg" },
+        ],
+      });
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        audioRef.current?.play();
+        setIsAudioPlaying(true);
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        audioRef.current?.pause();
+        setIsAudioPlaying(false);
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        if (hasPrev) handlePrevEpisode();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        if (hasNext) handleNextEpisode();
+      });
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime !== undefined && audioRef.current) {
+          audioRef.current.currentTime = details.seekTime;
+          setAudioCurrentTime(details.seekTime);
+        }
+      });
+      navigator.mediaSession.setActionHandler("seekforward", (details) => {
+        skipAudio(details.seekOffset || 10);
+      });
+      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+        skipAudio(-(details.seekOffset || 10));
+      });
+    } catch (e) {
+      console.warn("MediaSession initialization warning:", e);
+    }
+
+    return () => {
+      if ("mediaSession" in navigator) {
+        try {
+          navigator.mediaSession.setActionHandler("play", null);
+          navigator.mediaSession.setActionHandler("pause", null);
+          navigator.mediaSession.setActionHandler("previoustrack", null);
+          navigator.mediaSession.setActionHandler("nexttrack", null);
+          navigator.mediaSession.setActionHandler("seekto", null);
+          navigator.mediaSession.setActionHandler("seekforward", null);
+          navigator.mediaSession.setActionHandler("seekbackward", null);
+        } catch {}
+      }
+    };
+  }, [mediaMode, currentEpisode, program, hasPrev, hasNext]);
 
   const isInitialMount = useRef(true);
 
@@ -320,7 +583,30 @@ export default function ProgramDetailClient({
           {/* ════════ RIGHT COLUMN: Large Video / Audio Player ════════ */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-3 order-1">
             {/* Player Container */}
-            <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-800 bg-black aspect-video w-full">
+            <div
+              className={cn(
+                "relative rounded-3xl overflow-hidden shadow-xl border border-slate-800 bg-black w-full transition-all duration-300",
+                mediaMode === "audio"
+                  ? "min-h-[420px] sm:min-h-[460px]"
+                  : "aspect-video"
+              )}
+            >
+              {/* Hidden HTML5 Audio Element for Background / Screen-Off MP3 Playback */}
+              <audio
+                ref={audioRef}
+                playsInline
+                preload="auto"
+                onTimeUpdate={handleAudioTimeUpdate}
+                onLoadedMetadata={handleAudioLoadedMetadata}
+                onEnded={handleAudioEnded}
+                onPlay={() => setIsAudioPlaying(true)}
+                onPause={() => setIsAudioPlaying(false)}
+                onError={() => {
+                  setAudioError("تعذر تشغيل مسار الصوت في المتصفح");
+                  setIsAudioLoading(false);
+                }}
+              />
+
               {/* YouTube IFrame - Always kept mounted so video audio streams natively and authentically */}
               {(currentEpisode?.youtubeId || program.youtubePlaylistId) ? (
                 <iframe
@@ -349,18 +635,30 @@ export default function ProgramDetailClient({
 
               {/* Audio Mode Card Overlay */}
               {mediaMode === "audio" && (
-                <div className="absolute inset-0 z-20 w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#072418] via-[#041710] to-[#020b07] text-white p-6 relative overflow-hidden select-none">
+                <div className="absolute inset-0 z-20 w-full h-full flex flex-col justify-between bg-gradient-to-br from-[#072418] via-[#041710] to-[#020b07] text-white p-5 sm:p-7 relative overflow-hidden select-none">
                   {/* Decorative background grid & radial glow */}
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:20px_20px]" />
-                  <div className="pointer-events-none absolute -top-10 -right-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
-                  <div className="pointer-events-none absolute -bottom-10 -left-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
+                  <div className="pointer-events-none absolute -top-10 -right-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-10 -left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl" />
 
-                  {/* Vinyl Disc / Thumbnail with Spinning Animation when playing */}
-                  <div className="relative z-10 flex flex-col items-center">
+                  {/* Top Bar inside Audio Player: Badge + Episode order */}
+                  <div className="relative z-10 flex items-center justify-between w-full">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-600/40 text-[11px] font-bold text-amber-300 font-arabic">
+                      <Headphones className="h-3.5 w-3.5 text-amber-400" />
+                      <span>مشغل MP3 (يعمل في الخلفية وعند قفل الشاشة)</span>
+                    </div>
+
+                    <div className="text-[11px] text-emerald-200/80 font-arabic font-medium">
+                      الحلقة {toArabicNumber(currentEpisode?.order || currentEpisodeIndex + 1)} من {toArabicNumber(program.episodesCount)}
+                    </div>
+                  </div>
+
+                  {/* Center: Spinning Vinyl Disc / Cover Art & Title */}
+                  <div className="relative z-10 flex flex-col items-center my-auto py-2">
                     <div
                       className={cn(
-                        "relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden shadow-2xl border-4 border-emerald-500/40 mb-3 transition-transform",
-                        isVideoPlaying ? "animate-[spin_20s_linear_infinite]" : ""
+                        "relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden shadow-2xl border-4 border-emerald-500/40 transition-transform",
+                        isAudioPlaying ? "animate-[spin_20s_linear_infinite]" : ""
                       )}
                     >
                       <Image
@@ -380,54 +678,131 @@ export default function ProgramDetailClient({
                       </div>
                     </div>
 
-                    {/* Central Play/Pause Floating Action Button */}
-                    <button
-                      type="button"
-                      onClick={toggleVideoPlayback}
-                      className={cn(
-                        "flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-arabic text-xs font-bold shadow-xl transition-all duration-150 active:scale-95 cursor-pointer",
-                        isVideoPlaying
-                          ? "bg-amber-400 hover:bg-amber-300 text-amber-950"
-                          : "bg-emerald-500 hover:bg-emerald-400 text-white"
-                      )}
-                    >
-                      {isVideoPlaying ? (
-                        <>
-                          <Pause className="h-4 w-4" />
-                          <span>إيقاف الصوت مؤقتاً</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-[-2px]" />
-                          <span>استئناف الاستماع</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Title & Metadata */}
-                  <div className="relative z-10 text-center max-w-lg space-y-1.5 px-4 mt-3">
-                    <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/40 text-[11px] font-bold text-amber-300 font-arabic">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      <span>
-                        الحلقة {toArabicNumber(currentEpisode?.order || currentEpisodeIndex + 1)} من{" "}
-                        {toArabicNumber(program.episodesCount)}
-                      </span>
+                    {/* Title & Presenter */}
+                    <div className="text-center max-w-md space-y-1 mt-3 px-2">
+                      <h3 className="font-bold text-sm sm:text-base font-arabic text-white line-clamp-2">
+                        {currentEpisode?.title}
+                      </h3>
+                      <p className="text-xs text-emerald-200/70 font-arabic">
+                        {program.presenter} • {program.title}
+                      </p>
                     </div>
 
-                    <h3 className="font-bold text-sm sm:text-base md:text-lg font-arabic text-white line-clamp-1">
-                      {currentEpisode?.title}
-                    </h3>
+                    {/* Error message banner if upstream audio fails */}
+                    {audioError && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-arabic">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        <span>{audioError} - يمكنك المشاهدة عبر زر الفيديو بالأسفل</span>
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="flex items-center justify-center gap-2 text-xs text-emerald-200/70 font-arabic">
-                      <span>{program.presenter}</span>
-                      <span>•</span>
-                      <span className="font-mono">{currentEpisode?.duration}</span>
-                      <span>•</span>
-                      <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                        صوت الفيديو الأصلي HD
-                      </span>
+                  {/* Bottom Controls of Audio Player: Scrubber Bar + Actions */}
+                  <div className="relative z-10 w-full max-w-lg mx-auto space-y-3">
+                    {/* Scrubber Range Slider & Times */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] font-mono text-emerald-200/80">
+                        <span>{formatAudioTime(audioCurrentTime)}</span>
+                        <span>{formatAudioTime(audioDuration || 0)}</span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="range"
+                          min={0}
+                          max={audioDuration || 100}
+                          step={1}
+                          value={audioCurrentTime}
+                          onChange={(e) => seekAudio(Number(e.target.value))}
+                          className="w-full h-1.5 bg-emerald-950/80 rounded-lg appearance-none cursor-pointer accent-amber-400 hover:accent-amber-300 focus:outline-hidden"
+                          style={{
+                            background: `linear-gradient(to right, #fbbf24 ${
+                              audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0
+                            }%, #0e3b28 ${
+                              audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0
+                            }%)`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Playback Controls Row */}
+                    <div className="flex items-center justify-center gap-3 sm:gap-5">
+                      {/* Playback Speed Cycle Button */}
+                      <button
+                        type="button"
+                        onClick={cyclePlaybackRate}
+                        title="سرعة التشغيل"
+                        className="px-2.5 py-1 rounded-lg bg-emerald-950/70 border border-emerald-600/40 text-[11px] font-mono font-bold text-emerald-200 hover:text-white hover:border-emerald-400 transition-colors cursor-pointer"
+                      >
+                        {audioPlaybackRate}x
+                      </button>
+
+                      {/* Skip Back 10 Seconds */}
+                      <button
+                        type="button"
+                        onClick={() => skipAudio(-10)}
+                        title="رجوع 10 ثواني"
+                        className="p-2 rounded-full bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-600/40 text-emerald-200 hover:text-white transition-all active:scale-90 cursor-pointer"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </button>
+
+                      {/* Main Play / Pause Button */}
+                      <button
+                        type="button"
+                        onClick={toggleAudioPlayback}
+                        disabled={isAudioLoading}
+                        title={isAudioPlaying ? "إيقاف مؤقت" : "تشغيل الصوت"}
+                        className={cn(
+                          "flex items-center justify-center w-12 h-12 rounded-full font-arabic shadow-xl transition-all duration-150 active:scale-95 cursor-pointer",
+                          isAudioPlaying
+                            ? "bg-amber-400 hover:bg-amber-300 text-amber-950"
+                            : "bg-emerald-500 hover:bg-emerald-400 text-white"
+                        )}
+                      >
+                        {isAudioLoading ? (
+                          <Loader2 className="h-5 w-5 animate-spin text-current" />
+                        ) : isAudioPlaying ? (
+                          <Pause className="h-5 w-5 fill-current" />
+                        ) : (
+                          <Play className="h-5 w-5 fill-current mr-[-2px]" />
+                        )}
+                      </button>
+
+                      {/* Skip Forward 10 Seconds */}
+                      <button
+                        type="button"
+                        onClick={() => skipAudio(10)}
+                        title="تقديم 10 ثواني"
+                        className="p-2 rounded-full bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-600/40 text-emerald-200 hover:text-white transition-all active:scale-90 cursor-pointer"
+                      >
+                        <RotateCw className="h-4 w-4" />
+                      </button>
+
+                      {/* Equalizer Wave Badge */}
+                      <div
+                        className="hidden sm:flex items-center gap-[2px] h-4 px-2 py-1 rounded-md bg-emerald-950/60 border border-emerald-600/30"
+                        title="مؤشر الصوت"
+                      >
+                        <span
+                          className={cn(
+                            "w-1 bg-amber-400 rounded-full transition-all",
+                            isAudioPlaying ? "h-3.5 animate-pulse" : "h-1.5"
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            "w-1 bg-amber-400 rounded-full transition-all",
+                            isAudioPlaying ? "h-2 animate-pulse delay-100" : "h-2.5"
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            "w-1 bg-amber-400 rounded-full transition-all",
+                            isAudioPlaying ? "h-3 animate-pulse delay-200" : "h-1"
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -497,36 +872,32 @@ export default function ProgramDetailClient({
             {/* Bottom Toolbar Below Player (Al-Fath Signature Style) */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-[#0b1922] text-slate-200 border border-slate-800 shadow-md">
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                {/* Video Mode Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    useAudioStore.getState().stop();
-                    setMediaMode("video");
-                    if (!isVideoPlaying && iframeRef.current?.contentWindow) {
-                      iframeRef.current.contentWindow.postMessage(
-                        JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-                        "*"
-                      );
-                      setIsVideoPlaying(true);
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-arabic font-semibold transition-all cursor-pointer",
-                    mediaMode === "video"
-                      ? "bg-[var(--athar-green)] text-white shadow-xs"
-                      : "bg-slate-800/80 hover:bg-slate-700 text-slate-300"
-                  )}
-                >
-                  <Video className="h-4 w-4" />
-                  <span>فيديو مرئي HD</span>
-                </button>
+                {/* Mode Switcher Button */}
+                {mediaMode === "video" ? (
+                  <button
+                    type="button"
+                    onClick={switchToAudioMode}
+                    className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-arabic font-bold bg-amber-400 hover:bg-amber-300 text-amber-950 transition-all shadow-xs cursor-pointer active:scale-95"
+                  >
+                    <Headphones className="h-4 w-4" />
+                    <span>تحويل إلى مشغل MP3</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={switchToVideoMode}
+                    className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-arabic font-bold bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white transition-all shadow-xs cursor-pointer active:scale-95"
+                  >
+                    <Video className="h-4 w-4" />
+                    <span>مشاهدة فيديو الحلقة HD</span>
+                  </button>
+                )}
 
                 {/* Share Button */}
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-arabic font-medium bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-arabic font-medium bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors cursor-pointer"
                 >
                   <Share2 className="h-4 w-4" />
                   <span>مشاركة</span>
@@ -536,7 +907,7 @@ export default function ProgramDetailClient({
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-arabic font-medium bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-arabic font-medium bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors cursor-pointer"
                 >
                   {copiedLink ? (
                     <>
@@ -555,67 +926,47 @@ export default function ProgramDetailClient({
                 <button
                   type="button"
                   onClick={toggleSave}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-arabic font-medium bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-arabic font-medium bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition-colors cursor-pointer"
                 >
                   <Bookmark className={cn("h-4 w-4", isSaved && "fill-amber-400 text-amber-400")} />
                   <span>{isSaved ? "محفوظ" : "حفظ"}</span>
                 </button>
               </div>
 
-              {/* Convert to MP3 Player / Audio Mode Control Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  useAudioStore.getState().stop();
-                  if (mediaMode === "video") {
-                    setMediaMode("audio");
-                    if (!isVideoPlaying && iframeRef.current?.contentWindow) {
-                      iframeRef.current.contentWindow.postMessage(
-                        JSON.stringify({ event: "command", func: "playVideo", args: "" }),
-                        "*"
-                      );
-                      setIsVideoPlaying(true);
-                    }
-                  } else {
-                    toggleVideoPlayback();
-                  }
-                }}
-                className={cn(
-                  "flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-arabic font-bold transition-all shadow-xs cursor-pointer",
-                  mediaMode === "audio"
-                    ? "bg-amber-400 hover:bg-amber-300 text-amber-950 shadow-md"
-                    : "bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-950 text-emerald-300 border border-emerald-600/50 hover:border-emerald-400"
-                )}
-              >
-                {/* Mini Equalizer indicator */}
+              {/* Status / Equalizer badge showing active playback state */}
+              <div className="flex items-center gap-2 text-xs font-arabic text-slate-400">
                 <div className="flex items-end gap-[2px] h-3.5 w-3.5">
                   <span
                     className={cn(
-                      "w-1 bg-current rounded-full transition-all",
-                      mediaMode === "audio" && isVideoPlaying ? "h-3.5 animate-pulse" : "h-2"
+                      "w-1 rounded-full transition-all",
+                      mediaMode === "audio"
+                        ? isAudioPlaying ? "bg-amber-400 h-3.5 animate-pulse" : "bg-slate-600 h-1.5"
+                        : isVideoPlaying ? "bg-emerald-400 h-3.5 animate-pulse" : "bg-slate-600 h-1.5"
                     )}
                   />
                   <span
                     className={cn(
-                      "w-1 bg-current rounded-full transition-all",
-                      mediaMode === "audio" && isVideoPlaying ? "h-2 animate-pulse delay-100" : "h-3"
+                      "w-1 rounded-full transition-all",
+                      mediaMode === "audio"
+                        ? isAudioPlaying ? "bg-amber-400 h-2 animate-pulse delay-100" : "bg-slate-600 h-2.5"
+                        : isVideoPlaying ? "bg-emerald-400 h-2 animate-pulse delay-100" : "bg-slate-600 h-2.5"
                     )}
                   />
                   <span
                     className={cn(
-                      "w-1 bg-current rounded-full transition-all",
-                      mediaMode === "audio" && isVideoPlaying ? "h-3 animate-pulse delay-200" : "h-1.5"
+                      "w-1 rounded-full transition-all",
+                      mediaMode === "audio"
+                        ? isAudioPlaying ? "bg-amber-400 h-3 animate-pulse delay-200" : "bg-slate-600 h-1"
+                        : isVideoPlaying ? "bg-emerald-400 h-3 animate-pulse delay-200" : "bg-slate-600 h-1"
                     )}
                   />
                 </div>
-                <span>
+                <span className="text-[11px] font-medium">
                   {mediaMode === "audio"
-                    ? isVideoPlaying
-                      ? "إيقاف الصوت مؤقتاً"
-                      : "استئناف الاستماع MP3"
-                    : "تحويل إلى مشغل MP3"}
+                    ? isAudioPlaying ? "صوت MP3 قيد التشغيل في الخلفية" : "مشغل الصوت متوقف مؤقتاً"
+                    : isVideoPlaying ? "فيديو HD قيد التشغيل" : "الفيديو متوقف مؤقتاً"}
                 </span>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -623,20 +974,22 @@ export default function ProgramDetailClient({
           <div className="lg:col-span-5 xl:col-span-4 order-2">
             <div className="rounded-3xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm space-y-4">
               {/* Header: Title + Badge + Auto-Play Switch */}
-              <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-border/60">
+                <div className="flex items-center gap-2 shrink-0">
                   <span className="p-1.5 rounded-lg bg-amber-500/15 text-amber-600">
                     <ListVideo className="h-4 w-4" />
                   </span>
-                  <h2 className="font-bold text-base font-arabic text-foreground">
+                  <h2 className="font-bold text-sm sm:text-base font-arabic text-foreground whitespace-nowrap">
                     قائمة الحلقات
                   </h2>
-                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-arabic">
+                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-arabic whitespace-nowrap">
                     {toArabicNumber(program.episodesCount)} حلقة
                   </span>
+                </div>
 
+                <div className="flex items-center gap-2.5 shrink-0">
                   {/* Mini Flip Arrow Buttons */}
-                  <div className="flex items-center gap-0.5 mr-1">
+                  <div className="flex items-center gap-0.5">
                     <button
                       type="button"
                       onClick={handlePrevEpisode}
@@ -666,32 +1019,34 @@ export default function ProgramDetailClient({
                       <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                </div>
 
-                {/* Auto-Play Next Toggle Switch */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground font-arabic">
-                    تشغيل تلقائي
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={autoPlayNext}
-                    onClick={() => setAutoPlayNext(!autoPlayNext)}
-                    className={cn(
-                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden",
-                      autoPlayNext
-                        ? "bg-[var(--athar-green)]"
-                        : "bg-muted-foreground/30"
-                    )}
-                  >
-                    <span
+                  <div className="h-4 w-[1px] bg-border/60" />
+
+                  {/* Auto-Play Next Toggle Switch */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground font-arabic whitespace-nowrap">
+                      تشغيل تلقائي
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={autoPlayNext}
+                      onClick={() => setAutoPlayNext(!autoPlayNext)}
                       className={cn(
-                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out",
-                        autoPlayNext ? "-translate-x-4" : "translate-x-0"
+                        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden",
+                        autoPlayNext
+                          ? "bg-[var(--athar-green)]"
+                          : "bg-muted-foreground/30"
                       )}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={cn(
+                          "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out",
+                          autoPlayNext ? "-translate-x-4" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
 
