@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   FileText,
   TrendingUp,
+  Tv,
 } from "lucide-react-native";
 import { Header } from "../components/Header";
 import { BOOKS, Book, BOOK_CATEGORIES } from "../data/books";
@@ -220,6 +221,32 @@ export const LibraryScreen: React.FC = () => {
           <Search size={18} color={theme.textMuted} />
         </View>
       </View>
+
+      {/* Quick Access to Visual Programs & Podcasts */}
+      <TouchableOpacity
+        style={[
+          styles.programsBanner,
+          {
+            backgroundColor: isDarkMode ? "#0e201b" : "#e6f4ea",
+            borderColor: isDarkMode ? "#194a3a" : "#bbf7d0",
+          },
+        ]}
+        onPress={() => navigation.navigate("Programs")}
+        activeOpacity={0.8}
+      >
+        <View style={styles.programsBannerRight}>
+          <Tv size={20} color={theme.primary} />
+          <View style={styles.programsBannerTextCol}>
+            <Text style={[styles.programsBannerTitle, { color: theme.text }]}>
+              البرامج والبودكاست المرئي (٢٢ برنامجاً)
+            </Text>
+            <Text style={[styles.programsBannerSubtitle, { color: theme.textMuted }]}>
+              خواطر التفسير، بودكاست وعي وفنجان، وسلاسل السيرة والأنبياء
+            </Text>
+          </View>
+        </View>
+        <ChevronLeft size={16} color={theme.primary} />
+      </TouchableOpacity>
 
       {/* Categories Horizontal Bar */}
       <View style={styles.categoriesBar}>
@@ -513,6 +540,37 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 8,
     fontSize: 13,
+  },
+  programsBanner: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  programsBannerRight: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  programsBannerTextCol: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  programsBannerTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  programsBannerSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: "right",
   },
   categoriesBar: {
     paddingVertical: 10,

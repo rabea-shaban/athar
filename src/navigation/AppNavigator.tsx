@@ -31,6 +31,8 @@ import { QiblaScreen } from "../screens/QiblaScreen";
 import { PdfReaderScreen } from "../screens/PdfReaderScreen";
 import { ArticlesScreen } from "../screens/ArticlesScreen";
 import { ArticleDetailScreen } from "../screens/ArticleDetailScreen";
+import { ProgramsScreen } from "../screens/ProgramsScreen";
+import { ProgramDetailScreen } from "../screens/ProgramDetailScreen";
 
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -151,6 +153,8 @@ export function AppNavigator() {
         <Stack.Screen name="PdfReader" component={PdfReaderScreen} />
         <Stack.Screen name="Articles" component={ArticlesScreen} />
         <Stack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
+        <Stack.Screen name="Programs" component={ProgramsScreen} />
+        <Stack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

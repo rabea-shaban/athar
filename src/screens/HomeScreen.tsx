@@ -22,6 +22,7 @@ import {
   Headphones,
   Star,
   FileText,
+  Tv,
   Download,
   X,
 } from "lucide-react-native";
@@ -154,6 +155,14 @@ export const HomeScreen: React.FC = () => {
       icon: FileText,
       color: "#0284c7",
       onPress: () => navigation.navigate("Articles"),
+    },
+    {
+      id: "programs",
+      title: "البرامج والبودكاست",
+      subtitle: "٢٢ برنامجاً وسلسلة مرئية",
+      icon: Tv,
+      color: "#f59e0b",
+      onPress: () => navigation.navigate("Programs"),
     },
     {
       id: "lectures",
