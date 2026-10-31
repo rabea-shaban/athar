@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  Image,
   StyleSheet,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -18,10 +19,14 @@ import {
   Clock,
   User,
   ChevronLeft,
+  FileText,
+  TrendingUp,
 } from "lucide-react-native";
 import { Header } from "../components/Header";
 import { BOOKS, Book, BOOK_CATEGORIES } from "../data/books";
+import { ARTICLES, ARTICLE_CATEGORIES } from "../data/articles";
 import { LECTURES_DATA, Lecture, LECTURE_CATEGORIES } from "../data/lectures";
+import { Article } from "../types/content";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { useAudioStore } from "../store/audioStore";
 import { lightTheme, darkTheme } from "../constants/theme";
@@ -29,13 +34,14 @@ import { toArabicNumber } from "../utils/arabic";
 
 export const LibraryScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { isDarkMode, favoriteBooks, toggleFavoriteBook } = usePreferencesStore();
+  const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const { playTrack, currentTrack, isPlaying } = useAudioStore();
 
-  const [activeTab, setActiveTab] = useState<"books" | "lectures">("books");
+  const [activeTab, setActiveTab] = useState<"books" | "articles" | "lectures">("books");
   const [selectedBookCategory, setSelectedBookCategory] = useState("الكل");
+  const [selectedArticleCategory, setSelectedArticleCategory] = useState("الكل");
   const [selectedLectureCategory, setSelectedLectureCategory] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -50,6 +56,19 @@ export const LibraryScreen: React.FC = () => {
       return matchCat && matchSearch;
     });
   }, [selectedBookCategory, searchQuery]);
+
+  const filteredArticles = useMemo(() => {
+    return ARTICLES.filter((a) => {
+      const matchCat =
+        selectedArticleCategory === "الكل" || a.category === selectedArticleCategory;
+      const matchSearch =
+        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchCat && matchSearch;
+    });
+  }, [selectedArticleCategory, searchQuery]);
 
   const filteredLectures = useMemo(() => {
     return LECTURES_DATA.filter((l) => {
@@ -76,11 +95,35 @@ export const LibraryScreen: React.FC = () => {
     }
   };
 
+  const getSearchPlaceholder = () => {
+    if (activeTab === "books") return "ابحث في ٦٧ كتاباً من أمهات التراث...";
+    if (activeTab === "articles") return "ابحث في المقالات والبحوث الإيمانية...";
+    return "ابحث في الشروحات والعلماء...";
+  };
+
+  const currentCategories = useMemo(() => {
+    if (activeTab === "books") return BOOK_CATEGORIES;
+    if (activeTab === "articles") return ARTICLE_CATEGORIES;
+    return LECTURE_CATEGORIES;
+  }, [activeTab]);
+
+  const currentSelectedCategory = () => {
+    if (activeTab === "books") return selectedBookCategory;
+    if (activeTab === "articles") return selectedArticleCategory;
+    return selectedLectureCategory;
+  };
+
+  const handleSelectCategory = (cat: string) => {
+    if (activeTab === "books") setSelectedBookCategory(cat);
+    else if (activeTab === "articles") setSelectedArticleCategory(cat);
+    else setSelectedLectureCategory(cat);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header
-        title="المعرفة الإسلامية"
-        subtitle="المكتبة التراثية والشروحات والدروس العلمية"
+        title="المعرفة والعلوم الإسلامية"
+        subtitle="المكتبة التراثية والمقالات والشروحات العلمية"
       />
 
       {/* Main Switch Tabs */}
@@ -114,6 +157,30 @@ export const LibraryScreen: React.FC = () => {
             styles.tabItem,
             {
               backgroundColor:
+                activeTab === "articles"
+                  ? theme.primary
+                  : isDarkMode
+                  ? "#131d2a"
+                  : "#e2e8f0",
+            },
+          ]}
+          onPress={() => setActiveTab("articles")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === "articles" ? "#ffffff" : theme.textMuted },
+            ]}
+          >
+            المقالات والتزكية ({toArabicNumber(ARTICLES.length)})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            {
+              backgroundColor:
                 activeTab === "lectures"
                   ? theme.primary
                   : isDarkMode
@@ -129,7 +196,7 @@ export const LibraryScreen: React.FC = () => {
               { color: activeTab === "lectures" ? "#ffffff" : theme.textMuted },
             ]}
           >
-            الشروحات والدروس ({toArabicNumber(LECTURES_DATA.length)})
+            الشروحات ({toArabicNumber(LECTURES_DATA.length)})
           </Text>
         </TouchableOpacity>
       </View>
@@ -144,11 +211,7 @@ export const LibraryScreen: React.FC = () => {
         >
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
-            placeholder={
-              activeTab === "books"
-                ? "ابحث في كتب التراث والمؤلفين..."
-                : "ابحث في الشروحات والعلماء..."
-            }
+            placeholder={getSearchPlaceholder()}
             placeholderTextColor={theme.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -165,49 +228,38 @@ export const LibraryScreen: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesScroll}
         >
-          {(activeTab === "books" ? BOOK_CATEGORIES : LECTURE_CATEGORIES).map(
-            (cat) => {
-              const isSelected =
-                activeTab === "books"
-                  ? selectedBookCategory === cat
-                  : selectedLectureCategory === cat;
-              return (
-                <TouchableOpacity
-                  key={cat}
+          {currentCategories.map((cat) => {
+            const isSelected = currentSelectedCategory() === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.catPill,
+                  {
+                    backgroundColor: isSelected
+                      ? isDarkMode
+                        ? "#0f372a"
+                        : "#ecfdf5"
+                      : theme.card,
+                    borderColor: isSelected ? theme.primary : theme.border,
+                  },
+                ]}
+                onPress={() => handleSelectCategory(cat)}
+              >
+                <Text
                   style={[
-                    styles.catPill,
+                    styles.catText,
                     {
-                      backgroundColor: isSelected
-                        ? isDarkMode
-                          ? "#0f372a"
-                          : "#ecfdf5"
-                        : theme.card,
-                      borderColor: isSelected ? theme.primary : theme.border,
+                      color: isSelected ? theme.primary : theme.text,
+                      fontWeight: isSelected ? "bold" : "500",
                     },
                   ]}
-                  onPress={() => {
-                    if (activeTab === "books") {
-                      setSelectedBookCategory(cat);
-                    } else {
-                      setSelectedLectureCategory(cat);
-                    }
-                  }}
                 >
-                  <Text
-                    style={[
-                      styles.catText,
-                      {
-                        color: isSelected ? theme.primary : theme.text,
-                        fontWeight: isSelected ? "bold" : "500",
-                      },
-                    ]}
-                  >
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-          )}
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
@@ -243,7 +295,7 @@ export const LibraryScreen: React.FC = () => {
                   </View>
                 ) : <View />}
 
-                <Text style={[styles.bookCategory, { color: theme.accentGold }]}>
+                <Text style={[styles.bookCategory, { color: "#C9A227" }]}>
                   {item.category}
                 </Text>
               </View>
@@ -252,7 +304,7 @@ export const LibraryScreen: React.FC = () => {
                 {item.title}
               </Text>
               <Text style={[styles.bookAuthor, { color: theme.textMuted }]}>
-                {item.author} • {item.authorEra}
+                {item.author} {item.authorEra ? `• ${item.authorEra}` : ""}
               </Text>
               <Text
                 style={[styles.bookDesc, { color: theme.textSecondary }]}
@@ -265,12 +317,79 @@ export const LibraryScreen: React.FC = () => {
                 <View style={styles.readMoreRow}>
                   <ChevronLeft size={16} color={theme.primary} />
                   <Text style={[styles.readMoreText, { color: theme.primary }]}>
-                    عرض الكتاب
+                    عرض وقراءة الكتاب
                   </Text>
                 </View>
                 <Text style={[styles.pagesText, { color: theme.textMuted }]}>
-                  {toArabicNumber(item.pages)} صفحة
+                  {toArabicNumber(item.pages)} صفحة معتمدة
                 </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      ) : activeTab === "articles" ? (
+        <FlatList
+          data={filteredArticles}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.articleCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+              onPress={() => navigation.navigate("ArticleDetail", { article: item })}
+              activeOpacity={0.8}
+            >
+              {item.coverImage ? (
+                <Image
+                  source={{ uri: item.coverImage }}
+                  style={styles.cardImage}
+                  resizeMode="cover"
+                />
+              ) : null}
+
+              <View style={styles.articleBody}>
+                <View style={styles.bookHeader}>
+                  {item.trending ? (
+                    <View style={styles.trendingBadge}>
+                      <TrendingUp size={12} color="#C9A227" />
+                      <Text style={styles.trendingText}>رائج الآن</Text>
+                    </View>
+                  ) : <View />}
+
+                  <Text style={[styles.bookCategory, { color: theme.primary }]}>
+                    {item.category}
+                  </Text>
+                </View>
+
+                <Text style={[styles.bookTitle, { color: theme.text }]} numberOfLines={2}>
+                  {item.title}
+                </Text>
+
+                <Text
+                  style={[styles.bookDesc, { color: theme.textSecondary }]}
+                  numberOfLines={2}
+                >
+                  {item.summary}
+                </Text>
+
+                <View style={styles.bookFooter}>
+                  <View style={styles.readMoreRow}>
+                    <ChevronLeft size={16} color={theme.primary} />
+                    <Text style={[styles.readMoreText, { color: theme.primary }]}>
+                      قراءة المقال كاملاً
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: "row-reverse", alignItems: "center", gap: 4 }}>
+                    <Clock size={12} color={theme.textMuted} />
+                    <Text style={[styles.pagesText, { color: theme.textMuted }]}>
+                      {toArabicNumber(item.readingTimeMinutes)} دقائق
+                    </Text>
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           )}
@@ -311,7 +430,7 @@ export const LibraryScreen: React.FC = () => {
                     </Text>
                   </View>
                   <Text
-                    style={[styles.lectureCat, { color: theme.accentGold }]}
+                    style={[styles.lectureCat, { color: "#C9A227" }]}
                   >
                     {item.category}
                   </Text>
@@ -366,7 +485,7 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     paddingHorizontal: 16,
     paddingTop: 12,
-    gap: 10,
+    gap: 8,
   },
   tabItem: {
     flex: 1,
@@ -375,7 +494,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "bold",
   },
   searchSection: {
@@ -393,7 +512,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingHorizontal: 8,
-    fontSize: 14,
+    fontSize: 13,
   },
   categoriesBar: {
     paddingVertical: 10,
@@ -421,6 +540,33 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
+  },
+  articleCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  cardImage: {
+    width: "100%",
+    height: 150,
+    backgroundColor: "#1e293b",
+  },
+  articleBody: {
+    padding: 16,
+  },
+  trendingBadge: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(201, 162, 39, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  trendingText: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#C9A227",
   },
   bookHeader: {
     flexDirection: "row-reverse",

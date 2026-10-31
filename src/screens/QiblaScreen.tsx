@@ -18,7 +18,7 @@ import {
   Compass,
   MapPin,
   RotateCcw,
-  Sparkles,
+  Star,
   ShieldAlert,
   CheckCircle2,
   Navigation,
@@ -244,7 +244,7 @@ export const QiblaScreen: React.FC = () => {
           </TouchableOpacity>
 
           <View style={styles.qiblaBadge}>
-            <Sparkles size={13} color={theme.accentGold} />
+            <Star size={13} color={theme.accentGold} />
             <Text style={[styles.qiblaBadgeText, { color: theme.primary }]}>
               زاوية الكعبة: {toArabicNumber(qiblaBearing)}°
             </Text>

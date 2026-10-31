@@ -28,6 +28,9 @@ import { ListenScreen } from "../screens/ListenScreen";
 import { AboutScreen } from "../screens/AboutScreen";
 import { UpdateAppScreen } from "../screens/UpdateAppScreen";
 import { QiblaScreen } from "../screens/QiblaScreen";
+import { PdfReaderScreen } from "../screens/PdfReaderScreen";
+import { ArticlesScreen } from "../screens/ArticlesScreen";
+import { ArticleDetailScreen } from "../screens/ArticleDetailScreen";
 
 import { MiniAudioPlayer } from "../components/MiniAudioPlayer";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -145,6 +148,9 @@ export function AppNavigator() {
         <Stack.Screen name="Listen" component={ListenScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="UpdateApp" component={UpdateAppScreen} />
+        <Stack.Screen name="PdfReader" component={PdfReaderScreen} />
+        <Stack.Screen name="Articles" component={ArticlesScreen} />
+        <Stack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

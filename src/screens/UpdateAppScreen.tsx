@@ -21,7 +21,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { Download, Sparkles, ChevronRight, ShieldAlert } from "lucide-react-native";
+import { Download, Star, ChevronRight, ShieldAlert } from "lucide-react-native";
 import Constants from "expo-constants";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
@@ -103,7 +103,7 @@ export const UpdateAppScreen: React.FC = () => {
           </View>
 
           <Text style={[styles.title, { color: theme.text }]}>
-            إصدار جديد متاح الآن 🌙
+            إصدار جديد متاح الآن
           </Text>
 
           <Text style={[styles.subtitle, { color: theme.primary }]}>
@@ -164,7 +164,7 @@ export const UpdateAppScreen: React.FC = () => {
             <Text style={[styles.notesTitle, { color: theme.text }]}>
               ما الجديد في هذا الإصدار؟
             </Text>
-            <Sparkles size={18} color={theme.accentGold} />
+            <Star size={18} color={theme.accentGold} />
           </View>
 
           <Text style={[styles.notesText, { color: theme.textMuted }]}>

@@ -20,7 +20,8 @@ import {
   Volume2,
   GraduationCap,
   Headphones,
-  Sparkles,
+  Star,
+  FileText,
   Download,
   X,
 } from "lucide-react-native";
@@ -147,6 +148,14 @@ export const HomeScreen: React.FC = () => {
       onPress: () => navigation.navigate("LibraryTab"),
     },
     {
+      id: "articles",
+      title: "المقالات والتزكية",
+      subtitle: "بحوث ودراسات إيمانية",
+      icon: FileText,
+      color: "#0284c7",
+      onPress: () => navigation.navigate("Articles"),
+    },
+    {
       id: "lectures",
       title: "الشروحات والدروس",
       subtitle: "سلاسل صوتية وعلمية",
@@ -191,9 +200,9 @@ export const HomeScreen: React.FC = () => {
 
               <View style={styles.updateBannerTitleRow}>
                 <Text style={[styles.updateBannerTitle, { color: theme.text }]}>
-                  تحديث جديد متوفر بـ أثر (v{updateResult.updateInfo.latestVersion}) 🌙
+                  تحديث جديد متوفر بـ أثر (v{updateResult.updateInfo.latestVersion})
                 </Text>
-                <Sparkles size={16} color={theme.accentGold} />
+                <Star size={16} color={theme.accentGold} />
               </View>
             </View>
 

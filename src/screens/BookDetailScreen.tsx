@@ -16,36 +16,54 @@ import {
   User,
   Clock,
   Share2,
-  ExternalLink,
+  Download,
+  ShieldCheck,
+  Building,
+  Calendar,
   Layers,
+  FileText,
+  CheckCircle2,
 } from "lucide-react-native";
-import { Book } from "../data/books";
+import { Book, getBookDownloadUrl, getBookReaderUrl } from "../data/books";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme } from "../constants/theme";
 import { toArabicNumber } from "../utils/arabic";
 
 export const BookDetailScreen: React.FC = () => {
   const route = useRoute<any>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { book } = route.params as { book: Book };
 
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
+  const downloadUrl = getBookDownloadUrl(book);
+  const readerUrl = getBookReaderUrl(book);
+
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `كتاب: ${book.title}\nالمؤلف: ${book.author}\nتصفحه عبر تطبيق أَثَر الإسلامي: https://athar-library.vercel.app/library/${book.slug}`,
+        title: book.title,
+        message: `كتاب: ${book.title}\nالمؤلف: ${book.author}\nتصفحه وقراءته عبر تطبيق ومكتبة أَثَر الإسلامية:\n${readerUrl}`,
       });
     } catch (e) {
-      console.warn(e);
+      console.warn("Share error:", e);
     }
   };
 
-  const handleOpenReadUrl = () => {
-    if (book.readUrl) {
-      Linking.openURL(book.readUrl);
+  const handleOpenInAppReader = () => {
+    navigation.navigate("PdfReader", { book });
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      const supported = await Linking.canOpenURL(downloadUrl);
+      if (supported) {
+        await Linking.openURL(downloadUrl);
+      }
+    } catch (e) {
+      console.warn("Download error:", e);
     }
   };
 
@@ -65,6 +83,7 @@ export const BookDetailScreen: React.FC = () => {
         <TouchableOpacity
           style={[styles.iconBtn, { backgroundColor: theme.border }]}
           onPress={handleShare}
+          accessibilityLabel="مشاركة الكتاب"
         >
           <Share2 size={18} color={theme.text} />
         </TouchableOpacity>
@@ -76,6 +95,7 @@ export const BookDetailScreen: React.FC = () => {
         <TouchableOpacity
           style={[styles.iconBtn, { backgroundColor: theme.border }]}
           onPress={() => navigation.goBack()}
+          accessibilityLabel="رجوع"
         >
           <ChevronRight size={22} color={theme.text} />
         </TouchableOpacity>
@@ -87,14 +107,20 @@ export const BookDetailScreen: React.FC = () => {
           style={[
             styles.bookHeroCard,
             {
-              backgroundColor: isDarkMode ? "#0e201b" : "#e6f4ea",
-              borderColor: isDarkMode ? "#194a3a" : "#bbf7d0",
+              backgroundColor: isDarkMode ? "#091712" : "#f4f8f4",
+              borderColor: isDarkMode ? "#133e2e" : "#d1fae5",
             },
           ]}
         >
           <View style={styles.bookIconBadge}>
-            <BookOpen size={36} color={theme.primary} />
+            <BookOpen size={36} color="#064E35" />
           </View>
+
+          {book.badge && (
+            <View style={styles.badgePill}>
+              <Text style={styles.badgePillText}>{book.badge}</Text>
+            </View>
+          )}
 
           <Text style={[styles.heroTitle, { color: theme.text }]}>
             {book.title}
@@ -103,22 +129,65 @@ export const BookDetailScreen: React.FC = () => {
           <View style={styles.authorRow}>
             <User size={14} color={theme.textMuted} />
             <Text style={[styles.heroAuthor, { color: theme.textMuted }]}>
-              {book.author} ({book.authorEra})
+              {book.author} {book.authorEra ? `(${book.authorEra})` : ""}
             </Text>
           </View>
 
           <View style={styles.metaRow}>
             <View style={[styles.metaPill, { backgroundColor: theme.card }]}>
-              <Text style={[styles.metaPillText, { color: theme.accentGold }]}>
+              <Text style={[styles.metaPillText, { color: "#C9A227" }]}>
                 {book.category}
               </Text>
             </View>
             <View style={[styles.metaPill, { backgroundColor: theme.card }]}>
-              <Text style={[styles.metaPillText, { color: theme.primary }]}>
-                {toArabicNumber(book.pages)} صفحة
+              <Text style={[styles.metaPillText, { color: "#064E35" }]}>
+                {toArabicNumber(book.pages)} صفحة معتمدة
               </Text>
             </View>
+            {book.fileSize && (
+              <View style={[styles.metaPill, { backgroundColor: theme.card }]}>
+                <Text style={[styles.metaPillText, { color: theme.textMuted }]}>
+                  {book.fileSize}
+                </Text>
+              </View>
+            )}
           </View>
+        </View>
+
+        {/* Primary Reading and Download Actions */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={[styles.primaryReadBtn, { backgroundColor: "#064E35" }]}
+            onPress={handleOpenInAppReader}
+            activeOpacity={0.85}
+          >
+            <BookOpen size={20} color="#ffffff" />
+            <View style={styles.readBtnTextCol}>
+              <Text style={styles.primaryReadText}>
+                قراءة الكتاب في القارئ الرقمي المدمج
+              </Text>
+              <Text style={styles.primaryReadSubtext}>
+                تصفح مصور سريع بتقنية WebAssembly وملاءمة كاملة للشاشة
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.secondaryDownloadBtn,
+              {
+                backgroundColor: isDarkMode ? "#101d28" : "#ffffff",
+                borderColor: "#C9A227",
+              },
+            ]}
+            onPress={handleDownloadPdf}
+            activeOpacity={0.85}
+          >
+            <Download size={18} color="#C9A227" />
+            <Text style={[styles.secondaryDownloadText, { color: "#C9A227" }]}>
+              تحميل نسخة الـ PDF المعتمدة ({book.fileSize || "مباشر"})
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Description */}
@@ -129,7 +198,7 @@ export const BookDetailScreen: React.FC = () => {
           ]}
         >
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            عن الكتاب
+            عن الكتاب والمنهج
           </Text>
           <Text
             style={[
@@ -139,6 +208,83 @@ export const BookDetailScreen: React.FC = () => {
           >
             {book.description}
           </Text>
+        </View>
+
+        {/* Academic Dossier / البطاقة والتوثيق */}
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: theme.card, borderColor: theme.border },
+          ]}
+        >
+          <View style={styles.dossierHeader}>
+            <ShieldCheck size={18} color="#C9A227" />
+            <Text style={[styles.sectionTitle, { color: theme.text, marginBottom: 0 }]}>
+              البطاقة والتوثيق الأكاديمي
+            </Text>
+          </View>
+
+          <View style={styles.dossierGrid}>
+            {book.publisher && (
+              <View style={styles.dossierRow}>
+                <Building size={15} color={theme.textMuted} />
+                <Text style={[styles.dossierLabel, { color: theme.textMuted }]}>
+                  دار النشر والتحقيق:
+                </Text>
+                <Text style={[styles.dossierValue, { color: theme.text }]}>
+                  {book.publisher}
+                </Text>
+              </View>
+            )}
+
+            {book.publicationYear && (
+              <View style={styles.dossierRow}>
+                <Calendar size={15} color={theme.textMuted} />
+                <Text style={[styles.dossierLabel, { color: theme.textMuted }]}>
+                  سنة النشر:
+                </Text>
+                <Text style={[styles.dossierValue, { color: theme.text }]}>
+                  {toArabicNumber(book.publicationYear)} م
+                </Text>
+              </View>
+            )}
+
+            {book.subcategory && (
+              <View style={styles.dossierRow}>
+                <Layers size={15} color={theme.textMuted} />
+                <Text style={[styles.dossierLabel, { color: theme.textMuted }]}>
+                  التصنيف الفرعي:
+                </Text>
+                <Text style={[styles.dossierValue, { color: theme.text }]}>
+                  {book.subcategory}
+                </Text>
+              </View>
+            )}
+
+            {book.license && (
+              <View style={styles.dossierRow}>
+                <CheckCircle2 size={15} color="#059669" />
+                <Text style={[styles.dossierLabel, { color: theme.textMuted }]}>
+                  حقوق الملكية الفكرية:
+                </Text>
+                <Text style={[styles.dossierValue, { color: theme.text }]}>
+                  {book.license}
+                </Text>
+              </View>
+            )}
+
+            {book.originalSource && (
+              <View style={styles.dossierRow}>
+                <FileText size={15} color={theme.textMuted} />
+                <Text style={[styles.dossierLabel, { color: theme.textMuted }]}>
+                  المصدر المعتمد:
+                </Text>
+                <Text style={[styles.dossierValue, { color: theme.text }]}>
+                  {book.originalSource}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Topics */}
@@ -172,17 +318,6 @@ export const BookDetailScreen: React.FC = () => {
             </View>
           </View>
         )}
-
-        {/* Read Online Button */}
-        {book.readUrl ? (
-          <TouchableOpacity
-            style={[styles.readBtn, { backgroundColor: theme.primary }]}
-            onPress={handleOpenReadUrl}
-          >
-            <ExternalLink size={18} color="#ffffff" />
-            <Text style={styles.readBtnText}>قراءة الكتاب كاملاً (المصدر الأصلي)</Text>
-          </TouchableOpacity>
-        ) : null}
       </ScrollView>
     </View>
   );
@@ -228,10 +363,24 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: "rgba(16,185,129,0.15)",
+    backgroundColor: "rgba(6, 78, 53, 0.12)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
+    marginBottom: 10,
+  },
+  badgePill: {
+    backgroundColor: "rgba(201, 162, 39, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(201, 162, 39, 0.3)",
+  },
+  badgePillText: {
+    color: "#C9A227",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   heroTitle: {
     fontSize: 20,
@@ -249,31 +398,96 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: "row-reverse",
-    gap: 10,
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
     marginTop: 14,
   },
   metaPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   metaPillText: {
     fontSize: 12,
+    fontWeight: "600",
+  },
+  actionsContainer: {
+    gap: 10,
+  },
+  primaryReadBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    gap: 12,
+  },
+  readBtnTextCol: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  primaryReadText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  primaryReadSubtext: {
+    color: "#d1fae5",
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: "right",
+  },
+  secondaryDownloadBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 8,
+  },
+  secondaryDownloadText: {
+    fontSize: 13,
     fontWeight: "bold",
   },
   sectionCard: {
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 12,
     textAlign: "right",
   },
   sectionDesc: {
     fontSize: 14,
+    textAlign: "right",
+  },
+  dossierHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  dossierGrid: {
+    gap: 10,
+  },
+  dossierRow: {
+    flexDirection: "row-reverse",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  dossierLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  dossierValue: {
+    flex: 1,
+    fontSize: 12,
     textAlign: "right",
   },
   topicsGrid: {
@@ -282,30 +496,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topicBadge: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
   },
   topicText: {
     fontSize: 12,
-    fontWeight: "500",
-  },
-  readBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    marginTop: 4,
-  },
-  readBtnText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "bold",
   },
 });
