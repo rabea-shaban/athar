@@ -6,39 +6,52 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
+  Image,
   StyleSheet,
 } from "react-native";
-import { X, Search, Check, Mic } from "lucide-react-native";
-import { QURAN_RECITERS, QuranReciter } from "../api/islamic";
+import { X, Search, Check, User } from "lucide-react-native";
+import {
+  VERIFIED_RECITERS,
+  RECITER_LOCAL_AVATARS,
+  QuranReciterItem,
+} from "../data/reciters";
 import { usePreferencesStore } from "../store/preferencesStore";
-import { lightTheme, darkTheme } from "../constants/theme";
+import { lightTheme, darkTheme, FONTS } from "../constants/theme";
+import { toArabicNumber } from "../utils/arabic";
 
 interface ReciterModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectReciter?: (reciter: QuranReciter) => void;
+  onSelectReciter?: (reciter: QuranReciterItem) => void;
+  selectedReciterId?: number | string;
+  selectedReciterStyle?: string;
 }
 
 export const ReciterModal: React.FC<ReciterModalProps> = ({
   visible,
   onClose,
   onSelectReciter,
+  selectedReciterId,
+  selectedReciterStyle,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [styleFilter, setStyleFilter] = useState<"ALL" | "مرتل" | "مجود" | "معلم">("ALL");
+
   const { isDarkMode, preferredReciter, setPreferredReciter } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const filteredReciters = useMemo(() => {
-    if (!searchQuery.trim()) return QURAN_RECITERS;
-    return QURAN_RECITERS.filter(
-      (r) =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.style.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
+    return VERIFIED_RECITERS.filter((r) => {
+      const matchSearch =
+        r.name.includes(searchQuery) ||
+        r.style.includes(searchQuery);
+      const matchStyle = styleFilter === "ALL" || r.style === styleFilter;
+      return matchSearch && matchStyle;
+    });
+  }, [searchQuery, styleFilter]);
 
-  const handleSelect = (reciter: QuranReciter) => {
-    setPreferredReciter(reciter.identifier);
+  const handleSelect = (reciter: QuranReciterItem) => {
+    setPreferredReciter(reciter.id);
     if (onSelectReciter) {
       onSelectReciter(reciter);
     }
@@ -53,26 +66,42 @@ export const ReciterModal: React.FC<ReciterModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={[styles.container, { backgroundColor: theme.card }]}>
-        {/* Header */}
+        {/* Modal Header */}
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <X size={22} color={theme.text} />
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityLabel="إغلاق">
+            <X size={20} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.text }]}>اختيار القارئ</Text>
-          <View style={{ width: 36 }} />
+
+          <View style={styles.headerTitleGroup}>
+            <Text style={[styles.title, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+              قائمة القراء المعتمدين
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+              اختر القارئ وأسلوب التلاوة للاستماع إلى المصحف الشريف
+            </Text>
+          </View>
+
+          <View style={styles.userIconBox}>
+            <User size={18} color="#064E35" />
+          </View>
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
+        <View style={styles.searchSection}>
           <View
             style={[
               styles.searchBox,
-              { backgroundColor: isDarkMode ? "#172233" : "#f1f5f9", borderColor: theme.border },
+              { backgroundColor: isDarkMode ? "#101d28" : "#f8fafc", borderColor: theme.border },
             ]}
           >
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearBtn}>
+                <X size={15} color={theme.textMuted} />
+              </TouchableOpacity>
+            )}
             <TextInput
               style={[styles.searchInput, { color: theme.text }]}
-              placeholder="ابحث عن قارئ أو رواية..."
+              placeholder="ابحث باسم القارئ (مثال: عبد الباسط، المنشاوي، الحصري...)"
               placeholderTextColor={theme.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -80,73 +109,179 @@ export const ReciterModal: React.FC<ReciterModalProps> = ({
             />
             <Search size={18} color={theme.textMuted} />
           </View>
-        </View>
 
-        {/* Reciters List */}
-        <FlatList
-          data={filteredReciters}
-          keyExtractor={(item) => item.identifier}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => {
-            const isSelected = item.identifier === preferredReciter;
-            return (
-              <TouchableOpacity
-                style={[
-                  styles.reciterItem,
-                  {
-                    backgroundColor: isSelected
-                      ? isDarkMode
-                        ? "#0f372a"
-                        : "#ecfdf5"
-                      : isDarkMode
-                      ? "#131d2a"
-                      : "#ffffff",
-                    borderColor: isSelected ? theme.primary : theme.border,
-                  },
-                ]}
-                onPress={() => handleSelect(item)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.leftCol}>
-                  {isSelected ? (
-                    <View style={[styles.checkCircle, { backgroundColor: theme.primary }]}>
-                      <Check size={14} color="#ffffff" />
-                    </View>
-                  ) : null}
-                  <View
+          {/* Style Filter Pills */}
+          <View style={styles.stylePillsRow}>
+            {(["ALL", "مرتل", "مجود", "معلم"] as const).map((style) => {
+              const isSelected = styleFilter === style;
+              return (
+                <TouchableOpacity
+                  key={style}
+                  style={[
+                    styles.stylePill,
+                    {
+                      backgroundColor: isSelected
+                        ? "#064E35"
+                        : isDarkMode
+                        ? "#15202e"
+                        : "#f1f5f9",
+                      borderColor: isSelected ? "#064E35" : theme.border,
+                    },
+                  ]}
+                  onPress={() => setStyleFilter(style)}
+                >
+                  <Text
                     style={[
-                      styles.styleBadge,
+                      styles.stylePillText,
                       {
-                        backgroundColor: isDarkMode ? "#1e293b" : "#e2e8f0",
+                        color: isSelected ? "#ffffff" : theme.textMuted,
+                        fontWeight: isSelected ? "bold" : "500",
                       },
                     ]}
                   >
-                    <Text style={[styles.styleText, { color: theme.textMuted }]}>
-                      {item.style}
+                    {style === "ALL"
+                      ? `جميع القراء (${toArabicNumber(VERIFIED_RECITERS.length)})`
+                      : style}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Reciters List with Real Portrait Photos */}
+        <FlatList
+          data={filteredReciters}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const isSelected =
+              (selectedReciterId !== undefined
+                ? item.listenId === Number(selectedReciterId) &&
+                  (!selectedReciterStyle || item.style === selectedReciterStyle)
+                : item.id === preferredReciter);
+
+            return (
+              <TouchableOpacity
+                style={[
+                  styles.reciterCard,
+                  {
+                    backgroundColor: isSelected
+                      ? isDarkMode
+                        ? "#082218"
+                        : "#edf8f3"
+                      : isDarkMode
+                      ? "#101d28"
+                      : "#ffffff",
+                    borderColor: isSelected ? "#064E35" : theme.border,
+                  },
+                ]}
+                onPress={() => handleSelect(item)}
+                activeOpacity={0.75}
+              >
+                {/* Right: Avatar Image and Names */}
+                <View style={styles.cardRightGroup}>
+                  <View
+                    style={[
+                      styles.avatarWrapper,
+                      { borderColor: isSelected ? "#064E35" : theme.border },
+                    ]}
+                  >
+                    <Image
+                      source={
+                        RECITER_LOCAL_AVATARS[item.avatarKey] || {
+                          uri: item.avatar,
+                        }
+                      }
+                      style={styles.avatarImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+
+                  <View style={styles.cardInfoGroup}>
+                    <Text
+                      style={[
+                        styles.reciterNameText,
+                        { color: theme.text, fontFamily: FONTS.amiriBold },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.name}
+                    </Text>
+                    <Text style={[styles.riwayahText, { color: theme.textMuted }]}>
+                      {item.riwayah}
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.rightCol}>
-                  <Text
+                {/* Left: Style Badge & Checkmark */}
+                <View style={styles.cardLeftGroup}>
+                  <View
                     style={[
-                      styles.reciterName,
+                      styles.styleBadge,
                       {
-                        color: isSelected ? theme.primary : theme.text,
-                        fontWeight: isSelected ? "bold" : "600",
+                        backgroundColor:
+                          item.style === "مرتل"
+                            ? isDarkMode
+                              ? "rgba(16, 185, 129, 0.15)"
+                              : "#ecfdf5"
+                            : item.style === "مجود"
+                            ? isDarkMode
+                              ? "rgba(245, 158, 11, 0.15)"
+                              : "#fef3c7"
+                            : isDarkMode
+                            ? "rgba(14, 165, 233, 0.15)"
+                            : "#e0f2fe",
+                        borderColor:
+                          item.style === "مرتل"
+                            ? "#10b981"
+                            : item.style === "مجود"
+                            ? "#f59e0b"
+                            : "#0ea5e9",
                       },
                     ]}
                   >
-                    {item.name}
-                  </Text>
-                  <View style={styles.iconTag}>
-                    <Mic size={14} color={isSelected ? theme.primary : theme.textMuted} />
+                    <Text
+                      style={[
+                        styles.styleBadgeText,
+                        {
+                          color:
+                            item.style === "مرتل"
+                              ? "#059669"
+                              : item.style === "مجود"
+                              ? "#d97706"
+                              : "#0284c7",
+                        },
+                      ]}
+                    >
+                      {item.style}
+                    </Text>
                   </View>
+
+                  {isSelected && (
+                    <View style={styles.checkCircle}>
+                      <Check size={12} color="#ffffff" />
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             );
           }}
         />
+
+        {/* Modal Footer */}
+        <View style={[styles.footer, { borderTopColor: theme.border }]}>
+          <TouchableOpacity
+            style={[styles.closeModalBtn, { backgroundColor: isDarkMode ? "#1e293b" : "#f1f5f9" }]}
+            onPress={onClose}
+          >
+            <Text style={[styles.closeModalText, { color: theme.text }]}>إغلاق</Text>
+          </TouchableOpacity>
+          <Text style={[styles.footerNote, { color: theme.textMuted }]}>
+            جميع التلاوات مسجلة برواية حفص عن عاصم
+          </Text>
+        </View>
       </View>
     </Modal>
   );
@@ -165,15 +300,39 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeBtn: {
-    padding: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitleGroup: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 8,
   },
   title: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
   },
-  searchContainer: {
+  subtitle: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: "center",
+  },
+  userIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(6, 78, 53, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  searchSection: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    gap: 10,
   },
   searchBox: {
     flexDirection: "row-reverse",
@@ -183,59 +342,114 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
+  clearBtn: {
+    padding: 4,
+  },
   searchInput: {
     flex: 1,
-    paddingHorizontal: 10,
-    fontSize: 14,
+    fontSize: 13,
+    paddingHorizontal: 8,
+  },
+  stylePillsRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  stylePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  stylePillText: {
+    fontSize: 11,
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 30,
+    paddingBottom: 24,
     gap: 10,
   },
-  reciterItem: {
+  reciterCard: {
     flexDirection: "row-reverse",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
   },
-  rightCol: {
+  cardRightGroup: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
+    flex: 1,
   },
-  iconTag: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(16,185,129,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
+  avatarWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 2,
+    backgroundColor: "#1e293b",
   },
-  reciterName: {
-    fontSize: 15,
+  avatarImage: {
+    width: "100%",
+    height: "100%",
   },
-  leftCol: {
-    flexDirection: "row",
+  cardInfoGroup: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  reciterNameText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  riwayahText: {
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: "right",
+  },
+  cardLeftGroup: {
+    flexDirection: "row-reverse",
     alignItems: "center",
     gap: 8,
   },
   styleBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: 8,
+    borderWidth: 1,
   },
-  styleText: {
-    fontSize: 11,
-    fontWeight: "500",
+  styleBadgeText: {
+    fontSize: 10,
+    fontWeight: "bold",
   },
   checkCircle: {
     width: 22,
     height: 22,
     borderRadius: 11,
+    backgroundColor: "#064E35",
     alignItems: "center",
     justifyContent: "center",
+  },
+  footer: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+  },
+  footerNote: {
+    fontSize: 11,
+  },
+  closeModalBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  closeModalText: {
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });

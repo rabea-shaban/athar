@@ -11,6 +11,7 @@ import {
   ScrollView,
   Share,
   Dimensions,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -43,23 +44,21 @@ import { useSettingsStore } from "../store/settingsStore";
 import { lightTheme, darkTheme, FONTS } from "../constants/theme";
 import { toArabicNumber, cleanSurahName } from "../utils/arabic";
 
+import { VERIFIED_RECITERS, RECITER_LOCAL_AVATARS } from "../data/reciters";
+import { IslamicDivider } from "../components/IslamicDivider";
+
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 40) / 2;
 
-export const RECITERS = [
-  { id: 2, name: "عبد الباسط عبد الصمد", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 1, name: "عبد الباسط عبد الصمد", style: "مجود", riwayah: "حفص عن عاصم" },
-  { id: 6, name: "محمود خليل الحصري", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 12, name: "محمود خليل الحصري", style: "معلم", riwayah: "حفص عن عاصم" },
-  { id: 9, name: "محمد صديق المنشاوي", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 8, name: "محمد صديق المنشاوي", style: "مجود", riwayah: "حفص عن عاصم" },
-  { id: 7, name: "مشاري راشد العفاسي", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 3, name: "عبد الرحمن السديس", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 10, name: "سعود الشريم", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 4, name: "أبو بكر الشاطري", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 5, name: "هاني الرفاعي", style: "مرتل", riwayah: "حفص عن عاصم" },
-  { id: 11, name: "عبد المحسن القاسم", style: "مرتل", riwayah: "حفص عن عاصم" },
-];
+export const RECITERS = VERIFIED_RECITERS.map((r) => ({
+  id: r.listenId,
+  name: r.name.replace(/^الشيخ\s+/, ""),
+  fullName: r.name,
+  style: r.style,
+  riwayah: r.riwayah,
+  avatarKey: r.avatarKey,
+  avatar: r.avatar,
+}));
 
 export const ListenScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -286,217 +285,263 @@ export const ListenScreen: React.FC = () => {
 
         {activeTab === "quran" ? (
           <>
-            {/* ─── Hero Section ─── */}
-            <View style={styles.heroSection}>
+            {/* ─── Hero Section Matching Web ─── */}
+            <View
+              style={[
+                styles.heroSection,
+                {
+                  backgroundColor: isDarkMode ? "#031d14" : "#064E35",
+                },
+              ]}
+            >
+              {/* Top Breadcrumb/Badge Pill */}
               <View
                 style={[
-                  styles.heroBadge,
+                  styles.heroBreadcrumbPill,
                   {
-                    backgroundColor: isDarkMode ? "#064e3b" : "#ecfdf5",
-                    borderColor: isDarkMode ? "#047857" : "#a7f3d0",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    borderColor: "rgba(255, 255, 255, 0.15)",
                   },
                 ]}
               >
-                <Headphones size={13} color={theme.primary} />
-                <Text
+                <Text style={styles.heroBreadcrumbText}>
+                  الرئيسية / الاستماع إلى القرآن الكريم
+                </Text>
+              </View>
+
+              {/* Luxury Badges Matching Web */}
+              <View style={styles.heroBadgesRow}>
+                <View
                   style={[
-                    styles.heroBadgeText,
-                    { color: theme.primary, fontFamily: FONTS.amiriBold },
+                    styles.heroPillBadge,
+                    {
+                      backgroundColor: "rgba(16, 185, 129, 0.2)",
+                      borderColor: "rgba(16, 185, 129, 0.35)",
+                    },
                   ]}
                 >
-                  تلاوات خاشعة بأصوات كبار القراء
-                </Text>
+                  <Headphones size={12} color="#6ee7b7" />
+                  <Text style={[styles.heroPillText, { color: "#6ee7b7" }]}>
+                    تلاوات خاشعة ومعتمدة
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.heroPillBadge,
+                    {
+                      backgroundColor: "rgba(201, 162, 39, 0.22)",
+                      borderColor: "rgba(201, 162, 39, 0.45)",
+                    },
+                  ]}
+                >
+                  <BookOpen size={12} color="#fbbf24" />
+                  <Text style={[styles.heroPillText, { color: "#fbbf24" }]}>
+                    ١٢ أسلوب وقارئ معتمد
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.heroPillBadge,
+                    {
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      borderColor: "rgba(255, 255, 255, 0.18)",
+                    },
+                  ]}
+                >
+                  <FileText size={12} color="#e2e8f0" />
+                  <Text style={[styles.heroPillText, { color: "#e2e8f0" }]}>
+                    جودة صوت فائقة ومباشرة
+                  </Text>
+                </View>
               </View>
 
               <Text
                 style={[
                   styles.heroTitle,
-                  { color: theme.text, fontFamily: FONTS.amiriBold },
+                  { color: "#ffffff", fontFamily: FONTS.amiriBold },
                 ]}
               >
                 الاستماع إلى القرآن الكريم
               </Text>
 
-              <Text style={[styles.heroSubtitle, { color: theme.textMuted }]}>
+              <Text
+                style={[
+                  styles.heroSubtitle,
+                  { color: "rgba(226, 232, 240, 0.85)" },
+                ]}
+              >
                 استمع إلى سور القرآن الكريم كاملة برواية حفص عن عاصم بمختلف أساليب
                 التلاوة (مرتل، مجود، ومعلم) بصوت نخبة من أعلام التلاوة.
               </Text>
 
-              {/* ─── Active Reciter Selector Box ─── */}
+              {/* ─── Active Reciter Selector Box with Real Photo ─── */}
               <TouchableOpacity
                 style={[
                   styles.reciterBox,
                   {
-                    backgroundColor: theme.card,
-                    borderColor: theme.border,
-                    shadowColor: isDarkMode ? "#000" : "#64748b",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    borderColor: "rgba(255, 255, 255, 0.18)",
                   },
                 ]}
                 onPress={() => setIsReciterModalOpen(true)}
                 activeOpacity={0.8}
               >
-            <View style={styles.reciterBoxRight}>
-              <View
-                style={[
-                  styles.reciterAvatar,
-                  { backgroundColor: theme.primary },
-                ]}
-              >
-                <Text style={styles.reciterAvatarText}>
-                  {selectedReciter.name.split(" ")[0][0]}
-                </Text>
-              </View>
+                <View style={styles.reciterBoxRight}>
+                  <View style={styles.reciterAvatarContainer}>
+                    <Image
+                      source={
+                        RECITER_LOCAL_AVATARS[selectedReciter.avatarKey] || {
+                          uri: selectedReciter.avatar,
+                        }
+                      }
+                      style={styles.reciterAvatarImg}
+                      resizeMode="cover"
+                    />
+                  </View>
 
-              <View style={styles.reciterBoxInfo}>
-                <View style={styles.reciterTitleRow}>
-                  <Text
-                    style={[styles.reciterLabel, { color: theme.textMuted }]}
-                  >
-                    القارئ المختار:
-                  </Text>
-                  <Text
-                    style={[
-                      styles.reciterMainName,
-                      { color: theme.text, fontFamily: FONTS.amiriBold },
-                    ]}
-                  >
-                    الشيخ {selectedReciter.name}
-                  </Text>
+                  <View style={styles.reciterBoxInfo}>
+                    <View style={styles.reciterTitleRow}>
+                      <Text
+                        style={[styles.reciterLabel, { color: "#a7f3d0" }]}
+                      >
+                        القارئ المختار:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.reciterMainName,
+                          { color: "#ffffff", fontFamily: FONTS.amiriBold },
+                        ]}
+                      >
+                        الشيخ {selectedReciter.name}
+                      </Text>
+                    </View>
+
+                    <View style={styles.reciterStyleRow}>
+                      <View
+                        style={[
+                          styles.styleBadge,
+                          {
+                            backgroundColor: "rgba(255, 255, 255, 0.16)",
+                            borderColor: "rgba(255, 255, 255, 0.25)",
+                            borderWidth: 1,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.styleBadgeText,
+                            { color: "#ffffff" },
+                          ]}
+                        >
+                          {selectedReciter.style}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[styles.riwayahText, { color: "#a7f3d0" }]}
+                      >
+                        {selectedReciter.riwayah}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
 
-                <View style={styles.reciterStyleRow}>
+                <View style={styles.reciterBoxLeft}>
+                  <Text
+                    style={[styles.listRecitersText, { color: "#fbbf24" }]}
+                  >
+                    قائمة القراء ({toArabicNumber(RECITERS.length)})
+                  </Text>
                   <View
                     style={[
-                      styles.styleBadge,
-                      {
-                        backgroundColor:
-                          selectedReciter.style === "مرتل"
-                            ? isDarkMode
-                              ? "#064e3b"
-                              : "#d1fae5"
-                            : selectedReciter.style === "مجود"
-                            ? isDarkMode
-                              ? "#451a03"
-                              : "#fef3c7"
-                            : isDarkMode
-                            ? "#082f49"
-                            : "#e0f2fe",
-                      },
+                      styles.chevronCircle,
+                      { backgroundColor: "rgba(255, 255, 255, 0.15)" },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.styleBadgeText,
-                        {
-                          color:
-                            selectedReciter.style === "مرتل"
-                              ? "#059669"
-                              : selectedReciter.style === "مجود"
-                              ? "#d97706"
-                              : "#0284c7",
-                        },
-                      ]}
-                    >
-                      {selectedReciter.style}
-                    </Text>
+                    <ChevronDown size={14} color="#ffffff" />
                   </View>
-                  <Text
-                    style={[styles.riwayahText, { color: theme.textMuted }]}
-                  >
-                    {selectedReciter.riwayah}
-                  </Text>
                 </View>
-              </View>
-            </View>
-
-            <View style={styles.reciterBoxLeft}>
-              <Text
-                style={[styles.listRecitersText, { color: theme.primary }]}
-              >
-                قائمة القراء ({toArabicNumber(RECITERS.length)})
-              </Text>
-              <View
-                style={[
-                  styles.chevronCircle,
-                  { backgroundColor: isDarkMode ? "#1e293b" : "#f1f5f9" },
-                ]}
-              >
-                <ChevronDown size={14} color={theme.textMuted} />
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          {/* Quick Reciters Horizontal Chips */}
-          <View style={styles.quickChipsSection}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.quickChipsContent}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.moreRecitersBtn,
-                  {
-                    borderColor: theme.primary,
-                    backgroundColor: isDarkMode ? "#064e3b" : "#ecfdf5",
-                  },
-                ]}
-                onPress={() => setIsReciterModalOpen(true)}
-              >
-                <Text
-                  style={[
-                    styles.moreRecitersText,
-                    { color: theme.primary, fontFamily: FONTS.amiriBold },
-                  ]}
-                >
-                  + المزيد
-                </Text>
               </TouchableOpacity>
 
-              {RECITERS.slice(0, 6).map((r) => {
-                const isSelected =
-                  selectedReciter.id === r.id &&
-                  selectedReciter.style === r.style;
-                return (
-                  <TouchableOpacity
-                    key={`${r.id}-${r.style}`}
+              {/* Quick Reciters Horizontal Chips */}
+              <View style={styles.quickChipsSection}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.quickChipsContent}
+                >
+                  <Text
                     style={[
-                      styles.quickChip,
+                      styles.quickChipsLabel,
+                      { color: "#a7f3d0", fontFamily: FONTS.amiri },
+                    ]}
+                  >
+                    أبرز القراء:
+                  </Text>
+
+                  {RECITERS.slice(0, 6).map((r) => {
+                    const isSelected =
+                      selectedReciter.id === r.id &&
+                      selectedReciter.style === r.style;
+                    return (
+                      <TouchableOpacity
+                        key={`${r.id}-${r.style}`}
+                        style={[
+                          styles.quickChip,
+                          isSelected
+                            ? {
+                                backgroundColor: "#F59E0B",
+                                borderColor: "#F59E0B",
+                              }
+                            : {
+                                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                                borderColor: "rgba(255, 255, 255, 0.18)",
+                              },
+                        ]}
+                        onPress={() => setSelectedReciter(r)}
+                      >
+                        <Text
+                          style={[
+                            styles.quickChipText,
+                            {
+                              color: isSelected ? "#0f172a" : "#f1f5f9",
+                              fontWeight: isSelected ? "bold" : "500",
+                            },
+                          ]}
+                        >
+                          {r.name.split(" ")[0]} {r.name.split(" ")[1] ?? ""} (
+                          {r.style})
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  <TouchableOpacity
+                    style={[
+                      styles.moreRecitersBtn,
                       {
-                        backgroundColor: isSelected
-                          ? theme.primary
-                          : theme.card,
-                        borderColor: isSelected ? theme.primary : theme.border,
+                        borderColor: "rgba(201, 162, 39, 0.5)",
+                        backgroundColor: "rgba(201, 162, 39, 0.15)",
                       },
                     ]}
-                    onPress={() => setSelectedReciter(r)}
+                    onPress={() => setIsReciterModalOpen(true)}
                   >
                     <Text
                       style={[
-                        styles.quickChipText,
-                        {
-                          color: isSelected ? "#ffffff" : theme.textMuted,
-                          fontWeight: isSelected ? "bold" : "500",
-                        },
+                        styles.moreRecitersText,
+                        { color: "#fbbf24", fontFamily: FONTS.amiriBold },
                       ]}
                     >
-                      {r.name.split(" ")[0]} {r.name.split(" ")[1] ?? ""} (
-                      {r.style})
+                      + المزيد
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-              <Text
-                style={[
-                  styles.quickChipsLabel,
-                  { color: theme.textMuted, fontFamily: FONTS.amiri },
-                ]}
-              >
-                أبرز القراء:
-              </Text>
-            </ScrollView>
-          </View>
-        </View>
+                </ScrollView>
+              </View>
+            </View>
+
+            {/* Classical Islamic Divider Between Hero & Content */}
+            <IslamicDivider color="#C9A227" />
 
         {/* ─── Search & Revelation Filter Bar ─── */}
         <View style={styles.filterSection}>
@@ -1047,11 +1092,22 @@ export const ListenScreen: React.FC = () => {
                 قائمة القراء المعتمدين
               </Text>
               <Text style={[styles.modalSubtitle, { color: theme.textMuted }]}>
-                اختر القارئ وأسلوب التلاوة للاستماع إلى المصحف
+                اختر القارئ وأسلوب التلاوة للاستماع إلى المصحف الشريف
               </Text>
             </View>
 
-            <View style={{ width: 32 }} />
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: "rgba(6, 78, 53, 0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <User size={18} color="#064E35" />
+            </View>
           </View>
 
           {/* Search Box */}
@@ -1064,7 +1120,7 @@ export const ListenScreen: React.FC = () => {
             >
               <TextInput
                 style={[styles.modalSearchInput, { color: theme.text }]}
-                placeholder="ابحث باسم القارئ..."
+                placeholder="ابحث باسم القارئ (مثال: عبد الباسط، المنشاوي، الحصري...)"
                 placeholderTextColor={theme.textMuted}
                 value={reciterSearchQuery}
                 onChangeText={setReciterSearchQuery}
@@ -1143,12 +1199,18 @@ export const ListenScreen: React.FC = () => {
                     <View
                       style={[
                         styles.reciterItemAvatar,
-                        { backgroundColor: theme.primary },
+                        { borderColor: isSelected ? theme.primary : theme.border },
                       ]}
                     >
-                      <Text style={styles.reciterItemAvatarText}>
-                        {item.name.split(" ")[0][0]}
-                      </Text>
+                      <Image
+                        source={
+                          RECITER_LOCAL_AVATARS[item.avatarKey] || {
+                            uri: item.avatar,
+                          }
+                        }
+                        style={styles.reciterItemAvatarImg}
+                        resizeMode="cover"
+                      />
                     </View>
 
                     <View style={styles.reciterItemInfo}>
@@ -1218,6 +1280,18 @@ export const ListenScreen: React.FC = () => {
               );
             }}
           />
+          {/* Modal Footer */}
+          <View style={[styles.modalFooter, { borderTopColor: theme.border }]}>
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: isDarkMode ? "#1e293b" : "#f1f5f9" }]}
+              onPress={() => setIsReciterModalOpen(false)}
+            >
+              <Text style={[styles.closeModalText, { color: theme.text }]}>إغلاق</Text>
+            </TouchableOpacity>
+            <Text style={[styles.footerNote, { color: theme.textMuted }]}>
+              جميع التلاوات مسجلة برواية حفص عن عاصم
+            </Text>
+          </View>
         </View>
       </Modal>
     </View>
@@ -1249,8 +1323,21 @@ const styles = StyleSheet.create({
   heroSection: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 8,
+    paddingBottom: 16,
     alignItems: "center",
+  },
+  heroBreadcrumbPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 10,
+    alignSelf: "center",
+  },
+  heroBreadcrumbText: {
+    color: "#a7f3d0",
+    fontSize: 11,
+    fontWeight: "500",
   },
   heroBadge: {
     flexDirection: "row-reverse",
@@ -1301,6 +1388,39 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  reciterAvatarContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#C9A227",
+    backgroundColor: "#1e293b",
+  },
+  reciterAvatarImg: {
+    width: "100%",
+    height: "100%",
+  },
+  heroBadgesRow: {
+    flexDirection: "row-reverse",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  heroPillBadge: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  heroPillText: {
+    fontSize: 11,
+    fontWeight: "bold",
   },
   reciterAvatarText: {
     color: "#ffffff",
@@ -1578,16 +1698,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reciterItemAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: "hidden",
+    borderWidth: 1.5,
+    backgroundColor: "#1e293b",
   },
-  reciterItemAvatarText: {
-    color: "#ffffff",
-    fontSize: 15,
+  reciterItemAvatarImg: {
+    width: "100%",
+    height: "100%",
+  },
+  modalFooter: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+  },
+  closeModalBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  closeModalText: {
+    fontSize: 12,
     fontWeight: "bold",
+  },
+  footerNote: {
+    fontSize: 11,
   },
   reciterItemInfo: {
     alignItems: "flex-end",
