@@ -206,6 +206,7 @@
 /* Smooth scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -214,4 +215,15 @@
   background: var(--athar-green);
   border-radius: 3px;
   opacity: 0.5;
+}
+
+/* Hide scrollbar for clean horizontal mobile trays */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

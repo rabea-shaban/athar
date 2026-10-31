@@ -65,7 +65,7 @@ export default function PdfReaderToolbar({
 
   return (
     <div
-      className="bg-[#F8F6EF] dark:bg-[#0E1E17] border-b border-[#E8E3D8] dark:border-[#1E3A2C] px-3 sm:px-6 py-2 flex items-center justify-between gap-3 text-xs font-arabic select-none transition-colors overflow-x-auto shrink-0"
+      className="bg-[#F8F6EF] dark:bg-[#0E1E17] border-b border-[#E8E3D8] dark:border-[#1E3A2C] px-3 sm:px-6 py-2 flex items-center justify-between gap-3 text-xs font-arabic select-none transition-colors overflow-x-auto no-scrollbar shrink-0"
       dir="rtl"
     >
       {/* Right Section: Quick Navigation & Page Controls */}

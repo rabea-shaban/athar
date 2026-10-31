@@ -23,17 +23,25 @@ const DynamicEmbedPdf = dynamic(() => import("./EmbedPdfViewerInner"), {
 
 // Verified books with full local PDFs inside the platform
 export const LOCAL_PDF_SLUGS = [
+  "abqariyyat-al-siddiq",
   "abqariyyat-muhammad",
+  "abqariyyat-umar",
   "akhlaq-hamalat-al-quran-ajurri",
   "al-adab-al-mufrad",
+  "al-akhlaq-al-islamiyyah-maydani",
   "al-aqeedah-al-tahawiyyah",
   "al-aqeedah-al-wasitiyyah",
+  "al-aqeedah-wal-shariah-fi-al-islam",
   "al-arbaun-al-nawawiyyah",
+  "al-balaghah-al-wadihah",
   "al-bidayah-wan-nihayah",
   "al-daa-wad-dawaa",
+  "al-fiqh-al-muyassar",
+  "al-itqan-fi-ulum-al-quran",
   "al-mukhtasar-fi-tafsir-al-quran",
   "al-muqaddimah-al-jazariyyah",
   "al-rahiq-al-makhtum",
+  "al-risalah-al-shafii",
   "al-shamail-al-muhammadiyyah",
   "al-tibyan-fi-adab-hamalat-al-quran",
   "al-wabil-al-sayyib",
@@ -41,20 +49,27 @@ export const LOCAL_PDF_SLUGS = [
   "asbab-al-nuzul-al-wahidi",
   "bidayat-al-mujtahid",
   "bulugh-al-maram",
+  "dhuha-al-islam",
+  "fajr-al-islam",
   "fath-al-bari-ibn-hajar",
   "hisn-al-muslim",
   "ihya-ulum-al-din",
   "ijaz-al-quran-al-rafii",
   "jami-al-ulum-wal-hikam",
   "kitab-al-tawhid",
+  "lum-at-al-itiqad",
   "madarij-al-salikin",
   "matn-abi-shuja",
   "matn-al-ajrumiyyah",
+  "mukhtasar-al-seerah",
   "muqaddimat-ibn-al-salah",
   "muqaddimat-ibn-khaldun",
   "nukhbat-al-fikar",
+  "qasas-al-anbiya-ibn-kathir",
+  "qasas-al-anbiya-lil-atfal-kilani",
   "qatr-al-nada",
   "qawaid-al-ahkam-al-izz",
+  "qawaid-al-tadabbur-al-amthal",
   "qawaid-al-tahdith",
   "riyadh-al-salihin",
   "sahih-al-bukhari",
@@ -63,8 +78,14 @@ export const LOCAL_PDF_SLUGS = [
   "sharh-al-aqeedah-al-tahawiyyah",
   "shudhur-al-dhahab",
   "sifat-al-safwah",
+  "siyar-alam-al-nubala",
+  "suwar-min-hayat-al-sahabah",
+  "suwar-min-hayat-al-tabieen",
+  "tafsir-al-qurtubi",
   "tafsir-al-tabari",
   "tafsir-ibn-kathir",
+  "tarbiyat-al-awlad-fi-al-islam",
+  "tarikh-adab-al-arab",
   "tarikh-al-khulafa-al-suyuti",
   "tarikh-al-tabari",
   "tuhfat-al-mawdud-ibn-al-qayyim",
@@ -219,8 +240,8 @@ export default function AtharPdfReaderModal({
       <div
         className={`bg-white dark:bg-[#0E1E17] border border-[#E8E3D8] dark:border-[#1E3A2C] shadow-2xl flex flex-col overflow-hidden transition-all duration-300 w-full ${
           isFullscreen
-            ? "fixed inset-0 rounded-none border-none h-screen max-h-screen"
-            : "max-w-7xl h-full sm:h-[97vh] sm:rounded-3xl max-h-[1000px]"
+            ? "fixed inset-0 rounded-none border-none h-[100dvh] max-h-[100dvh]"
+            : "max-w-7xl h-[100dvh] sm:h-[97vh] sm:rounded-3xl max-h-[1000px]"
         }`}
       >
         {/* ─── 1. Header (hidden in distraction-free mode) ─── */}
