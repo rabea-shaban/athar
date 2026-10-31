@@ -1,9 +1,9 @@
 {
-  "latestVersion": "2.0.3",
+  "latestVersion": "2.0.4",
   "minimumVersion": "1.0.0",
   "storeUrl": "https://athar-library.vercel.app/download",
   "forceUpdate": false,
-  "releaseNotes": "تحديث v2.0.3: تلاوة قرآنية متواصلة من الآية المحددة للختام، تظليل تفاعلي للآيات مع الصوت، تجاوب الشاشات، وسحب أفقي لتقليب الصفحات.",
+  "releaseNotes": "تحديث v2.0.4: إضافة ٦٧ كتاباً من أمهات كتب التراث مع قارئ PDF رقمي مدمج وتنزيل مباشر، وقسم المقالات والتزكية الإسلامية، وتطهير الواجهة بالكامل.",
   "downloads": {
     "directApk": {
       "available": true,
