@@ -37,7 +37,7 @@ import {
   Surah,
   QuranAudioFile,
 } from "../api/islamic";
-import { ADHANS_LIST, AdhanTrack } from "../data/adhans";
+import { ADHANS_LIST, AdhanTrack, ADHAN_LOCAL_SOUNDS } from "../data/adhans";
 import { useAudioStore } from "../store/audioStore";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { useSettingsStore } from "../store/settingsStore";
@@ -137,6 +137,7 @@ export const ListenScreen: React.FC = () => {
       title: adhan.name,
       subtitle: `${adhan.muadhin} • ${adhan.location}`,
       audioUrl: adhan.audioUrl,
+      localSource: ADHAN_LOCAL_SOUNDS[adhan.id],
     });
   };
 

@@ -11,7 +11,8 @@ export interface AudioTrack {
   id: string;
   title: string;
   subtitle?: string;
-  audioUrl: string;
+  audioUrl?: string;
+  localSource?: any;
   image?: string;
   isLive?: boolean;
   reciterId?: string;
@@ -103,7 +104,13 @@ export const useAudioStore = create<AudioStoreState>((set, get) => ({
         duration: 0,
       });
 
-      const player = createAudioPlayer({ uri: track.audioUrl });
+      const source = track.localSource
+        ? track.localSource
+        : track.audioUrl
+        ? { uri: track.audioUrl }
+        : null;
+
+      const player = createAudioPlayer(source);
       try {
         player.volume = get().volume;
       } catch (e) {

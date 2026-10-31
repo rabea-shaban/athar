@@ -93,6 +93,36 @@ class AdhanService : Service(), AudioManager.OnAudioFocusChangeListener {
         val floatVol = getAdhanVolumeFloat()
         Log.d(TAG, "[ATHAR][Adhan] Applying player gain volume on STREAM_MUSIC: $floatVol")
 
+        // 1. Check if soundUrl points to a local raw resource (from Athan-MP3)
+        if (!soundUrl.isNullOrEmpty() && !soundUrl.startsWith("http")) {
+            val cleanResName = soundUrl.removePrefix("raw://").removeSuffix(".mp3").lowercase().trim()
+            val resId = resources.getIdentifier(cleanResName, "raw", packageName)
+            if (resId != 0) {
+                try {
+                    Log.d(TAG, "[ATHAR][Adhan] Playing chosen local raw Adhan resource: $cleanResName (resId=$resId)")
+                    mediaPlayer?.release()
+                    mediaPlayer = MediaPlayer.create(this, resId)?.apply {
+                        setAudioAttributes(audioAttributes)
+                        setVolume(floatVol, floatVol)
+                        setOnCompletionListener {
+                            Log.d(TAG, "[ATHAR][Adhan] Local Adhan playback completed.")
+                            stopAdhanService()
+                        }
+                        setOnErrorListener { _, what, extra ->
+                            Log.e(TAG, "[ATHAR][Adhan] Local MediaPlayer error: $what, $extra")
+                            stopAdhanService()
+                            true
+                        }
+                        start()
+                    }
+                    playing = true
+                    return
+                } catch (e: Exception) {
+                    Log.e(TAG, "[ATHAR][Adhan] Failed to play local raw Adhan ($cleanResName): ${e.message}")
+                }
+            }
+        }
+
         if (!soundUrl.isNullOrEmpty() && soundUrl.startsWith("http")) {
             try {
                 mediaPlayer = MediaPlayer().apply {

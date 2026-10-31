@@ -31,7 +31,7 @@ import {
   BatteryCharging,
   Info,
 } from "lucide-react-native";
-import { ADHANS_LIST, getAdhanById, AdhanTrack } from "../data/adhans";
+import { ADHANS_LIST, getAdhanById, AdhanTrack, ADHAN_LOCAL_SOUNDS } from "../data/adhans";
 import { useAudioStore } from "../store/audioStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { usePreferencesStore } from "../store/preferencesStore";
@@ -114,6 +114,7 @@ export const NotificationSettingsScreen: React.FC = () => {
         title: adhan.name,
         subtitle: adhan.muadhin,
         audioUrl: adhan.audioUrl,
+        localSource: ADHAN_LOCAL_SOUNDS[adhan.id],
       });
     }
   };
@@ -123,7 +124,7 @@ export const NotificationSettingsScreen: React.FC = () => {
       NativeEngine.stopAdhan();
       setIsTestingAdhanNative(false);
     } else {
-      NativeEngine.startAdhanTest("الظهر");
+      NativeEngine.startAdhanTest("الظهر", selectedAdhan.localSoundKey || selectedAdhan.audioUrl);
       setIsTestingAdhanNative(true);
     }
   };
@@ -310,7 +311,10 @@ export const NotificationSettingsScreen: React.FC = () => {
                 { borderColor: theme.border, marginTop: 10 },
               ]}
               onPress={() => {
-                NativeEngine.scheduleTestAdhanInOneMinute("الظهر", selectedAdhan.audioUrl);
+                NativeEngine.scheduleTestAdhanInOneMinute(
+                  "الظهر",
+                  selectedAdhan.localSoundKey || selectedAdhan.audioUrl
+                );
                 Alert.alert(
                   "تم جدولة الأذان التجريبي",
                   `سيعمل أذان (${selectedAdhan.muadhin}) بعد 60 ثانية بالضبط. اغلق التطبيق واقفل الشاشة لاختبار العمل في الخلفية!`
