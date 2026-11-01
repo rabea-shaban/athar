@@ -1,83 +1,100 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
-  FlatList,
-  TouchableOpacity,
-  Image,
   StyleSheet,
-  Linking,
+  TouchableOpacity,
+  ScrollView,
   Share,
+  Linking,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   ChevronRight,
   Play,
-  Share2,
-  Clock,
+  Pause,
+  Headphones,
+  Video,
   User,
+  BookOpen,
+  CheckCircle2,
+  Share2,
   ExternalLink,
-  Tv,
-  ListVideo,
+  Sparkles,
+  Info,
 } from "lucide-react-native";
-import { Program, Episode } from "../types/content";
-import { usePreferencesStore } from "../store/preferencesStore";
+import { Lecture } from "../data/lectures";
 import { useAudioStore } from "../store/audioStore";
-import { lightTheme, darkTheme } from "../constants/theme";
-import { toArabicNumber } from "../utils/arabic";
+import { usePreferencesStore } from "../store/preferencesStore";
+import { lightTheme, darkTheme, FONTS } from "../constants/theme";
 
 export const ProgramDetailScreen: React.FC = () => {
   const route = useRoute<any>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { program } = route.params as { program: Program };
-
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const { playTrack, currentTrack, isPlaying } = useAudioStore();
+  const { lecture } = (route.params || {}) as { lecture?: Lecture };
 
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        title: program.title,
-        message: `${program.title}\nتقديم: ${program.presenter}\nاستمع وشاهد السلسلة عبر تطبيق أَثَر الإسلامي: https://athar-library.vercel.app/programs/${program.slug}`,
-      });
-    } catch (e) {
-      console.warn("Share error:", e);
-    }
-  };
+  const { playTrack, currentTrack, isPlaying, togglePlay } = useAudioStore();
 
-  const handlePlayEpisode = async (episode: Episode) => {
-    if (episode.youtubeUrl) {
-      try {
-        const canOpen = await Linking.canOpenURL(episode.youtubeUrl);
-        if (canOpen) {
-          await Linking.openURL(episode.youtubeUrl);
-          return;
-        }
-      } catch (e) {
-        console.warn("Cannot open YouTube URL:", e);
-      }
-    }
+  if (!lecture) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.errorBox}>
+          <Text style={[styles.errorText, { color: theme.text }]}>
+            عذراً، لم يتم العثور على بيانات البرنامج أو الشرح.
+          </Text>
+          <TouchableOpacity
+            style={[styles.backBtn, { backgroundColor: theme.primary }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backBtnText}>العودة</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
-    if (episode.audioUrl) {
+  const isCurrentAudioPlaying =
+    isPlaying && currentTrack?.id === `lecture_${lecture.id}`;
+
+  const handleToggleAudio = () => {
+    if (!lecture.audioUrl) return;
+
+    if (currentTrack?.id === `lecture_${lecture.id}`) {
+      togglePlay();
+    } else {
       playTrack({
-        id: episode.id,
-        title: episode.title,
-        subtitle: program.presenter,
-        audioUrl: episode.audioUrl,
+        id: `lecture_${lecture.id}`,
+        title: lecture.title,
+        subtitle: lecture.scholar,
+        audioUrl: lecture.audioUrl,
         isLive: false,
       });
     }
   };
 
-  const episodes = program.episodes || [];
+  const handleOpenVideo = () => {
+    if (lecture.videoUrl) {
+      Linking.openURL(lecture.videoUrl).catch((err) =>
+        console.warn("Failed to open video URL:", err)
+      );
+    }
+  };
+
+  const handleShare = () => {
+    Share.share({
+      message: `استمع وشاهد "${lecture.title}" لـ ${lecture.scholar} عبر تطبيق أَثَر الإسلامي: https://athar-library.vercel.app`,
+    });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Navigation Header */}
+      {/* ─── Top Header Navigation Bar ─── */}
       <View
         style={[
           styles.navBar,
@@ -91,138 +108,166 @@ export const ProgramDetailScreen: React.FC = () => {
         <TouchableOpacity
           style={[styles.iconBtn, { backgroundColor: theme.border }]}
           onPress={handleShare}
-          accessibilityLabel="مشاركة السلسلة"
         >
           <Share2 size={18} color={theme.text} />
         </TouchableOpacity>
 
-        <Text style={[styles.navTitle, { color: theme.text }]} numberOfLines={1}>
-          {program.title}
+        <Text style={[styles.navTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+          البرامج والشروحات
         </Text>
 
         <TouchableOpacity
           style={[styles.iconBtn, { backgroundColor: theme.border }]}
           onPress={() => navigation.goBack()}
-          accessibilityLabel="رجوع"
         >
           <ChevronRight size={22} color={theme.text} />
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={episodes}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={styles.headerComponent}>
-            {/* Cover Image */}
-            <View style={styles.coverWrapper}>
-              <Image
-                source={{ uri: program.coverImage }}
-                style={styles.coverImage}
-                resizeMode="cover"
-              />
-              <View style={styles.playlistBadge}>
-                <Tv size={12} color="#ffffff" />
-                <Text style={styles.playlistBadgeText}>
-                  {program.playlistType || "سلسلة مرئية"}
-                </Text>
-              </View>
-            </View>
-
-            {/* Info Card */}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Banner Card */}
+        <View
+          style={[
+            styles.bannerCard,
+            {
+              backgroundColor: isDarkMode ? "#132332" : "#ecfdf5",
+              borderColor: theme.primary,
+            },
+          ]}
+        >
+          <View style={styles.badgeRow}>
             <View
               style={[
-                styles.infoCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
+                styles.typeBadge,
+                { backgroundColor: theme.primary },
               ]}
             >
-              <View style={styles.infoMetaRow}>
-                {program.badge ? (
-                  <View style={styles.badgePill}>
-                    <Text style={styles.badgePillText}>{program.badge}</Text>
-                  </View>
-                ) : <View />}
+              {lecture.type === "فيديو" ? (
+                <Video size={12} color="#ffffff" />
+              ) : (
+                <Headphones size={12} color="#ffffff" />
+              )}
+              <Text style={styles.typeBadgeText}>{lecture.type}</Text>
+            </View>
 
-                <Text style={[styles.categoryText, { color: "#C9A227" }]}>
-                  {program.category}
-                </Text>
-              </View>
-
-              <Text style={[styles.programTitle, { color: theme.text }]}>
-                {program.title}
+            <View style={styles.categoryBadge}>
+              <Sparkles size={12} color={theme.accentGold} />
+              <Text style={[styles.categoryBadgeText, { color: theme.primary }]}>
+                {lecture.category}
               </Text>
-
-              <View style={styles.presenterRow}>
-                <User size={15} color={theme.primary} />
-                <Text style={[styles.presenterText, { color: theme.primary }]}>
-                  {program.presenter} {program.presenterTitle ? `• ${program.presenterTitle}` : ""}
-                </Text>
-              </View>
-
-              <Text
-                style={[
-                  styles.descriptionText,
-                  { color: theme.textSecondary, lineHeight: 24 },
-                ]}
-              >
-                {program.description}
-              </Text>
-
-              {/* Episodes Count Bar */}
-              <View
-                style={[
-                  styles.countBar,
-                  {
-                    backgroundColor: isDarkMode ? "#101d28" : "#f1f5f9",
-                    borderColor: theme.border,
-                  },
-                ]}
-              >
-                <ListVideo size={16} color={theme.primary} />
-                <Text style={[styles.countBarText, { color: theme.text }]}>
-                  قائمة الحلقات الكاملة ({toArabicNumber(episodes.length)} حلقة معتمدة)
-                </Text>
-              </View>
             </View>
           </View>
-        }
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={[
-              styles.episodeCard,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-            onPress={() => handlePlayEpisode(item)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.playCircle, { backgroundColor: "rgba(6, 78, 53, 0.12)" }]}>
-              <Play size={16} color="#064E35" fill="#064E35" />
-            </View>
 
-            <View style={styles.episodeTextCol}>
-              <View style={styles.episodeMetaTop}>
-                <Text style={[styles.orderNumber, { color: theme.primary }]}>
-                  الحلقة {toArabicNumber(item.order || index + 1)}
-                </Text>
-                {item.duration ? (
-                  <View style={styles.durationRow}>
-                    <Clock size={11} color={theme.textMuted} />
-                    <Text style={[styles.durationText, { color: theme.textMuted }]}>
-                      {item.duration}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
+          <Text style={[styles.lectureTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+            {lecture.title}
+          </Text>
 
-              <Text style={[styles.episodeTitle, { color: theme.text }]} numberOfLines={2}>
-                {item.title}
+          <View style={styles.scholarRow}>
+            <User size={15} color={theme.primary} />
+            <Text style={[styles.scholarName, { color: theme.textMuted }]}>
+              {lecture.scholar}
+            </Text>
+          </View>
+
+          {/* Action Button: Native Audio Player or Video Player */}
+          {lecture.audioUrl ? (
+            <TouchableOpacity
+              style={[
+                styles.primaryMediaBtn,
+                { backgroundColor: theme.primary },
+              ]}
+              onPress={handleToggleAudio}
+              activeOpacity={0.85}
+            >
+              {isCurrentAudioPlaying ? (
+                <Pause size={18} color="#ffffff" fill="#ffffff" />
+              ) : (
+                <Play size={18} color="#ffffff" fill="#ffffff" />
+              )}
+              <Text style={styles.primaryMediaBtnText}>
+                {isCurrentAudioPlaying
+                  ? "إيقاف مؤقت للتلاوة والشرح"
+                  : "تشغيل الشرح الصوتي المباشر"}
+              </Text>
+            </TouchableOpacity>
+          ) : lecture.videoUrl ? (
+            <TouchableOpacity
+              style={[
+                styles.primaryMediaBtn,
+                { backgroundColor: "#dc2626" },
+              ]}
+              onPress={handleOpenVideo}
+              activeOpacity={0.85}
+            >
+              <Video size={18} color="#ffffff" />
+              <Text style={styles.primaryMediaBtnText}>
+                مشاهدة الحلقة والمرئي على يوتيوب
+              </Text>
+              <ExternalLink size={14} color="#ffffff" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Description Section */}
+        <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={styles.sectionHeaderRow}>
+            <BookOpen size={16} color={theme.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+              نبذة وتفاصيل المنهج العلمي:
+            </Text>
+          </View>
+
+          <Text style={[styles.descriptionParagraph, { color: theme.text, fontFamily: FONTS.amiri }]}>
+            {lecture.description}
+          </Text>
+        </View>
+
+        {/* Topics Section */}
+        {lecture.topics && lecture.topics.length > 0 && (
+          <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.sectionHeaderRow}>
+              <Sparkles size={16} color={theme.accentGold} />
+              <Text style={[styles.sectionTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+                أبرز محاور وقضايا السلسلة:
               </Text>
             </View>
-          </TouchableOpacity>
+
+            <View style={styles.listItemsBox}>
+              {lecture.topics.map((topic, idx) => (
+                <View key={idx} style={styles.listItemRow}>
+                  <CheckCircle2 size={16} color={theme.primary} style={{ marginTop: 2 }} />
+                  <Text style={[styles.listItemText, { color: theme.text, fontFamily: FONTS.amiri }]}>
+                    {topic}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
         )}
-      />
+
+        {/* Benefits Section */}
+        {lecture.benefits && lecture.benefits.length > 0 && (
+          <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.sectionHeaderRow}>
+              <Info size={16} color={theme.primary} />
+              <Text style={[styles.sectionTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+                الفوائد والعبر الإيمانية المستفادة:
+              </Text>
+            </View>
+
+            <View style={styles.listItemsBox}>
+              {lecture.benefits.map((benefit, idx) => (
+                <View key={idx} style={styles.listItemRow}>
+                  <View style={[styles.bulletDot, { backgroundColor: theme.accentGold }]} />
+                  <Text style={[styles.listItemText, { color: theme.text, fontFamily: FONTS.amiri }]}>
+                    {benefit}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -247,149 +292,131 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   navTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    maxWidth: "70%",
-    textAlign: "center",
+    fontSize: 16,
   },
   scrollContent: {
+    padding: 16,
     paddingBottom: 40,
-    gap: 10,
-    paddingHorizontal: 16,
+    gap: 16,
   },
-  headerComponent: {
-    marginBottom: 8,
+  bannerCard: {
+    padding: 18,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    gap: 12,
   },
-  coverWrapper: {
-    width: "100%",
-    height: 200,
-    borderRadius: 16,
-    overflow: "hidden",
-    position: "relative",
-    backgroundColor: "#1e293b",
-    marginTop: 12,
-  },
-  coverImage: {
-    width: "100%",
-    height: "100%",
-  },
-  playlistBadge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+  badgeRow: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    justifyContent: "space-between",
   },
-  playlistBadgeText: {
+  typeBadge: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  typeBadgeText: {
     color: "#ffffff",
     fontSize: 11,
     fontWeight: "bold",
   },
-  infoCard: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginTop: 12,
-    gap: 8,
-  },
-  infoMetaRow: {
+  categoryBadge: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 5,
   },
-  badgePill: {
-    backgroundColor: "rgba(6, 78, 53, 0.12)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  badgePillText: {
-    fontSize: 11,
-    color: "#064E35",
-    fontWeight: "bold",
-  },
-  categoryText: {
+  categoryBadgeText: {
     fontSize: 12,
     fontWeight: "bold",
   },
-  programTitle: {
-    fontSize: 17,
-    fontWeight: "bold",
+  lectureTitle: {
+    fontSize: 18,
     textAlign: "right",
-    lineHeight: 24,
+    lineHeight: 28,
   },
-  presenterRow: {
+  scholarRow: {
     flexDirection: "row-reverse",
     alignItems: "center",
     gap: 6,
   },
-  presenterText: {
+  scholarName: {
     fontSize: 13,
     fontWeight: "600",
   },
-  descriptionText: {
-    fontSize: 13,
-    textAlign: "right",
-  },
-  countBar: {
+  primaryMediaBtn: {
     flexDirection: "row-reverse",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
     marginTop: 6,
   },
-  countBarText: {
+  primaryMediaBtnText: {
+    color: "#ffffff",
     fontSize: 13,
     fontWeight: "bold",
   },
-  episodeCard: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 14,
+  sectionCard: {
+    padding: 16,
+    borderRadius: 18,
     borderWidth: 1,
     gap: 12,
   },
-  playCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  sectionHeaderRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 15,
+  },
+  descriptionParagraph: {
+    fontSize: 14,
+    textAlign: "right",
+    lineHeight: 26,
+  },
+  listItemsBox: {
+    gap: 10,
+  },
+  listItemRow: {
+    flexDirection: "row-reverse",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  listItemText: {
+    fontSize: 13,
+    flex: 1,
+    textAlign: "right",
+    lineHeight: 22,
+  },
+  bulletDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
+  },
+  errorBox: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 24,
+    gap: 16,
   },
-  episodeTextCol: {
-    flex: 1,
-    alignItems: "flex-end",
+  errorText: {
+    fontSize: 15,
+    textAlign: "center",
   },
-  episodeMetaTop: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 4,
+  backBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
   },
-  orderNumber: {
-    fontSize: 11,
+  backBtnText: {
+    color: "#ffffff",
     fontWeight: "bold",
-  },
-  durationRow: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    gap: 4,
-  },
-  durationText: {
-    fontSize: 11,
-  },
-  episodeTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    textAlign: "right",
   },
 });

@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Bell,
   Volume2,
+  Video,
+  Sparkles,
 } from "lucide-react-native";
 import {
   getSurahList,
@@ -38,6 +40,7 @@ import {
   QuranAudioFile,
 } from "../api/islamic";
 import { ADHANS_LIST, AdhanTrack, ADHAN_LOCAL_SOUNDS } from "../data/adhans";
+import { LECTURES_DATA, Lecture, LECTURE_CATEGORIES } from "../data/lectures";
 import { useAudioStore } from "../store/audioStore";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { useSettingsStore } from "../store/settingsStore";
@@ -84,9 +87,14 @@ export const ListenScreen: React.FC = () => {
 
   const { prayerNotifications, setPrayerNotificationConfig } = useSettingsStore();
 
-  const [activeTab, setActiveTab] = useState<"quran" | "adhans">("quran");
+  const [activeTab, setActiveTab] = useState<"quran" | "lectures" | "adhans">(
+    "quran"
+  );
   const [adhanSearch, setAdhanSearch] = useState("");
   const [filterFajrAdhans, setFilterFajrAdhans] = useState(false);
+
+  const [lectureSearch, setLectureSearch] = useState("");
+  const [selectedLectureCategory, setSelectedLectureCategory] = useState<string>("الكل");
 
   useEffect(() => {
     getSurahList()
@@ -141,6 +149,10 @@ export const ListenScreen: React.FC = () => {
     });
   };
 
+  const handlePlayLecture = (lecture: Lecture) => {
+    navigation.navigate("ProgramDetail", { lecture });
+  };
+
   const filteredReciters = useMemo(() => {
     return RECITERS.filter((r) => {
       const matchSearch =
@@ -177,6 +189,19 @@ export const ListenScreen: React.FC = () => {
     });
   }, [adhanSearch, filterFajrAdhans]);
 
+  const filteredLectures = useMemo(() => {
+    return LECTURES_DATA.filter((l) => {
+      const matchSearch =
+        l.title.includes(lectureSearch) ||
+        l.scholar.includes(lectureSearch) ||
+        l.category.includes(lectureSearch);
+      const matchCat =
+        selectedLectureCategory === "الكل" ||
+        l.category === selectedLectureCategory;
+      return matchSearch && matchCat;
+    });
+  }, [lectureSearch, selectedLectureCategory]);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* ─── Top Header Navigation Bar ─── */}
@@ -203,7 +228,7 @@ export const ListenScreen: React.FC = () => {
             { color: theme.text, fontFamily: FONTS.amiriBold },
           ]}
         >
-          الاستماع إلى القرآن الكريم
+          الصوتيات والشروحات
         </Text>
 
         <TouchableOpacity
@@ -234,7 +259,7 @@ export const ListenScreen: React.FC = () => {
             onPress={() => setActiveTab("quran")}
           >
             <BookOpen
-              size={16}
+              size={15}
               color={activeTab === "quran" ? "#ffffff" : theme.textMuted}
             />
             <Text
@@ -246,7 +271,40 @@ export const ListenScreen: React.FC = () => {
                 },
               ]}
             >
-              تلاوات القرآن ({toArabicNumber(114)})
+              القرآن الكريم ({toArabicNumber(114)})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.topTabButton,
+              {
+                backgroundColor:
+                  activeTab === "lectures"
+                    ? theme.primary
+                    : isDarkMode
+                    ? "#172535"
+                    : "#f1f5f9",
+                borderColor:
+                  activeTab === "lectures" ? theme.primary : theme.border,
+              },
+            ]}
+            onPress={() => setActiveTab("lectures")}
+          >
+            <Sparkles
+              size={15}
+              color={activeTab === "lectures" ? "#ffffff" : theme.textMuted}
+            />
+            <Text
+              style={[
+                styles.topTabButtonText,
+                {
+                  color: activeTab === "lectures" ? "#ffffff" : theme.text,
+                  fontWeight: activeTab === "lectures" ? "bold" : "500",
+                },
+              ]}
+            >
+              البرامج والشروحات ({toArabicNumber(LECTURES_DATA.length)})
             </Text>
           </TouchableOpacity>
 
@@ -267,7 +325,7 @@ export const ListenScreen: React.FC = () => {
             onPress={() => setActiveTab("adhans")}
           >
             <Volume2
-              size={16}
+              size={15}
               color={activeTab === "adhans" ? "#ffffff" : theme.textMuted}
             />
             <Text
@@ -544,523 +602,625 @@ export const ListenScreen: React.FC = () => {
             {/* Classical Islamic Divider Between Hero & Content */}
             <IslamicDivider color="#C9A227" />
 
-        {/* ─── Search & Revelation Filter Bar ─── */}
-        <View style={styles.filterSection}>
-          <View
-            style={[
-              styles.searchBox,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            {surahSearch.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setSurahSearch("")}
-                style={styles.clearBtn}
+            {/* ─── Search & Revelation Filter Bar ─── */}
+            <View style={styles.filterSection}>
+              <View
+                style={[
+                  styles.searchBox,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
               >
-                <X size={16} color={theme.textMuted} />
-              </TouchableOpacity>
-            )}
-            <TextInput
-              style={[styles.searchInput, { color: theme.text }]}
-              placeholder="ابحث باسم السورة أو رقمها..."
-              placeholderTextColor={theme.textMuted}
-              value={surahSearch}
-              onChangeText={setSurahSearch}
-              textAlign="right"
-            />
-            <Search size={18} color={theme.textMuted} />
-          </View>
+                {surahSearch.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setSurahSearch("")}
+                    style={styles.clearBtn}
+                  >
+                    <X size={16} color={theme.textMuted} />
+                  </TouchableOpacity>
+                )}
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="ابحث باسم السورة أو رقمها..."
+                  placeholderTextColor={theme.textMuted}
+                  value={surahSearch}
+                  onChangeText={setSurahSearch}
+                  textAlign="right"
+                />
+                <Search size={18} color={theme.textMuted} />
+              </View>
 
-          {/* Filter Pills */}
-          <View style={styles.filterPillsRow}>
-            {[
-              { key: "ALL", label: `جميع السور (${toArabicNumber(114)})` },
-              { key: "Meccan", label: `مكية (${toArabicNumber(86)})` },
-              { key: "Medinan", label: `مدنية (${toArabicNumber(28)})` },
-            ].map((pill) => {
-              const isActive = revelationFilter === pill.key;
-              return (
+              {/* Filter Pills */}
+              <View style={styles.filterPillsRow}>
+                {[
+                  { key: "ALL", label: `جميع السور (${toArabicNumber(114)})` },
+                  { key: "Meccan", label: `مكية (${toArabicNumber(86)})` },
+                  { key: "Medinan", label: `مدنية (${toArabicNumber(28)})` },
+                ].map((pill) => {
+                  const isActive = revelationFilter === pill.key;
+                  return (
+                    <TouchableOpacity
+                      key={pill.key}
+                      style={[
+                        styles.filterPill,
+                        {
+                          backgroundColor: isActive
+                            ? theme.primary
+                            : isDarkMode
+                            ? "#131d2a"
+                            : "#e2e8f0",
+                        },
+                      ]}
+                      onPress={() => setRevelationFilter(pill.key as any)}
+                    >
+                      <Text
+                        style={[
+                          styles.filterPillText,
+                          {
+                            color: isActive ? "#ffffff" : theme.textMuted,
+                            fontWeight: isActive ? "bold" : "500",
+                          },
+                        ]}
+                      >
+                        {pill.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Loading Audio Status */}
+            {loadingAudio && (
+              <View style={styles.loadingAudioBox}>
+                <ActivityIndicator size="small" color={theme.primary} />
+                <Text style={[styles.loadingAudioText, { color: theme.textMuted }]}>
+                  جاري تجهيز تلاوات الشيخ {selectedReciter.name}...
+                </Text>
+              </View>
+            )}
+
+            {/* ─── Surahs Audio Grid (2 Columns) ─── */}
+            <View style={styles.gridContainer}>
+              {filteredSurahs.map((surah) => {
+                const file = audioFiles.find((f) => f.chapter_id === surah.number);
+                const trackId = `listen_reciter_${selectedReciter.id}_surah_${surah.number}`;
+                const isCurrent = currentTrack?.id === trackId;
+                const playing = isCurrent && isPlaying;
+                const cleanName = cleanSurahName(surah.name);
+
+                return (
+                  <View
+                    key={surah.number}
+                    style={[
+                      styles.surahCard,
+                      {
+                        backgroundColor: theme.card,
+                        borderColor: isCurrent ? theme.primary : theme.border,
+                        borderWidth: isCurrent ? 1.5 : 1,
+                        shadowColor: isDarkMode ? "#000" : "#64748b",
+                      },
+                    ]}
+                  >
+                    {/* Top Row: Surah Name & Number */}
+                    <View style={styles.surahCardTop}>
+                      <View style={styles.surahNameCol}>
+                        <Text
+                          style={[
+                            styles.surahCardTitle,
+                            {
+                              color: isCurrent ? theme.primary : theme.text,
+                              fontFamily: FONTS.amiriBold,
+                            },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          سورة {cleanName}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.surahCardMeta,
+                            { color: theme.textMuted },
+                          ]}
+                        >
+                          {surah.revelationType === "Meccan" ? "مكية" : "مدنية"} •{" "}
+                          {toArabicNumber(surah.numberOfAyahs)} آية
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.surahNumberCircle,
+                          {
+                            backgroundColor: isDarkMode ? "#172535" : "#f1f5f9",
+                            borderColor: theme.border,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.surahNumberText,
+                            { color: theme.primary },
+                          ]}
+                        >
+                          {toArabicNumber(surah.number)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Bottom Row: Play Button & Quick Links */}
+                    <View
+                      style={[
+                        styles.surahCardBottom,
+                        { borderTopColor: theme.border },
+                      ]}
+                    >
+                      <View style={styles.quickIconsRow}>
+                        <TouchableOpacity
+                          style={styles.cardIconBtn}
+                          onPress={() =>
+                            Share.share({
+                              message: `استمع إلى سورة ${cleanName} بصوت الشيخ ${selectedReciter.name}\n${file?.audio_url || ""}`,
+                            })
+                          }
+                        >
+                          <Share2 size={16} color={theme.textMuted} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={styles.cardIconBtn}
+                          onPress={() =>
+                            navigation.navigate("SurahDetail", {
+                              surahNumber: surah.number,
+                              surahName: surah.name,
+                            })
+                          }
+                        >
+                          <BookOpen size={16} color={theme.textMuted} />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.listenBtn,
+                          {
+                            backgroundColor: isCurrent
+                              ? theme.primary
+                              : isDarkMode
+                              ? "#1e293b"
+                              : "#f1f5f9",
+                          },
+                        ]}
+                        onPress={() => handlePlaySurah(surah)}
+                        disabled={loadingAudio || !file}
+                      >
+                        {playing ? (
+                          <Pause size={14} color="#ffffff" />
+                        ) : (
+                          <Play
+                            size={14}
+                            color={isCurrent ? "#ffffff" : theme.text}
+                          />
+                        )}
+                        <Text
+                          style={[
+                            styles.listenBtnText,
+                            {
+                              color: isCurrent ? "#ffffff" : theme.text,
+                              fontFamily: FONTS.amiriBold,
+                            },
+                          ]}
+                        >
+                          {playing ? "إيقاف" : "استماع"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        ) : activeTab === "lectures" ? (
+          /* Tab 2: البرامج والشروحات */
+          <View style={styles.tabSection}>
+            <View style={styles.searchSection}>
+              <View
+                style={[
+                  styles.searchBox,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="ابحث عن برنامج أو شرح أو عالم..."
+                  placeholderTextColor={theme.textMuted}
+                  value={lectureSearch}
+                  onChangeText={setLectureSearch}
+                  textAlign="right"
+                />
+                <Search size={16} color={theme.textMuted} />
+              </View>
+            </View>
+
+            {/* Category Filter Chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryChipsRow}
+            >
+              {LECTURE_CATEGORIES.map((cat, idx) => {
+                const isSelected = selectedLectureCategory === cat;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.chipItem,
+                      {
+                        backgroundColor: isSelected ? theme.primary : theme.card,
+                        borderColor: isSelected ? theme.primary : theme.border,
+                      },
+                    ]}
+                    onPress={() => setSelectedLectureCategory(cat)}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        {
+                          color: isSelected ? "#ffffff" : theme.textMuted,
+                          fontWeight: isSelected ? "bold" : "500",
+                        },
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            {/* Lectures & Programs List */}
+            <View style={styles.lecturesList}>
+              {filteredLectures.map((item) => {
+                const isCurrent = currentTrack?.id === `lecture_${item.id}`;
+                const isPlayingThis = isCurrent && isPlaying;
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.lectureCard,
+                      {
+                        backgroundColor: theme.card,
+                        borderColor: isCurrent ? theme.primary : theme.border,
+                        borderWidth: isCurrent ? 2 : 1,
+                      },
+                    ]}
+                    onPress={() => handlePlayLecture(item)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.lectureCardHeader}>
+                      <View style={styles.lectureTypeBadge}>
+                        {item.type === "فيديو" ? (
+                          <Video size={12} color={theme.primary} />
+                        ) : (
+                          <Headphones size={12} color={theme.primary} />
+                        )}
+                        <Text style={[styles.lectureTypeText, { color: theme.primary }]}>
+                          {item.type}
+                        </Text>
+                      </View>
+
+                      <Text style={[styles.lectureCategoryText, { color: theme.accentGold }]}>
+                        {item.category}
+                      </Text>
+                    </View>
+
+                    <Text
+                      style={[
+                        styles.lectureCardTitle,
+                        { color: theme.text, fontFamily: FONTS.amiriBold },
+                      ]}
+                    >
+                      {item.title}
+                    </Text>
+
+                    <View style={styles.lectureScholarRow}>
+                      <User size={13} color={theme.textMuted} />
+                      <Text style={[styles.lectureScholarText, { color: theme.textMuted }]}>
+                        {item.scholar}
+                      </Text>
+                    </View>
+
+                    <View style={[styles.cardDivider, { backgroundColor: theme.border }]} />
+
+                    <View style={styles.lectureFooterRow}>
+                      <Text style={[styles.lectureFooterMeta, { color: theme.textMuted }]}>
+                        {toArabicNumber(item.episodesCount)} حلقة • {item.duration}
+                      </Text>
+
+                      <View
+                        style={[
+                          styles.lectureActionIcon,
+                          { backgroundColor: theme.primary },
+                        ]}
+                      >
+                        {item.type === "فيديو" ? (
+                          <Video size={14} color="#ffffff" />
+                        ) : isPlayingThis ? (
+                          <Pause size={14} color="#ffffff" />
+                        ) : (
+                          <Play size={14} color="#ffffff" />
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        ) : (
+          /* Tab 3: أصوات الأذان */
+          <View style={styles.tabSection}>
+            <View style={styles.searchSection}>
+              <View
+                style={[
+                  styles.searchBox,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+              >
+                {adhanSearch.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setAdhanSearch("")}
+                    style={styles.clearBtn}
+                  >
+                    <X size={16} color={theme.textMuted} />
+                  </TouchableOpacity>
+                )}
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text }]}
+                  placeholder="ابحث عن مؤذن، مسجد، أو دولة..."
+                  placeholderTextColor={theme.textMuted}
+                  value={adhanSearch}
+                  onChangeText={setAdhanSearch}
+                  textAlign="right"
+                />
+                <Search size={18} color={theme.textMuted} />
+              </View>
+
+              {/* Fajr Filter Pill */}
+              <View style={styles.filterPillsRow}>
                 <TouchableOpacity
-                  key={pill.key}
                   style={[
                     styles.filterPill,
                     {
-                      backgroundColor: isActive
+                      backgroundColor: !filterFajrAdhans
                         ? theme.primary
                         : isDarkMode
                         ? "#131d2a"
                         : "#e2e8f0",
                     },
                   ]}
-                  onPress={() => setRevelationFilter(pill.key as any)}
+                  onPress={() => setFilterFajrAdhans(false)}
                 >
                   <Text
                     style={[
                       styles.filterPillText,
                       {
-                        color: isActive ? "#ffffff" : theme.textMuted,
-                        fontWeight: isActive ? "bold" : "500",
+                        color: !filterFajrAdhans ? "#ffffff" : theme.textMuted,
+                        fontWeight: !filterFajrAdhans ? "bold" : "500",
                       },
                     ]}
                   >
-                    {pill.label}
+                    جميع الأذانات ({toArabicNumber(ADHANS_LIST.length)})
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
 
-        {/* Loading Audio Status */}
-        {loadingAudio && (
-          <View style={styles.loadingAudioBox}>
-            <ActivityIndicator size="small" color={theme.primary} />
-            <Text style={[styles.loadingAudioText, { color: theme.textMuted }]}>
-              جاري تجهيز تلاوات الشيخ {selectedReciter.name}...
-            </Text>
-          </View>
-        )}
-
-        {/* ─── Surahs Audio Grid (2 Columns) ─── */}
-        <View style={styles.gridContainer}>
-          {filteredSurahs.map((surah) => {
-            const file = audioFiles.find((f) => f.chapter_id === surah.number);
-            const trackId = `listen_reciter_${selectedReciter.id}_surah_${surah.number}`;
-            const isCurrent = currentTrack?.id === trackId;
-            const playing = isCurrent && isPlaying;
-            const cleanName = cleanSurahName(surah.name);
-
-            return (
-              <View
-                key={surah.number}
-                style={[
-                  styles.surahCard,
-                  {
-                    backgroundColor: theme.card,
-                    borderColor: isCurrent ? theme.primary : theme.border,
-                    borderWidth: isCurrent ? 1.5 : 1,
-                    shadowColor: isDarkMode ? "#000" : "#64748b",
-                  },
-                ]}
-              >
-                {/* Top Row: Surah Name & Number */}
-                <View style={styles.surahCardTop}>
-                  <View style={styles.surahNameCol}>
-                    <Text
-                      style={[
-                        styles.surahCardTitle,
-                        {
-                          color: isCurrent ? theme.primary : theme.text,
-                          fontFamily: FONTS.amiriBold,
-                        },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      سورة {cleanName}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.surahCardMeta,
-                        { color: theme.textMuted },
-                      ]}
-                    >
-                      {surah.revelationType === "Meccan" ? "مكية" : "مدنية"} •{" "}
-                      {toArabicNumber(surah.numberOfAyahs)} آية
-                    </Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.surahNumberCircle,
-                      {
-                        backgroundColor: isDarkMode ? "#172535" : "#f1f5f9",
-                        borderColor: theme.border,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.surahNumberText,
-                        { color: theme.primary },
-                      ]}
-                    >
-                      {toArabicNumber(surah.number)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Bottom Row: Play Button & Quick Links */}
-                <View
+                <TouchableOpacity
                   style={[
-                    styles.surahCardBottom,
-                    { borderTopColor: theme.border },
+                    styles.filterPill,
+                    {
+                      backgroundColor: filterFajrAdhans
+                        ? "#059669"
+                        : isDarkMode
+                        ? "#131d2a"
+                        : "#e2e8f0",
+                    },
                   ]}
+                  onPress={() => setFilterFajrAdhans(true)}
                 >
-                  <View style={styles.quickIconsRow}>
-                    <TouchableOpacity
-                      style={styles.cardIconBtn}
-                      onPress={() =>
-                        Share.share({
-                          message: `استمع إلى سورة ${cleanName} بصوت الشيخ ${selectedReciter.name}\n${file?.audio_url || ""}`,
-                        })
-                      }
-                    >
-                      <Share2 size={16} color={theme.textMuted} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.cardIconBtn}
-                      onPress={() =>
-                        navigation.navigate("SurahDetail", {
-                          surahNumber: surah.number,
-                          surahName: surah.name,
-                        })
-                      }
-                    >
-                      <BookOpen size={16} color={theme.textMuted} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <TouchableOpacity
+                  <Text
                     style={[
-                      styles.listenBtn,
+                      styles.filterPillText,
                       {
-                        backgroundColor: isCurrent
-                          ? theme.primary
-                          : isDarkMode
-                          ? "#1e293b"
-                          : "#f1f5f9",
+                        color: filterFajrAdhans ? "#ffffff" : theme.textMuted,
+                        fontWeight: filterFajrAdhans ? "bold" : "500",
                       },
                     ]}
-                    onPress={() => handlePlaySurah(surah)}
-                    disabled={loadingAudio || !file}
                   >
-                    {playing ? (
-                      <Pause size={14} color="#ffffff" />
-                    ) : (
-                      <Play
-                        size={14}
-                        color={isCurrent ? "#ffffff" : theme.text}
-                      />
-                    )}
-                    <Text
+                    أذان الفجر فقط (مع التثويب)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Adhans List Cards */}
+            <View style={styles.adhansListContainer}>
+              {filteredAdhans.map((adhan) => {
+                const trackId = `adhan_track_${adhan.id}`;
+                const isCurrent = currentTrack?.id === trackId;
+                const playing = isCurrent && isPlaying;
+                const isSelectedAsDefault =
+                  prayerNotifications.sound === adhan.id;
+
+                return (
+                  <View
+                    key={adhan.id}
+                    style={[
+                      styles.adhanFullCard,
+                      {
+                        backgroundColor: isCurrent
+                          ? isDarkMode
+                            ? "#064e3b22"
+                            : "#ecfdf5"
+                          : theme.card,
+                        borderColor: isCurrent ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.adhanFullCardTop}>
+                      {/* Play Button */}
+                      <TouchableOpacity
+                        style={[
+                          styles.adhanPlayLargeBtn,
+                          {
+                            backgroundColor: isCurrent
+                              ? theme.primary
+                              : isDarkMode
+                              ? "#1e293b"
+                              : "#f1f5f9",
+                          },
+                        ]}
+                        onPress={() => handlePlayAdhan(adhan)}
+                        activeOpacity={0.8}
+                      >
+                        {playing ? (
+                          <Pause size={20} color="#ffffff" />
+                        ) : (
+                          <Play
+                            size={20}
+                            color={isCurrent ? "#ffffff" : theme.text}
+                            style={{ marginLeft: 3 }}
+                          />
+                        )}
+                      </TouchableOpacity>
+
+                      {/* Info */}
+                      <View style={{ flex: 1, alignItems: "flex-end" }}>
+                        <View style={styles.adhanTitleRow}>
+                          {adhan.badge && (
+                            <View
+                              style={[
+                                styles.badgeSmall,
+                                {
+                                  backgroundColor: adhan.color
+                                    ? `${adhan.color}20`
+                                    : "rgba(16,185,129,0.15)",
+                                },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.badgeSmallText,
+                                  { color: adhan.color || theme.primary },
+                                ]}
+                              >
+                                {adhan.badge}
+                              </Text>
+                            </View>
+                          )}
+                          <Text
+                            style={[
+                              styles.adhanCardTitleLarge,
+                              {
+                                color: theme.text,
+                                fontFamily: FONTS.amiriBold,
+                              },
+                            ]}
+                          >
+                            {adhan.name}
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={[
+                            styles.adhanCardMuadhinText,
+                            { color: theme.primary },
+                          ]}
+                        >
+                          {adhan.muadhin}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.adhanCardDescText,
+                            { color: theme.textMuted },
+                          ]}
+                        >
+                          {adhan.description}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.adhanCardMetaText,
+                            { color: theme.textMuted },
+                          ]}
+                        >
+                          {adhan.location} • المدة: {adhan.durationFormatted}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Footer Actions: Set as App Adhan */}
+                    <View
                       style={[
-                        styles.listenBtnText,
-                        {
-                          color: isCurrent ? "#ffffff" : theme.text,
-                          fontFamily: FONTS.amiriBold,
-                        },
+                        styles.adhanCardFooter,
+                        { borderTopColor: theme.border },
                       ]}
                     >
-                      {playing ? "إيقاف" : "استماع"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </>
-    ) : (
-      /* ─── Adhans Audio Section ─── */
-      <View style={styles.adhansSection}>
-        <View style={styles.heroSection}>
-          <View
-            style={[
-              styles.heroBadge,
-              {
-                backgroundColor: isDarkMode ? "#1e1b4b" : "#e0e7ff",
-                borderColor: isDarkMode ? "#4338ca" : "#c7d2fe",
-              },
-            ]}
-          >
-            <Volume2 size={13} color="#6366f1" />
-            <Text
-              style={[
-                styles.heroBadgeText,
-                { color: "#6366f1", fontFamily: FONTS.amiriBold },
-              ]}
-            >
-              أصوات الأذان الحرمين والعالم الإسلامي
-            </Text>
-          </View>
-
-          <Text
-            style={[
-              styles.heroTitle,
-              { color: theme.text, fontFamily: FONTS.amiriBold },
-            ]}
-          >
-            الأذان والتكبيرات الشرعية
-          </Text>
-
-          <Text style={[styles.heroSubtitle, { color: theme.textMuted }]}>
-            مكتبة صوتية شاملة لأصوات الأذان كاملة من الحرم المكي والمسجد النبوي والمسجد الأقصى ونخبة من أعلام المؤذنين، مع إمكانية تعيين أي أذان كتنبيه للصلاة.
-          </Text>
-        </View>
-
-        {/* Adhan Search & Filter */}
-        <View style={styles.filterSection}>
-          <View
-            style={[
-              styles.searchBox,
-              { backgroundColor: theme.card, borderColor: theme.border },
-            ]}
-          >
-            {adhanSearch.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setAdhanSearch("")}
-                style={styles.clearBtn}
-              >
-                <X size={16} color={theme.textMuted} />
-              </TouchableOpacity>
-            )}
-            <TextInput
-              style={[styles.searchInput, { color: theme.text }]}
-              placeholder="ابحث عن مؤذن، مسجد، أو دولة..."
-              placeholderTextColor={theme.textMuted}
-              value={adhanSearch}
-              onChangeText={setAdhanSearch}
-              textAlign="right"
-            />
-            <Search size={18} color={theme.textMuted} />
-          </View>
-
-          {/* Fajr Filter Pill */}
-          <View style={styles.filterPillsRow}>
-            <TouchableOpacity
-              style={[
-                styles.filterPill,
-                {
-                  backgroundColor: !filterFajrAdhans
-                    ? theme.primary
-                    : isDarkMode
-                    ? "#131d2a"
-                    : "#e2e8f0",
-                },
-              ]}
-              onPress={() => setFilterFajrAdhans(false)}
-            >
-              <Text
-                style={[
-                  styles.filterPillText,
-                  {
-                    color: !filterFajrAdhans ? "#ffffff" : theme.textMuted,
-                    fontWeight: !filterFajrAdhans ? "bold" : "500",
-                  },
-                ]}
-              >
-                جميع الأذانات ({toArabicNumber(ADHANS_LIST.length)})
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.filterPill,
-                {
-                  backgroundColor: filterFajrAdhans
-                    ? "#059669"
-                    : isDarkMode
-                    ? "#131d2a"
-                    : "#e2e8f0",
-                },
-              ]}
-              onPress={() => setFilterFajrAdhans(true)}
-            >
-              <Text
-                style={[
-                  styles.filterPillText,
-                  {
-                    color: filterFajrAdhans ? "#ffffff" : theme.textMuted,
-                    fontWeight: filterFajrAdhans ? "bold" : "500",
-                  },
-                ]}
-              >
-                أذان الفجر فقط (مع التثويب)
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Adhans List Cards */}
-        <View style={styles.adhansListContainer}>
-          {filteredAdhans.map((adhan) => {
-            const trackId = `adhan_track_${adhan.id}`;
-            const isCurrent = currentTrack?.id === trackId;
-            const playing = isCurrent && isPlaying;
-            const isSelectedAsDefault =
-              prayerNotifications.sound === adhan.id;
-
-            return (
-              <View
-                key={adhan.id}
-                style={[
-                  styles.adhanFullCard,
-                  {
-                    backgroundColor: isCurrent
-                      ? isDarkMode
-                        ? "#064e3b22"
-                        : "#ecfdf5"
-                      : theme.card,
-                    borderColor: isCurrent ? theme.primary : theme.border,
-                  },
-                ]}
-              >
-                <View style={styles.adhanFullCardTop}>
-                  {/* Play Button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.adhanPlayLargeBtn,
-                      {
-                        backgroundColor: isCurrent
-                          ? theme.primary
-                          : isDarkMode
-                          ? "#1e293b"
-                          : "#f1f5f9",
-                      },
-                    ]}
-                    onPress={() => handlePlayAdhan(adhan)}
-                    activeOpacity={0.8}
-                  >
-                    {playing ? (
-                      <Pause size={20} color="#ffffff" />
-                    ) : (
-                      <Play
-                        size={20}
-                        color={isCurrent ? "#ffffff" : theme.text}
-                        style={{ marginLeft: 3 }}
-                      />
-                    )}
-                  </TouchableOpacity>
-
-                  {/* Info */}
-                  <View style={{ flex: 1, alignItems: "flex-end" }}>
-                    <View style={styles.adhanTitleRow}>
-                      {adhan.badge && (
-                        <View
+                      <TouchableOpacity
+                        style={[
+                          styles.setAsAdhanBtn,
+                          {
+                            backgroundColor: isSelectedAsDefault
+                              ? isDarkMode
+                                ? "#064e3b"
+                                : "#d1fae5"
+                              : "transparent",
+                            borderColor: isSelectedAsDefault
+                              ? theme.primary
+                              : theme.border,
+                          },
+                        ]}
+                        onPress={() => {
+                          setPrayerNotificationConfig({ sound: adhan.id });
+                        }}
+                      >
+                        {isSelectedAsDefault && (
+                          <Check size={14} color={theme.primary} />
+                        )}
+                        <Text
                           style={[
-                            styles.badgeSmall,
+                            styles.setAsAdhanBtnText,
                             {
-                              backgroundColor: adhan.color
-                                ? `${adhan.color}20`
-                                : "rgba(16,185,129,0.15)",
+                              color: isSelectedAsDefault
+                                ? theme.primary
+                                : theme.textMuted,
+                              fontWeight: isSelectedAsDefault
+                                ? "bold"
+                                : "500",
                             },
                           ]}
                         >
-                          <Text
-                            style={[
-                              styles.badgeSmallText,
-                              { color: adhan.color || theme.primary },
-                            ]}
-                          >
-                            {adhan.badge}
-                          </Text>
-                        </View>
-                      )}
-                      <Text
-                        style={[
-                          styles.adhanCardTitleLarge,
-                          {
-                            color: theme.text,
-                            fontFamily: FONTS.amiriBold,
-                          },
-                        ]}
-                      >
-                        {adhan.name}
-                      </Text>
+                          {isSelectedAsDefault
+                            ? "محدد كصوت للأذان في التطبيق"
+                            : "تعيين كصوت الأذان للتنبيهات"}
+                        </Text>
+                        <Bell
+                          size={14}
+                          color={
+                            isSelectedAsDefault
+                              ? theme.primary
+                              : theme.textMuted
+                          }
+                        />
+                      </TouchableOpacity>
                     </View>
-
-                    <Text
-                      style={[
-                        styles.adhanCardMuadhinText,
-                        { color: theme.primary },
-                      ]}
-                    >
-                      {adhan.muadhin}
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.adhanCardDescText,
-                        { color: theme.textMuted },
-                      ]}
-                    >
-                      {adhan.description}
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.adhanCardMetaText,
-                        { color: theme.textMuted },
-                      ]}
-                    >
-                      {adhan.location} • المدة: {adhan.durationFormatted}
-                    </Text>
                   </View>
-                </View>
-
-                {/* Footer Actions: Set as App Adhan */}
-                <View
-                  style={[
-                    styles.adhanCardFooter,
-                    { borderTopColor: theme.border },
-                  ]}
-                >
-                  <TouchableOpacity
-                    style={[
-                      styles.setAsAdhanBtn,
-                      {
-                        backgroundColor: isSelectedAsDefault
-                          ? isDarkMode
-                            ? "#064e3b"
-                            : "#d1fae5"
-                          : "transparent",
-                        borderColor: isSelectedAsDefault
-                          ? theme.primary
-                          : theme.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      setPrayerNotificationConfig({ sound: adhan.id });
-                    }}
-                  >
-                    {isSelectedAsDefault && (
-                      <Check size={14} color={theme.primary} />
-                    )}
-                    <Text
-                      style={[
-                        styles.setAsAdhanBtnText,
-                        {
-                          color: isSelectedAsDefault
-                            ? theme.primary
-                            : theme.textMuted,
-                          fontWeight: isSelectedAsDefault
-                            ? "bold"
-                            : "500",
-                        },
-                      ]}
-                    >
-                      {isSelectedAsDefault
-                        ? "محدد كصوت للأذان في التطبيق"
-                        : "تعيين كصوت الأذان للتنبيهات"}
-                    </Text>
-                    <Bell
-                      size={14}
-                      color={
-                        isSelectedAsDefault
-                          ? theme.primary
-                          : theme.textMuted
-                      }
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    )}
-  </ScrollView>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </ScrollView>
 
       {/* ─── Reciter Selection Modal ─── */}
       <Modal
@@ -1281,13 +1441,19 @@ export const ListenScreen: React.FC = () => {
               );
             }}
           />
+
           {/* Modal Footer */}
           <View style={[styles.modalFooter, { borderTopColor: theme.border }]}>
             <TouchableOpacity
-              style={[styles.closeModalBtn, { backgroundColor: isDarkMode ? "#1e293b" : "#f1f5f9" }]}
+              style={[
+                styles.closeModalBtn,
+                { backgroundColor: isDarkMode ? "#1e293b" : "#f1f5f9" },
+              ]}
               onPress={() => setIsReciterModalOpen(false)}
             >
-              <Text style={[styles.closeModalText, { color: theme.text }]}>إغلاق</Text>
+              <Text style={[styles.closeModalText, { color: theme.text }]}>
+                إغلاق
+              </Text>
             </TouchableOpacity>
             <Text style={[styles.footerNote, { color: theme.textMuted }]}>
               جميع التلاوات مسجلة برواية حفص عن عاصم
@@ -1320,6 +1486,29 @@ const styles = StyleSheet.create({
   },
   navTitle: {
     fontSize: 16,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  topTabsContainer: {
+    flexDirection: "row-reverse",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+    gap: 8,
+  },
+  topTabButton: {
+    flex: 1,
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  topTabButtonText: {
+    fontSize: 11,
   },
   heroSection: {
     paddingHorizontal: 16,
@@ -1383,13 +1572,6 @@ const styles = StyleSheet.create({
     gap: 10,
     flex: 1,
   },
-  reciterAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   reciterAvatarContainer: {
     width: 48,
     height: 48,
@@ -1421,11 +1603,6 @@ const styles = StyleSheet.create({
   },
   heroPillText: {
     fontSize: 11,
-    fontWeight: "bold",
-  },
-  reciterAvatarText: {
-    color: "#ffffff",
-    fontSize: 18,
     fontWeight: "bold",
   },
   reciterBoxInfo: {
@@ -1507,6 +1684,9 @@ const styles = StyleSheet.create({
   },
   moreRecitersText: {
     fontSize: 11,
+  },
+  searchSection: {
+    marginVertical: 4,
   },
   filterSection: {
     paddingHorizontal: 16,
@@ -1624,6 +1804,165 @@ const styles = StyleSheet.create({
   },
   listenBtnText: {
     fontSize: 11,
+  },
+  tabSection: {
+    paddingHorizontal: 16,
+    gap: 12,
+    paddingBottom: 40,
+  },
+  categoryChipsRow: {
+    flexDirection: "row-reverse",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  chipItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 11,
+  },
+  lecturesList: {
+    gap: 12,
+  },
+  lectureCard: {
+    padding: 16,
+    borderRadius: 18,
+    gap: 10,
+    borderWidth: 1,
+  },
+  lectureCardHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  lectureTypeBadge: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 4,
+  },
+  lectureTypeText: {
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  lectureCategoryText: {
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  lectureCardTitle: {
+    fontSize: 15,
+    textAlign: "right",
+    lineHeight: 22,
+  },
+  lectureScholarRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+  },
+  lectureScholarText: {
+    fontSize: 12,
+  },
+  cardDivider: {
+    height: 1,
+    marginVertical: 4,
+  },
+  lectureFooterRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  lectureFooterMeta: {
+    fontSize: 11,
+  },
+  lectureActionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adhansSection: {
+    paddingBottom: 20,
+  },
+  adhansListContainer: {
+    paddingHorizontal: 16,
+    gap: 12,
+    marginTop: 4,
+  },
+  adhanFullCard: {
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  adhanFullCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  adhanPlayLargeBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adhanCardTitleLarge: {
+    fontSize: 15,
+    textAlign: "right",
+  },
+  adhanCardMuadhinText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    marginTop: 3,
+    textAlign: "right",
+  },
+  adhanCardDescText: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+    textAlign: "right",
+  },
+  adhanCardMetaText: {
+    fontSize: 11,
+    marginTop: 4,
+    textAlign: "right",
+  },
+  adhanCardFooter: {
+    paddingTop: 10,
+    borderTopWidth: 1,
+    flexDirection: "row-reverse",
+    justifyContent: "flex-start",
+  },
+  setAsAdhanBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  setAsAdhanBtnText: {
+    fontSize: 11,
+  },
+  adhanTitleRow: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  badgeSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeSmallText: {
+    fontSize: 10,
+    fontWeight: "bold",
   },
   modalContainer: {
     flex: 1,
@@ -1745,105 +2084,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-  },
-  topTabsContainer: {
-    flexDirection: "row-reverse",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 10,
-  },
-  topTabButton: {
-    flex: 1,
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  topTabButtonText: {
-    fontSize: 13,
-  },
-  adhansSection: {
-    paddingBottom: 20,
-  },
-  adhansListContainer: {
-    paddingHorizontal: 16,
-    gap: 12,
-    marginTop: 4,
-  },
-  adhanFullCard: {
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1.5,
-    gap: 12,
-  },
-  adhanFullCardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 14,
-  },
-  adhanPlayLargeBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  adhanCardTitleLarge: {
-    fontSize: 15,
-    textAlign: "right",
-  },
-  adhanCardMuadhinText: {
-    fontSize: 13,
-    fontWeight: "bold",
-    marginTop: 3,
-    textAlign: "right",
-  },
-  adhanCardDescText: {
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 4,
-    textAlign: "right",
-  },
-  adhanCardMetaText: {
-    fontSize: 11,
-    marginTop: 4,
-    textAlign: "right",
-  },
-  adhanCardFooter: {
-    paddingTop: 10,
-    borderTopWidth: 1,
-    flexDirection: "row-reverse",
-    justifyContent: "flex-start",
-  },
-  setAsAdhanBtn: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  setAsAdhanBtnText: {
-    fontSize: 11,
-  },
-  adhanTitleRow: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  badgeSmall: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  badgeSmallText: {
-    fontSize: 10,
-    fontWeight: "bold",
   },
 });
