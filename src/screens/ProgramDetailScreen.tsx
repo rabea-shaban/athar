@@ -7,7 +7,8 @@ import {
   ScrollView,
   Share,
   Linking,
-  Platform,
+  Image,
+  FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -24,11 +25,16 @@ import {
   ExternalLink,
   Sparkles,
   Info,
+  Clock,
+  Tv,
+  ListOrdered,
 } from "lucide-react-native";
+import { Program, Episode } from "../types/content";
 import { Lecture } from "../data/lectures";
 import { useAudioStore } from "../store/audioStore";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme, FONTS } from "../constants/theme";
+import { toArabicNumber } from "../utils/arabic";
 
 export const ProgramDetailScreen: React.FC = () => {
   const route = useRoute<any>();
@@ -37,11 +43,16 @@ export const ProgramDetailScreen: React.FC = () => {
   const { isDarkMode } = usePreferencesStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const { lecture } = (route.params || {}) as { lecture?: Lecture };
+  const { program, lecture } = (route.params || {}) as {
+    program?: Program;
+    lecture?: Lecture;
+  };
 
   const { playTrack, currentTrack, isPlaying, togglePlay } = useAudioStore();
 
-  if (!lecture) {
+  const activeItem = program || lecture;
+
+  if (!activeItem) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.errorBox}>
@@ -59,36 +70,51 @@ export const ProgramDetailScreen: React.FC = () => {
     );
   }
 
-  const isCurrentAudioPlaying =
-    isPlaying && currentTrack?.id === `lecture_${lecture.id}`;
+  const title = program?.title || lecture?.title || "";
+  const presenter = program?.presenter || lecture?.scholar || "";
+  const presenterTitle = program?.presenterTitle || "";
+  const category = program?.category || lecture?.category || "";
+  const description = program?.description || lecture?.description || "";
+  const episodes: Episode[] = program?.episodes || [];
 
-  const handleToggleAudio = () => {
-    if (!lecture.audioUrl) return;
-
-    if (currentTrack?.id === `lecture_${lecture.id}`) {
-      togglePlay();
-    } else {
-      playTrack({
-        id: `lecture_${lecture.id}`,
-        title: lecture.title,
-        subtitle: lecture.scholar,
-        audioUrl: lecture.audioUrl,
-        isLive: false,
-      });
+  const getCoverImage = () => {
+    if (program?.coverImage && program.coverImage.startsWith("http")) {
+      return program.coverImage;
     }
+    if (episodes && episodes[0]?.youtubeId) {
+      return `https://img.youtube.com/vi/${episodes[0].youtubeId}/hqdefault.jpg`;
+    }
+    if (episodes && episodes[0]?.thumb) {
+      return episodes[0].thumb;
+    }
+    return "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=800&q=80";
   };
 
-  const handleOpenVideo = () => {
-    if (lecture.videoUrl) {
-      Linking.openURL(lecture.videoUrl).catch((err) =>
-        console.warn("Failed to open video URL:", err)
+  const coverUri = getCoverImage();
+
+  const handlePlayEpisode = (episode: Episode) => {
+    if (episode.youtubeUrl) {
+      Linking.openURL(episode.youtubeUrl).catch((err) =>
+        console.warn("Failed to open YouTube video:", err)
       );
+    } else if (episode.audioUrl) {
+      const isThisPlaying = isPlaying && currentTrack?.id === episode.id;
+      if (isThisPlaying) {
+        togglePlay();
+      } else {
+        playTrack({
+          id: episode.id,
+          title: episode.title,
+          subtitle: presenter,
+          audioUrl: episode.audioUrl,
+        });
+      }
     }
   };
 
   const handleShare = () => {
     Share.share({
-      message: `استمع وشاهد "${lecture.title}" لـ ${lecture.scholar} عبر تطبيق أَثَر الإسلامي: https://athar-library.vercel.app`,
+      message: `استمع وشاهد "${title}" لـ ${presenter} عبر تطبيق أَثَر الإسلامي: https://athar-library.vercel.app`,
     });
   };
 
@@ -112,8 +138,14 @@ export const ProgramDetailScreen: React.FC = () => {
           <Share2 size={18} color={theme.text} />
         </TouchableOpacity>
 
-        <Text style={[styles.navTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
-          البرامج والشروحات
+        <Text
+          style={[
+            styles.navTitle,
+            { color: theme.text, fontFamily: FONTS.amiriBold },
+          ]}
+          numberOfLines={1}
+        >
+          {title}
         </Text>
 
         <TouchableOpacity
@@ -125,145 +157,125 @@ export const ProgramDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Banner Card */}
-        <View
-          style={[
-            styles.bannerCard,
-            {
-              backgroundColor: isDarkMode ? "#132332" : "#ecfdf5",
-              borderColor: theme.primary,
-            },
-          ]}
-        >
-          <View style={styles.badgeRow}>
-            <View
-              style={[
-                styles.typeBadge,
-                { backgroundColor: theme.primary },
-              ]}
-            >
-              {lecture.type === "فيديو" ? (
-                <Video size={12} color="#ffffff" />
-              ) : (
-                <Headphones size={12} color="#ffffff" />
-              )}
-              <Text style={styles.typeBadgeText}>{lecture.type}</Text>
-            </View>
+        {/* Cover Thumbnail Image Card matching Web */}
+        <View style={styles.coverWrapper}>
+          <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
+          <View style={styles.vignetteOverlay} />
 
-            <View style={styles.categoryBadge}>
-              <Sparkles size={12} color={theme.accentGold} />
-              <Text style={[styles.categoryBadgeText, { color: theme.primary }]}>
-                {lecture.category}
-              </Text>
-            </View>
+          <View style={styles.playlistTypeBadge}>
+            <Tv size={12} color="#ffffff" />
+            <Text style={styles.playlistTypeText}>
+              {program?.playlistType || "سلسلة مرئية"}
+            </Text>
           </View>
 
-          <Text style={[styles.lectureTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
-            {lecture.title}
+          <View style={styles.episodesBadge}>
+            <Text style={styles.episodesBadgeText}>
+              {program?.badge || `${toArabicNumber(episodes.length)} حلقة`}
+            </Text>
+          </View>
+        </View>
+
+        {/* Info Card */}
+        <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.categoryBadgeText, { color: theme.accentGold, fontFamily: FONTS.amiriBold }]}>
+            {category}
           </Text>
 
-          <View style={styles.scholarRow}>
+          <Text style={[styles.programMainTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
+            {title}
+          </Text>
+
+          <View style={styles.presenterRow}>
             <User size={15} color={theme.primary} />
-            <Text style={[styles.scholarName, { color: theme.textMuted }]}>
-              {lecture.scholar}
+            <Text style={[styles.presenterNameText, { color: theme.primary, fontFamily: FONTS.amiriBold }]}>
+              {presenter} {presenterTitle ? `• ${presenterTitle}` : ""}
             </Text>
           </View>
 
-          {/* Action Button: Native Audio Player or Video Player */}
-          {lecture.audioUrl ? (
-            <TouchableOpacity
-              style={[
-                styles.primaryMediaBtn,
-                { backgroundColor: theme.primary },
-              ]}
-              onPress={handleToggleAudio}
-              activeOpacity={0.85}
-            >
-              {isCurrentAudioPlaying ? (
-                <Pause size={18} color="#ffffff" fill="#ffffff" />
-              ) : (
-                <Play size={18} color="#ffffff" fill="#ffffff" />
-              )}
-              <Text style={styles.primaryMediaBtnText}>
-                {isCurrentAudioPlaying
-                  ? "إيقاف مؤقت للتلاوة والشرح"
-                  : "تشغيل الشرح الصوتي المباشر"}
-              </Text>
-            </TouchableOpacity>
-          ) : lecture.videoUrl ? (
-            <TouchableOpacity
-              style={[
-                styles.primaryMediaBtn,
-                { backgroundColor: "#dc2626" },
-              ]}
-              onPress={handleOpenVideo}
-              activeOpacity={0.85}
-            >
-              <Video size={18} color="#ffffff" />
-              <Text style={styles.primaryMediaBtnText}>
-                مشاهدة الحلقة والمرئي على يوتيوب
-              </Text>
-              <ExternalLink size={14} color="#ffffff" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
-
-        {/* Description Section */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <View style={styles.sectionHeaderRow}>
-            <BookOpen size={16} color={theme.primary} />
-            <Text style={[styles.sectionTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
-              نبذة وتفاصيل المنهج العلمي:
-            </Text>
-          </View>
-
-          <Text style={[styles.descriptionParagraph, { color: theme.text, fontFamily: FONTS.amiri }]}>
-            {lecture.description}
+          <Text style={[styles.descriptionText, { color: theme.textSecondary, fontFamily: FONTS.amiri }]}>
+            {description}
           </Text>
         </View>
 
-        {/* Topics Section */}
-        {lecture.topics && lecture.topics.length > 0 && (
-          <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        {/* Episode List Section */}
+        {episodes.length > 0 && (
+          <View style={styles.episodesSection}>
             <View style={styles.sectionHeaderRow}>
-              <Sparkles size={16} color={theme.accentGold} />
+              <ListOrdered size={18} color={theme.primary} />
               <Text style={[styles.sectionTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
-                أبرز محاور وقضايا السلسلة:
+                قائمة الحلقات الكاملة ({toArabicNumber(episodes.length)} حلقة معتمدة)
               </Text>
             </View>
 
-            <View style={styles.listItemsBox}>
-              {lecture.topics.map((topic, idx) => (
-                <View key={idx} style={styles.listItemRow}>
-                  <CheckCircle2 size={16} color={theme.primary} style={{ marginTop: 2 }} />
-                  <Text style={[styles.listItemText, { color: theme.text, fontFamily: FONTS.amiri }]}>
-                    {topic}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
+            <View style={styles.episodesList}>
+              {episodes.map((ep, idx) => {
+                const isThisPlaying = isPlaying && currentTrack?.id === ep.id;
 
-        {/* Benefits Section */}
-        {lecture.benefits && lecture.benefits.length > 0 && (
-          <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <View style={styles.sectionHeaderRow}>
-              <Info size={16} color={theme.primary} />
-              <Text style={[styles.sectionTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
-                الفوائد والعبر الإيمانية المستفادة:
-              </Text>
-            </View>
+                return (
+                  <TouchableOpacity
+                    key={ep.id || idx}
+                    style={[
+                      styles.episodeCard,
+                      {
+                        backgroundColor: isThisPlaying
+                          ? isDarkMode
+                            ? "#064e3b22"
+                            : "#ecfdf5"
+                          : theme.card,
+                        borderColor: isThisPlaying ? theme.primary : theme.border,
+                      },
+                    ]}
+                    onPress={() => handlePlayEpisode(ep)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.episodeCardRight}>
+                      <View
+                        style={[
+                          styles.episodeNumBadge,
+                          { backgroundColor: isDarkMode ? "#172535" : "#f1f5f9" },
+                        ]}
+                      >
+                        <Text style={[styles.episodeNumText, { color: theme.primary }]}>
+                          {toArabicNumber(ep.order || idx + 1)}
+                        </Text>
+                      </View>
 
-            <View style={styles.listItemsBox}>
-              {lecture.benefits.map((benefit, idx) => (
-                <View key={idx} style={styles.listItemRow}>
-                  <View style={[styles.bulletDot, { backgroundColor: theme.accentGold }]} />
-                  <Text style={[styles.listItemText, { color: theme.text, fontFamily: FONTS.amiri }]}>
-                    {benefit}
-                  </Text>
-                </View>
-              ))}
+                      <View style={styles.episodeInfoCol}>
+                        <Text
+                          style={[
+                            styles.episodeTitle,
+                            { color: theme.text, fontFamily: FONTS.amiriBold },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {ep.title}
+                        </Text>
+                        {ep.duration ? (
+                          <Text style={[styles.episodeDuration, { color: theme.textMuted }]}>
+                            المدة: {ep.duration}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.playIconCircle,
+                        { backgroundColor: ep.youtubeUrl ? "#dc2626" : theme.primary },
+                      ]}
+                    >
+                      {ep.youtubeUrl ? (
+                        <Video size={14} color="#ffffff" />
+                      ) : isThisPlaying ? (
+                        <Pause size={14} color="#ffffff" />
+                      ) : (
+                        <Play size={14} color="#ffffff" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         )}
@@ -292,78 +304,95 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   navTitle: {
-    fontSize: 16,
+    fontSize: 15,
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 8,
   },
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
     gap: 16,
   },
-  bannerCard: {
-    padding: 18,
+  coverWrapper: {
+    width: "100%",
+    height: 220,
     borderRadius: 20,
-    borderWidth: 1.5,
-    gap: 12,
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: "#0f172a",
   },
-  badgeRow: {
+  coverImage: {
+    width: "100%",
+    height: "100%",
+  },
+  vignetteOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  playlistTypeBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
     flexDirection: "row-reverse",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  typeBadge: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    gap: 6,
+    gap: 5,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
-  typeBadgeText: {
+  playlistTypeText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  episodesBadge: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    backgroundColor: "#059669",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  episodesBadgeText: {
     color: "#ffffff",
     fontSize: 11,
     fontWeight: "bold",
   },
-  categoryBadge: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    gap: 5,
+  infoCard: {
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 10,
   },
   categoryBadgeText: {
     fontSize: 12,
     fontWeight: "bold",
+    textAlign: "right",
   },
-  lectureTitle: {
-    fontSize: 18,
+  programMainTitle: {
+    fontSize: 19,
     textAlign: "right",
     lineHeight: 28,
   },
-  scholarRow: {
+  presenterRow: {
     flexDirection: "row-reverse",
     alignItems: "center",
     gap: 6,
   },
-  scholarName: {
+  presenterNameText: {
     fontSize: 13,
-    fontWeight: "600",
+    flex: 1,
+    textAlign: "right",
   },
-  primaryMediaBtn: {
-    flexDirection: "row-reverse",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 14,
-    marginTop: 6,
+  descriptionText: {
+    fontSize: 14,
+    lineHeight: 24,
+    textAlign: "right",
   },
-  primaryMediaBtnText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "bold",
-  },
-  sectionCard: {
-    padding: 16,
-    borderRadius: 18,
-    borderWidth: 1,
+  episodesSection: {
     gap: 12,
   },
   sectionHeaderRow: {
@@ -372,32 +401,56 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
   },
-  descriptionParagraph: {
-    fontSize: 14,
-    textAlign: "right",
-    lineHeight: 26,
-  },
-  listItemsBox: {
+  episodesList: {
     gap: 10,
   },
-  listItemRow: {
+  episodeCard: {
     flexDirection: "row-reverse",
-    alignItems: "flex-start",
-    gap: 8,
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
   },
-  listItemText: {
-    fontSize: 13,
+  episodeCardRight: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    gap: 10,
     flex: 1,
-    textAlign: "right",
-    lineHeight: 22,
+    marginLeft: 8,
   },
-  bulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 8,
+  episodeNumBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  episodeNumText: {
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  episodeInfoCol: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  episodeTitle: {
+    fontSize: 13,
+    textAlign: "right",
+    lineHeight: 20,
+  },
+  episodeDuration: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  playIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
   errorBox: {
     flex: 1,

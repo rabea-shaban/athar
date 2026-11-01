@@ -29,7 +29,7 @@ import { LECTURES_DATA, Lecture, LECTURE_CATEGORIES } from "../data/lectures";
 import { Program } from "../types/content";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { useAudioStore } from "../store/audioStore";
-import { lightTheme, darkTheme } from "../constants/theme";
+import { lightTheme, darkTheme, FONTS } from "../constants/theme";
 import { toArabicNumber } from "../utils/arabic";
 
 export const ProgramsScreen: React.FC = () => {
@@ -81,6 +81,20 @@ export const ProgramsScreen: React.FC = () => {
     }
   };
 
+  const getProgramImage = (item: Program) => {
+    if (item.coverImage && item.coverImage.startsWith("http")) {
+      return item.coverImage;
+    }
+    const firstEp = item.episodes && item.episodes[0];
+    if (firstEp && firstEp.youtubeId) {
+      return `https://img.youtube.com/vi/${firstEp.youtubeId}/hqdefault.jpg`;
+    }
+    if (firstEp && firstEp.thumb) {
+      return firstEp.thumb;
+    }
+    return "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=800&q=80";
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Navigation Header */}
@@ -103,7 +117,7 @@ export const ProgramsScreen: React.FC = () => {
         </TouchableOpacity>
 
         <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
+          <Text style={[styles.headerTitle, { color: theme.text, fontFamily: FONTS.amiriBold }]}>
             البرامج والشروحات الإسلامية
           </Text>
           <Text
@@ -136,7 +150,10 @@ export const ProgramsScreen: React.FC = () => {
           <Text
             style={[
               styles.tabText,
-              { color: activeTab === "programs" ? "#ffffff" : theme.textMuted },
+              {
+                color: activeTab === "programs" ? "#ffffff" : theme.textMuted,
+                fontFamily: FONTS.amiriBold,
+              },
             ]}
           >
             البرامج والبودكاست المرئي ({toArabicNumber(PROGRAMS.length)})
@@ -160,7 +177,10 @@ export const ProgramsScreen: React.FC = () => {
           <Text
             style={[
               styles.tabText,
-              { color: activeTab === "lectures" ? "#ffffff" : theme.textMuted },
+              {
+                color: activeTab === "lectures" ? "#ffffff" : theme.textMuted,
+                fontFamily: FONTS.amiriBold,
+              },
             ]}
           >
             الشروحات والدروس ({toArabicNumber(LECTURES_DATA.length)})
@@ -249,79 +269,108 @@ export const ProgramsScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.programCard,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-              onPress={() => navigation.navigate("ProgramDetail", { program: item })}
-              activeOpacity={0.8}
-            >
-              <View style={styles.thumbnailWrapper}>
-                <Image
-                  source={{ uri: item.coverImage }}
-                  style={styles.programImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.playlistTypeBadge}>
-                  <Tv size={12} color="#ffffff" />
-                  <Text style={styles.playlistTypeText}>
-                    {item.playlistType || "سلسلة مرئية"}
-                  </Text>
-                </View>
+          renderItem={({ item }) => {
+            const coverUri = getProgramImage(item);
 
-                {item.badge ? (
-                  <View style={styles.episodesCountBadge}>
-                    <Text style={styles.episodesCountText}>{item.badge}</Text>
-                  </View>
-                ) : null}
-              </View>
+            return (
+              <TouchableOpacity
+                style={[
+                  styles.programCard,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                ]}
+                onPress={() => navigation.navigate("ProgramDetail", { program: item })}
+                activeOpacity={0.85}
+              >
+                <View style={styles.thumbnailWrapper}>
+                  <Image
+                    source={{ uri: coverUri }}
+                    style={styles.programImage}
+                    resizeMode="cover"
+                  />
+                  {/* Dark vignette overlay matching Web */}
+                  <View style={styles.vignetteOverlay} />
 
-              <View style={styles.programBody}>
-                <View style={styles.programCategoryRow}>
-                  <Text style={[styles.programCategory, { color: "#C9A227" }]}>
-                    {item.category}
-                  </Text>
-                  {item.durationPerEpisode ? (
-                    <View style={styles.durationCol}>
-                      <Clock size={12} color={theme.textMuted} />
-                      <Text style={[styles.durationText, { color: theme.textMuted }]}>
-                        {item.durationPerEpisode}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-
-                <Text style={[styles.programTitle, { color: theme.text }]} numberOfLines={2}>
-                  {item.title}
-                </Text>
-
-                <View style={styles.presenterRow}>
-                  <User size={13} color={theme.primary} />
-                  <Text style={[styles.presenterName, { color: theme.primary }]}>
-                    {item.presenter} {item.presenterTitle ? `• ${item.presenterTitle}` : ""}
-                  </Text>
-                </View>
-
-                <Text
-                  style={[styles.programDesc, { color: theme.textSecondary }]}
-                  numberOfLines={2}
-                >
-                  {item.description}
-                </Text>
-
-                <View style={styles.programFooter}>
-                  <View style={styles.actionRow}>
-                    <ChevronLeft size={16} color={theme.primary} />
-                    <Text style={[styles.actionText, { color: theme.primary }]}>
-                      عرض جميع الحلقات ({toArabicNumber(item.episodesCount || item.episodes?.length || 0)})
+                  <View style={styles.playlistTypeBadge}>
+                    <Tv size={12} color="#ffffff" />
+                    <Text style={styles.playlistTypeText}>
+                      {item.playlistType || "سلسلة مرئية"}
                     </Text>
                   </View>
+
+                  <View style={styles.episodesCountBadge}>
+                    <Text style={styles.episodesCountText}>
+                      {item.badge || `${toArabicNumber(item.episodesCount || item.episodes?.length || 0)} حلقة`}
+                    </Text>
+                  </View>
+
+                  {/* Center Play Button Icon matching Web */}
+                  <View style={styles.centerPlayCircle}>
+                    <Play size={20} color="#ffffff" fill="#ffffff" style={{ marginLeft: 2 }} />
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          )}
+
+                <View style={styles.programBody}>
+                  <View style={styles.programCategoryRow}>
+                    <Text style={[styles.programCategory, { color: "#C9A227" }]}>
+                      {item.category}
+                    </Text>
+                    {item.durationPerEpisode ? (
+                      <View style={styles.durationCol}>
+                        <Clock size={12} color={theme.textMuted} />
+                        <Text style={[styles.durationText, { color: theme.textMuted }]}>
+                          {item.durationPerEpisode}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <Text
+                    style={[
+                      styles.programTitle,
+                      { color: theme.text, fontFamily: FONTS.amiriBold },
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {item.title}
+                  </Text>
+
+                  <View style={styles.presenterRow}>
+                    <User size={13} color={theme.primary} />
+                    <Text
+                      style={[
+                        styles.presenterName,
+                        { color: theme.primary, fontFamily: FONTS.amiriBold },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.presenter} {item.presenterTitle ? `• ${item.presenterTitle}` : ""}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={[styles.programDesc, { color: theme.textSecondary, fontFamily: FONTS.amiri }]}
+                    numberOfLines={2}
+                  >
+                    {item.description}
+                  </Text>
+
+                  <View style={styles.programFooter}>
+                    <View style={styles.actionRow}>
+                      <ChevronLeft size={16} color={theme.primary} />
+                      <Text
+                        style={[
+                          styles.actionText,
+                          { color: theme.primary, fontFamily: FONTS.amiriBold },
+                        ]}
+                      >
+                        عرض جميع الحلقات ({toArabicNumber(item.episodesCount || item.episodes?.length || 0)})
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
         />
       ) : (
         <FlatList
@@ -362,7 +411,12 @@ export const ProgramsScreen: React.FC = () => {
                   </Text>
                 </View>
 
-                <Text style={[styles.lectureTitle, { color: theme.text }]}>
+                <Text
+                  style={[
+                    styles.lectureTitle,
+                    { color: theme.text, fontFamily: FONTS.amiriBold },
+                  ]}
+                >
                   {item.title}
                 </Text>
 
@@ -374,7 +428,7 @@ export const ProgramsScreen: React.FC = () => {
                 </View>
 
                 <Text
-                  style={[styles.lectureDesc, { color: theme.textSecondary }]}
+                  style={[styles.lectureDesc, { color: theme.textSecondary, fontFamily: FONTS.amiri }]}
                   numberOfLines={2}
                 >
                   {item.description}
@@ -428,7 +482,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: "bold",
   },
   headerSubtitle: {
     fontSize: 11,
@@ -450,7 +503,6 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 12,
-    fontWeight: "bold",
   },
   searchSection: {
     paddingHorizontal: 16,
@@ -489,34 +541,40 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
-    gap: 14,
+    gap: 16,
   },
   programCard: {
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
     overflow: "hidden",
   },
   thumbnailWrapper: {
     width: "100%",
-    height: 180,
-    backgroundColor: "#1e293b",
+    height: 200,
+    backgroundColor: "#0f172a",
     position: "relative",
   },
   programImage: {
     width: "100%",
     height: "100%",
   },
+  vignetteOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
   playlistTypeBadge: {
     position: "absolute",
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
     flexDirection: "row-reverse",
     alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    gap: 5,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
   },
   playlistTypeText: {
     color: "#ffffff",
@@ -525,17 +583,35 @@ const styles = StyleSheet.create({
   },
   episodesCountBadge: {
     position: "absolute",
-    bottom: 10,
-    right: 10,
-    backgroundColor: "rgba(6, 78, 53, 0.9)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    bottom: 12,
+    right: 12,
+    backgroundColor: "#059669",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
   episodesCountText: {
     color: "#ffffff",
     fontSize: 11,
     fontWeight: "bold",
+  },
+  centerPlayCircle: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginTop: -25,
+    marginLeft: -25,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#d97706",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   programBody: {
     padding: 16,
@@ -560,7 +636,6 @@ const styles = StyleSheet.create({
   },
   programTitle: {
     fontSize: 16,
-    fontWeight: "bold",
     lineHeight: 24,
     textAlign: "right",
     marginBottom: 6,
@@ -573,7 +648,8 @@ const styles = StyleSheet.create({
   },
   presenterName: {
     fontSize: 12,
-    fontWeight: "600",
+    flex: 1,
+    textAlign: "right",
   },
   programDesc: {
     fontSize: 13,
@@ -586,7 +662,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderTopWidth: 1,
-    borderTopColor: "rgba(150, 150, 150, 0.1)",
+    borderTopColor: "rgba(150, 150, 150, 0.15)",
     paddingTop: 10,
   },
   actionRow: {
@@ -596,7 +672,6 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    fontWeight: "bold",
   },
   lectureCard: {
     borderRadius: 18,
@@ -624,7 +699,6 @@ const styles = StyleSheet.create({
   },
   lectureTitle: {
     fontSize: 16,
-    fontWeight: "bold",
     textAlign: "right",
   },
   scholarRow: {
