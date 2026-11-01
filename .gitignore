@@ -36,22 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# local scripts & notes
-playlist_episodes.json
-scrape_playlist_episodes.js
-مراجع جديده/
-*.log
-
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-
-# local scripts & notes
-playlist_episodes.json
-scrape_playlist_episodes.js
-مراجع جديده/
-*.log
-
+# Large Universal APK files (>100MB)
+public/downloads/ATHAR-v2.apk
