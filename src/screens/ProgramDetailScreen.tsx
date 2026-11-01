@@ -8,8 +8,10 @@ import {
   Share,
   Linking,
   Image,
-  FlatList,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
@@ -28,6 +30,7 @@ import {
   Clock,
   Tv,
   ListOrdered,
+  X,
 } from "lucide-react-native";
 import { Program, Episode } from "../types/content";
 import { Lecture } from "../data/lectures";
@@ -35,6 +38,13 @@ import { useAudioStore } from "../store/audioStore";
 import { usePreferencesStore } from "../store/preferencesStore";
 import { lightTheme, darkTheme, FONTS } from "../constants/theme";
 import { toArabicNumber } from "../utils/arabic";
+
+function extractYouTubeId(url?: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+}
 
 export const ProgramDetailScreen: React.FC = () => {
   const route = useRoute<any>();
@@ -49,6 +59,11 @@ export const ProgramDetailScreen: React.FC = () => {
   };
 
   const { playTrack, currentTrack, isPlaying, togglePlay } = useAudioStore();
+
+  const [activeVideo, setActiveVideo] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const activeItem = program || lecture;
 
@@ -84,8 +99,9 @@ export const ProgramDetailScreen: React.FC = () => {
     if (episodes && episodes[0]?.youtubeId) {
       return `https://img.youtube.com/vi/${episodes[0].youtubeId}/hqdefault.jpg`;
     }
-    if (episodes && episodes[0]?.thumb) {
-      return episodes[0].thumb;
+    if (lecture?.videoUrl) {
+      const vid = extractYouTubeId(lecture.videoUrl);
+      if (vid) return `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
     }
     return "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=800&q=80";
   };
@@ -93,10 +109,9 @@ export const ProgramDetailScreen: React.FC = () => {
   const coverUri = getCoverImage();
 
   const handlePlayEpisode = (episode: Episode) => {
-    if (episode.youtubeUrl) {
-      Linking.openURL(episode.youtubeUrl).catch((err) =>
-        console.warn("Failed to open YouTube video:", err)
-      );
+    const youtubeId = episode.youtubeId || extractYouTubeId(episode.youtubeUrl);
+    if (youtubeId) {
+      setActiveVideo({ id: youtubeId, title: episode.title });
     } else if (episode.audioUrl) {
       const isThisPlaying = isPlaying && currentTrack?.id === episode.id;
       if (isThisPlaying) {
@@ -108,6 +123,17 @@ export const ProgramDetailScreen: React.FC = () => {
           subtitle: presenter,
           audioUrl: episode.audioUrl,
         });
+      }
+    }
+  };
+
+  const handlePlayLectureVideo = () => {
+    if (lecture?.videoUrl) {
+      const youtubeId = extractYouTubeId(lecture.videoUrl);
+      if (youtubeId) {
+        setActiveVideo({ id: youtubeId, title: lecture.title });
+      } else {
+        Linking.openURL(lecture.videoUrl);
       }
     }
   };
@@ -158,23 +184,38 @@ export const ProgramDetailScreen: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Cover Thumbnail Image Card matching Web */}
-        <View style={styles.coverWrapper}>
+        <TouchableOpacity
+          style={styles.coverWrapper}
+          onPress={() => {
+            if (episodes && episodes[0]) {
+              handlePlayEpisode(episodes[0]);
+            } else if (lecture?.videoUrl) {
+              handlePlayLectureVideo();
+            }
+          }}
+          activeOpacity={0.9}
+        >
           <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
           <View style={styles.vignetteOverlay} />
 
           <View style={styles.playlistTypeBadge}>
             <Tv size={12} color="#ffffff" />
             <Text style={styles.playlistTypeText}>
-              {program?.playlistType || "سلسلة مرئية"}
+              {program?.playlistType || (lecture?.type === "فيديو" ? "سلسلة مرئية" : "شرح صوتي")}
             </Text>
           </View>
 
           <View style={styles.episodesBadge}>
             <Text style={styles.episodesBadgeText}>
-              {program?.badge || `${toArabicNumber(episodes.length)} حلقة`}
+              {program?.badge || `${toArabicNumber(episodes.length || 1)} حلقة`}
             </Text>
           </View>
-        </View>
+
+          {/* Center Play Button Icon matching Web */}
+          <View style={styles.centerPlayCircle}>
+            <Play size={22} color="#ffffff" fill="#ffffff" style={{ marginLeft: 2 }} />
+          </View>
+        </TouchableOpacity>
 
         {/* Info Card */}
         <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -188,7 +229,10 @@ export const ProgramDetailScreen: React.FC = () => {
 
           <View style={styles.presenterRow}>
             <User size={15} color={theme.primary} />
-            <Text style={[styles.presenterNameText, { color: theme.primary, fontFamily: FONTS.amiriBold }]}>
+            <Text
+              style={[styles.presenterNameText, { color: theme.primary, fontFamily: FONTS.amiriBold }]}
+              numberOfLines={1}
+            >
               {presenter} {presenterTitle ? `• ${presenterTitle}` : ""}
             </Text>
           </View>
@@ -196,6 +240,19 @@ export const ProgramDetailScreen: React.FC = () => {
           <Text style={[styles.descriptionText, { color: theme.textSecondary, fontFamily: FONTS.amiri }]}>
             {description}
           </Text>
+
+          {lecture?.videoUrl && (
+            <TouchableOpacity
+              style={[styles.inAppVideoPlayBtn, { backgroundColor: "#dc2626" }]}
+              onPress={handlePlayLectureVideo}
+              activeOpacity={0.85}
+            >
+              <Video size={18} color="#ffffff" />
+              <Text style={styles.inAppVideoPlayBtnText}>
+                مشاهدة الشرح المرئي مباشرة داخل التطبيق
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Episode List Section */}
@@ -262,10 +319,10 @@ export const ProgramDetailScreen: React.FC = () => {
                     <View
                       style={[
                         styles.playIconCircle,
-                        { backgroundColor: ep.youtubeUrl ? "#dc2626" : theme.primary },
+                        { backgroundColor: ep.youtubeId || ep.youtubeUrl ? "#dc2626" : theme.primary },
                       ]}
                     >
-                      {ep.youtubeUrl ? (
+                      {ep.youtubeId || ep.youtubeUrl ? (
                         <Video size={14} color="#ffffff" />
                       ) : isThisPlaying ? (
                         <Pause size={14} color="#ffffff" />
@@ -280,6 +337,70 @@ export const ProgramDetailScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* ─── Embedded Native In-App Video Player Modal ─── */}
+      <Modal
+        visible={!!activeVideo}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setActiveVideo(null)}
+      >
+        <View style={styles.videoModalContainer}>
+          {/* Header */}
+          <View style={[styles.videoModalHeader, { paddingTop: insets.top + 8 }]}>
+            <TouchableOpacity
+              onPress={() => setActiveVideo(null)}
+              style={styles.closeVideoBtn}
+            >
+              <X size={22} color="#ffffff" />
+            </TouchableOpacity>
+
+            <Text style={styles.videoModalTitle} numberOfLines={1}>
+              {activeVideo?.title || "مشاهدة الحلقة"}
+            </Text>
+
+            <View style={{ width: 36 }} />
+          </View>
+
+          {/* Embedded Native WebView Video Player */}
+          {activeVideo?.id ? (
+            <View style={styles.webViewContainer}>
+              <WebView
+                style={{ flex: 1, backgroundColor: "#000000" }}
+                javaScriptEnabled
+                domStorageEnabled
+                allowsFullscreenVideo
+                source={{
+                  html: `
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                        <style>
+                          * { box-sizing: border-box; }
+                          body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+                          iframe { width: 100%; height: 100%; border: none; }
+                        </style>
+                      </head>
+                      <body>
+                        <iframe
+                          src="https://www.youtube-nocookie.com/embed/${activeVideo.id}?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowfullscreen
+                        ></iframe>
+                      </body>
+                    </html>
+                  `,
+                }}
+              />
+            </View>
+          ) : (
+            <View style={styles.videoLoadingBox}>
+              <ActivityIndicator size="large" color="#10b981" />
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -361,6 +482,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "bold",
   },
+  centerPlayCircle: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginTop: -25,
+    marginLeft: -25,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#d97706",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
   infoCard: {
     padding: 16,
     borderRadius: 20,
@@ -391,6 +530,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 24,
     textAlign: "right",
+  },
+  inAppVideoPlayBtn: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  inAppVideoPlayBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "bold",
   },
   episodesSection: {
     gap: 12,
@@ -449,6 +602,40 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  videoModalContainer: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
+  videoModalHeader: {
+    flexDirection: "row-reverse",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: "#090d16",
+    borderBottomWidth: 1,
+    borderBottomColor: "#1e293b",
+  },
+  closeVideoBtn: {
+    padding: 6,
+  },
+  videoModalTitle: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 8,
+  },
+  webViewContainer: {
+    flex: 1,
+    backgroundColor: "#000000",
+  },
+  videoLoadingBox: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
