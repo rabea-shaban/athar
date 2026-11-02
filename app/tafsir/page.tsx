@@ -26,7 +26,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Container from "@/components/layout/Container";
 import QuranTextRenderer, { toArabicNumerals } from "@/components/quran/QuranTextRenderer";
-import { getSurahList, getTafsir, type Surah, type TafsirAyah } from "@/lib/api/islamic";
+import {
+  getSurahList,
+  getTafsir,
+  getAyahTafsir,
+  AVAILABLE_TAFSIRS,
+  type Surah,
+  type TafsirAyah,
+  type TafsirInfo,
+} from "@/lib/api/islamic";
 import { useAudioStore } from "@/store/audioStore";
 import { cn, toArabicNumber } from "@/lib/utils";
 
@@ -49,6 +57,9 @@ function TafsirContent() {
   const [loadingSurahs, setLoadingSurahs] = useState(true);
 
   // Filters
+  const [selectedTafsir, setSelectedTafsir] = useState<TafsirInfo>(AVAILABLE_TAFSIRS[0]);
+  const [customTafsirs, setCustomTafsirs] = useState<Record<string, string>>({});
+  const [loadingCustomTafsir, setLoadingCustomTafsir] = useState(false);
   const [surahSearchQuery, setSurahSearchQuery] = useState("");
   const [revelationFilter, setRevelationFilter] = useState<"ALL" | "Meccan" | "Medinan">("ALL");
   const [ayahSearchQuery, setAyahSearchQuery] = useState("");
@@ -86,6 +97,44 @@ function TafsirContent() {
       .finally(() => setLoadingTafsir(false));
   }, [selectedSurahNumber]);
 
+  // Load custom scholarly Tafsir if not Muyassar
+  useEffect(() => {
+    if (selectedTafsir.id === 16 || tafsir.length === 0) return;
+    let active = true;
+    setLoadingCustomTafsir(true);
+
+    const fetchAllTafsirs = async () => {
+      const needed = tafsir.filter(
+        (item) => !customTafsirs[`${selectedTafsir.id}_${selectedSurahNumber}_${item.aya}`]
+      );
+      // Fetch in chunks of 5
+      for (let i = 0; i < needed.length; i += 5) {
+        if (!active) break;
+        const chunk = needed.slice(i, i + 5);
+        await Promise.all(
+          chunk.map(async (item) => {
+            const res = await getAyahTafsir(selectedSurahNumber, item.aya, selectedTafsir.id);
+            const clean = res.text.replace(/<[^>]*>?/gm, "").trim();
+            if (active) {
+              setCustomTafsirs((prev) => ({
+                ...prev,
+                [`${selectedTafsir.id}_${selectedSurahNumber}_${item.aya}`]:
+                  clean || "التفسير غير متوفر لهذه الآية في هذه الطبعة.",
+              }));
+            }
+          })
+        );
+      }
+      if (active) setLoadingCustomTafsir(false);
+    };
+
+    fetchAllTafsirs();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedTafsir, selectedSurahNumber, tafsir]);
+
   const currentSurah = useMemo(() => {
     return surahs.find((s) => s.number === selectedSurahNumber) || null;
   }, [surahs, selectedSurahNumber]);
@@ -118,8 +167,18 @@ function TafsirContent() {
     );
   }, [tafsir, ayahSearchQuery]);
 
+  const getAyahTafsirContent = (item: TafsirAyah) => {
+    if (selectedTafsir.id === 16) return item.translation;
+    const cacheKey = `${selectedTafsir.id}_${selectedSurahNumber}_${item.aya}`;
+    return (
+      customTafsirs[cacheKey] ||
+      (loadingCustomTafsir ? "جاري جلب نص التفسير المعتمد من المصدر..." : item.translation)
+    );
+  };
+
   const handleCopy = (item: TafsirAyah) => {
-    const text = `﴿${item.arabic_text}﴾ [سورة ${cleanSurahName(currentSurah?.name || "")}، آية ${item.aya}]\n\nالتفسير الميسر:\n${item.translation}\n\n— عبر منصة أَثَر للمعرفة الإسلامية`;
+    const tafsirText = getAyahTafsirContent(item);
+    const text = `﴿${item.arabic_text}﴾ [سورة ${cleanSurahName(currentSurah?.name || "")}، آية ${item.aya}]\n\n${selectedTafsir.name} (${selectedTafsir.author}):\n${tafsirText}\n\n— عبر منصة أَثَر للمعرفة الإسلامية`;
     navigator.clipboard.writeText(text).then(() => {
       setCopiedAyah(item.aya);
       setTimeout(() => setCopiedAyah(null), 2000);
@@ -127,7 +186,8 @@ function TafsirContent() {
   };
 
   const handleShare = (item: TafsirAyah) => {
-    const text = `﴿${item.arabic_text}﴾ [سورة ${cleanSurahName(currentSurah?.name || "")}، آية ${item.aya}]\n\nالتفسير الميسر:\n${item.translation}\n\n— عبر منصة أَثَر للمعرفة الإسلامية`;
+    const tafsirText = getAyahTafsirContent(item);
+    const text = `﴿${item.arabic_text}﴾ [سورة ${cleanSurahName(currentSurah?.name || "")}، آية ${item.aya}]\n\n${selectedTafsir.name}:\n${tafsirText}\n\n— عبر منصة أَثَر للمعرفة الإسلامية`;
     navigator.share?.({ text }).catch(() => {});
   };
 
@@ -163,14 +223,36 @@ function TafsirContent() {
           { label: "التفسير وعلوم القرآن" },
         ]}
         title="تفسير القرآن الكريم"
-        subtitle="بيان معاني الآيات الكريمة وإيضاح دلالاتها بأسلوب ميسر وموجز من «التفسير الميسر» المعتمد لنخبة من كبار علماء التفسير."
+        subtitle="تصفح وابحث في أعظم كتب التفسير المعتمدة لأهل السنة والجماعة، مع إمكانية التبديل الفوري بين التفاسير والاستماع لآيات الذكر الحكيم."
         badges={[
-          { label: "التفسير الميسر المعتمد", icon: BookOpen, variant: "emerald" },
-          { label: "١١٤ سورة مباركة", icon: Layers, variant: "gold" },
+          { label: selectedTafsir.name, icon: BookOpen, variant: "gold" },
+          { label: "١١٤ سورة مباركة", icon: Layers, variant: "emerald" },
           { label: "استماع فوري ومطابقة الآيات", icon: Volume2, variant: "default" },
         ]}
         theme="emerald"
-      />
+      >
+        {/* Tafsir Selection Pills */}
+        <div className="flex items-center justify-center gap-2 flex-wrap max-w-4xl mx-auto pt-3">
+          {AVAILABLE_TAFSIRS.map((t) => {
+            const isSelected = selectedTafsir.id === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setSelectedTafsir(t)}
+                className={cn(
+                  "text-xs sm:text-sm px-3.5 py-2 rounded-2xl border transition-all duration-200 font-arabic flex items-center gap-2 shadow-xs cursor-pointer",
+                  isSelected
+                    ? "bg-amber-400 text-slate-950 border-amber-300 font-bold scale-[1.03] shadow-md ring-2 ring-amber-300/40"
+                    : "bg-white/10 hover:bg-white/15 text-white/90 border border-white/15"
+                )}
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>{t.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </PageHero>
 
       {/* 2. Main Two-Column Layout */}
       <Container size="2xl">
@@ -576,16 +658,19 @@ function TafsirContent() {
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="w-2 h-2 rounded-full bg-[var(--athar-green)]" />
                         <h4 className="text-xs font-bold text-[var(--athar-green)] font-arabic">
-                          التفسير الميسر:
+                          {selectedTafsir.name}:
                         </h4>
+                        <span className="text-[11px] text-muted-foreground font-arabic hidden sm:inline">
+                          ({selectedTafsir.author})
+                        </span>
                       </div>
                       <p
                         className={cn(
-                          "text-foreground/90 font-arabic leading-loose select-text",
+                          "text-foreground/90 font-arabic leading-loose select-text whitespace-pre-line",
                           FONT_CLASSES[tafsirFontSize]
                         )}
                       >
-                        {item.translation}
+                        {getAyahTafsirContent(item)}
                       </p>
                     </div>
                   </article>

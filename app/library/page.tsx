@@ -18,13 +18,17 @@ import {
   Filter,
   Flame,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { BOOKS, CATEGORIES, Book, RightsStatus } from "@/data/books";
 import Container from "@/components/layout/Container";
 import PageHero from "@/components/layout/PageHero";
 import BookCard from "@/components/books/BookCard";
 import BookReaderModal from "@/components/books/BookReaderModal";
+import { getIslamHouseBooks, type IslamHouseBook } from "@/lib/api/islamic";
 import { toArabicNumber, cn } from "@/lib/utils";
 
 interface BookProgressData {
@@ -37,19 +41,38 @@ interface BookProgressData {
 }
 
 export default function LibraryPage() {
-  const [activeTab, setActiveTab] = useState<"catalog" | "my-library">("catalog");
+  const [activeTab, setActiveTab] = useState<"catalog" | "islamhouse" | "my-library">("catalog");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [rightsFilter, setRightsFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"featured" | "pagesAsc" | "pagesDesc" | "title" | "downloadable">("featured");
   
+  // IslamHouse Digital Library state
+  const [islamHouseBooks, setIslamHouseBooks] = useState<IslamHouseBook[]>([]);
+  const [islamHouseLoading, setIslamHouseLoading] = useState(false);
+  const [islamHousePage, setIslamHousePage] = useState(1);
+  const [islamHouseTotal, setIslamHouseTotal] = useState(0);
+
   // Local storage state
   const [savedBooks, setSavedBooks] = useState<string[]>([]);
   const [readingProgress, setReadingProgress] = useState<BookProgressData>({});
   
   // Active reading modal
   const [activeReaderBook, setActiveReaderBook] = useState<Book | null>(null);
+
+  // Load IslamHouse books when tab is active
+  useEffect(() => {
+    if (activeTab !== "islamhouse") return;
+    setIslamHouseLoading(true);
+    getIslamHouseBooks(islamHousePage, 24)
+      .then((res) => {
+        setIslamHouseBooks(res.books || []);
+        setIslamHouseTotal(res.total || 0);
+      })
+      .catch(() => setIslamHouseBooks([]))
+      .finally(() => setIslamHouseLoading(false));
+  }, [activeTab, islamHousePage]);
 
   // Load saved bookmarks & progress from localStorage
   useEffect(() => {
@@ -169,6 +192,7 @@ export default function LibraryPage() {
         ]}
         tabs={[
           { id: "catalog", label: "المكتبة الشاملة", icon: Library, count: toArabicNumber(BOOKS.length) },
+          { id: "islamhouse", label: "المكتبة الرقمية الموثقة (IslamHouse)", icon: Scroll, count: islamHouseTotal > 0 ? toArabicNumber(islamHouseTotal) : "PDF" },
           { id: "my-library", label: "مكتبتي وسجل القراءة", icon: BookmarkCheck, count: toArabicNumber(savedBooks.length + inProgressSlugs.length) },
         ]}
         activeTab={activeTab}
@@ -352,7 +376,122 @@ export default function LibraryPage() {
         )}
 
         {/* ─── Books Grid ─── */}
-        {filteredBooks.length === 0 ? (
+        {activeTab === "islamhouse" ? (
+          <div className="space-y-6">
+            {/* IslamHouse Banner */}
+            <div className="p-6 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--athar-green)] text-white flex items-center justify-center font-bold shadow-sm">
+                  <Scroll className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold font-arabic text-foreground">
+                    المكتبة الرقمية الموثقة — دار الإسلام (IslamHouse)
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-arabic">
+                    كتب ومصنفات إسلامية موثقة من إعداد نخبة من العلماء، متاحة للتحميل المباشر بصيغة PDF مجاناً.
+                  </p>
+                </div>
+              </div>
+              {islamHouseTotal > 0 && (
+                <span className="px-3.5 py-1.5 rounded-xl bg-background border border-border/80 text-xs font-arabic font-medium">
+                  إجمالي المصنفات: <strong className="text-[var(--athar-green)]">{toArabicNumber(islamHouseTotal)}</strong>
+                </span>
+              )}
+            </div>
+
+            {islamHouseLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-48 rounded-2xl bg-card border border-border/70 animate-pulse" />
+                ))}
+              </div>
+            ) : islamHouseBooks.length === 0 ? (
+              <div className="text-center py-16 bg-card rounded-3xl border border-dashed border-border/80 p-8 space-y-3">
+                <BookOpen className="w-12 h-12 text-muted-foreground/40 mx-auto" />
+                <h3 className="text-lg font-bold font-arabic text-foreground">لا توجد كتب متاحة حالياً</h3>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {islamHouseBooks.map((b) => (
+                    <div
+                      key={b.id}
+                      className="p-5 rounded-2xl bg-card border border-border/80 hover:border-[var(--athar-green)]/40 transition-all flex flex-col justify-between gap-4 shadow-xs"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-bold text-foreground font-arabic text-base line-clamp-2">
+                            {b.title}
+                          </h4>
+                          {b.fileSize && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-muted text-muted-foreground shrink-0">
+                              {b.fileSize}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[var(--athar-green)] font-arabic font-medium">
+                          {b.author}
+                        </p>
+                        {b.description && (
+                          <p className="text-xs text-muted-foreground font-arabic line-clamp-3 leading-relaxed">
+                            {b.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-border/50 flex items-center justify-between gap-2">
+                        {b.downloadUrl ? (
+                          <a
+                            href={b.downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 py-2 px-3 rounded-xl bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white text-xs font-bold font-arabic flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span>تحميل الكتاب (PDF)</span>
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground font-arabic">التحميل غير متوفر</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* IslamHouse Pagination */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/80">
+                  <button
+                    onClick={() => {
+                      setIslamHousePage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 300, behavior: "smooth" });
+                    }}
+                    disabled={islamHousePage <= 1}
+                    className="px-4 py-2 rounded-xl border border-border/80 text-xs font-arabic disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span>السابق</span>
+                  </button>
+
+                  <span className="text-xs text-muted-foreground font-arabic">
+                    صفحة <strong className="text-foreground">{toArabicNumber(islamHousePage)}</strong>
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      setIslamHousePage((p) => p + 1);
+                      window.scrollTo({ top: 300, behavior: "smooth" });
+                    }}
+                    className="px-4 py-2 rounded-xl border border-border/80 text-xs font-arabic flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>التالي</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : filteredBooks.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-3xl border border-dashed border-border/80 p-8 space-y-3">
             <BookOpen className="w-12 h-12 text-muted-foreground/40 mx-auto" />
             <h3 className="text-lg font-bold font-arabic text-foreground">لم يتم العثور على كتب مطابقة</h3>

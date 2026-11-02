@@ -6,6 +6,8 @@ const AZKAR_API =
   "https://raw.githubusercontent.com/nawafalqari/azkar-api/56df51279ab6eb86dc2f6202c7de26c8948331c1/azkar.json";
 const RADIO_API = "https://data-rosy.vercel.app/radio.json";
 const QURAN_AUDIO_API = "https://api.quran.com/api/v4";
+const HADEETHENC_API = "https://hadeethenc.com/api/v1";
+const ISLAMHOUSE_API = "https://api3.islamhouse.com/v3/paV29H2gm56kvLPy/main";
 
 function cleanZikrText(text: string): string {
   const quoted = text.match(/"([^"]+)"/);
@@ -506,4 +508,220 @@ export interface QuranSearchMatch {
 export interface QuranSearchResult {
   count: number;
   matches: QuranSearchMatch[];
+}
+
+// ----------------------------------------------------
+// Multiple Tafsirs Integration
+// ----------------------------------------------------
+
+export interface TafsirInfo {
+  id: number;
+  name: string;
+  author: string;
+  slug: string;
+}
+
+export const AVAILABLE_TAFSIRS: TafsirInfo[] = [
+  { id: 16, name: "التفسير الميسر", author: "مجمع الملك فهد لطباعة المصحف الشريف", slug: "muyassar" },
+  { id: 91, name: "تفسير السعدي", author: "الشيخ عبد الرحمن بن ناصر السعدي", slug: "saadi" },
+  { id: 14, name: "تفسير ابن كثير", author: "الحافظ عماد الدين ابن كثير", slug: "ibn-kathir" },
+  { id: 15, name: "تفسير الطبري", author: "الإمام محمد بن جرير الطبري", slug: "tabari" },
+  { id: 90, name: "تفسير القرطبي", author: "الإمام شمس الدين القرطبي", slug: "qurtubi" },
+  { id: 94, name: "تفسير البغوي", author: "الإمام الحسين بن مسعود البغوي", slug: "baghawi" },
+  { id: 93, name: "التفسير الوسيط", author: "الإمام محمد سيد طنطاوي", slug: "wasit" },
+];
+
+export async function getAyahTafsir(
+  surahNumber: number,
+  ayahNumber: number,
+  tafsirId = 16
+): Promise<{ text: string; name: string; author: string }> {
+  try {
+    const res = await fetch(
+      `${QURAN_AUDIO_API}/tafsirs/${tafsirId}/by_ayah/${surahNumber}:${ayahNumber}`
+    );
+    if (!res.ok) throw new Error("Failed to fetch tafsir");
+    const data = await res.json();
+    const tafsirObj = data?.tafsir;
+    return {
+      text: tafsirObj?.text || "",
+      name: tafsirObj?.resource_name || "",
+      author: tafsirObj?.translated_name?.name || "",
+    };
+  } catch (err) {
+    console.error("Error fetching ayah tafsir:", err);
+    return { text: "", name: "", author: "" };
+  }
+}
+
+// ----------------------------------------------------
+// Word-by-Word Morphology & Pronunciation
+// ----------------------------------------------------
+
+export interface QuranWord {
+  id: number;
+  position: number;
+  audioUrl: string | null;
+  charType: "word" | "end";
+  textUthmani: string;
+  location: string;
+  translation: string;
+  transliteration: string;
+}
+
+export async function getAyahWords(
+  surahNumber: number,
+  ayahNumber: number
+): Promise<QuranWord[]> {
+  try {
+    const res = await fetch(
+      `${QURAN_AUDIO_API}/verses/by_key/${surahNumber}:${ayahNumber}?words=true&word_fields=text_uthmani,location,translation,transliteration`
+    );
+    if (!res.ok) throw new Error("Failed to fetch ayah words");
+    const data = await res.json();
+    const words = data?.verse?.words || [];
+    return words.map((w: any) => ({
+      id: w.id,
+      position: w.position,
+      audioUrl: w.audio_url ? `https://audio.qurancdn.com/${w.audio_url}` : null,
+      charType: w.char_type_name,
+      textUthmani: w.text_uthmani || w.text,
+      location: w.location,
+      translation: w.translation?.text || "",
+      transliteration: w.transliteration?.text || "",
+    }));
+  } catch (err) {
+    console.error("Error fetching ayah words:", err);
+    return [];
+  }
+}
+
+// ----------------------------------------------------
+// HadeethEnc Authentic Encyclopedia Integration
+// ----------------------------------------------------
+
+export interface HadeethCategory {
+  id: string;
+  title: string;
+  hadeeths_count: string;
+  parent_id?: string;
+}
+
+export interface HadeethDetail {
+  id: string;
+  title: string;
+  hadeeth: string;
+  attribution: string;
+  grade: string;
+  explanation: string;
+  hints: string[];
+  words_meanings: { word: string; meaning: string }[];
+  reference: string;
+  categories?: string[];
+}
+
+export interface HadeethSearchItem {
+  id: string;
+  title: string;
+  hadith_text: string;
+  hadith_text_highlights?: string;
+}
+
+export async function getHadeethCategories(): Promise<HadeethCategory[]> {
+  try {
+    const res = await fetch(`${HADEETHENC_API}/categories/roots/?language=ar`);
+    if (!res.ok) throw new Error("Failed to fetch hadeeth categories");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching hadeeth categories:", err);
+    return [];
+  }
+}
+
+export async function getHadeethsByCategory(
+  categoryId: string | number,
+  page = 1,
+  perPage = 20
+): Promise<{ data: { id: string; title: string }[]; meta: { current_page: string; last_page: number; total_items: number } }> {
+  try {
+    const res = await fetch(
+      `${HADEETHENC_API}/hadeeths/list/?language=ar&category_id=${categoryId}&page=${page}&per_page=${perPage}`
+    );
+    if (!res.ok) throw new Error("Failed to fetch hadeeths list");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching hadeeths list:", err);
+    return { data: [], meta: { current_page: "1", last_page: 1, total_items: 0 } };
+  }
+}
+
+export async function getHadeethDetail(id: string | number): Promise<HadeethDetail | null> {
+  try {
+    const res = await fetch(`${HADEETHENC_API}/hadeeths/one/?language=ar&id=${id}`);
+    if (!res.ok) throw new Error("Failed to fetch hadeeth detail");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching hadeeth detail:", err);
+    return null;
+  }
+}
+
+export async function searchHadeethEnc(phrase: string): Promise<HadeethSearchItem[]> {
+  try {
+    const res = await fetch(
+      `${HADEETHENC_API}/hadeeths/search/?language=ar&phrase=${encodeURIComponent(phrase)}`
+    );
+    if (!res.ok) throw new Error("Failed to search hadeeths");
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Error searching hadeeths:", err);
+    return [];
+  }
+}
+
+// ----------------------------------------------------
+// IslamHouse Authentic Digital Library Integration
+// ----------------------------------------------------
+
+export interface IslamHouseBook {
+  id: number;
+  title: string;
+  author: string;
+  description: string;
+  downloadUrl?: string;
+  fileSize?: string;
+}
+
+export async function getIslamHouseBooks(
+  page = 1,
+  limit = 20
+): Promise<{ books: IslamHouseBook[]; total: number }> {
+  try {
+    const res = await fetch(`${ISLAMHOUSE_API}/books/ar/ar/${page}/${limit}/json`);
+    if (!res.ok) throw new Error("Failed to fetch IslamHouse books");
+    const json = await res.json();
+    const data = json.data || [];
+    const books: IslamHouseBook[] = data.map((b: any) => {
+      const pdfAttachment = b.attachments?.find(
+        (a: any) => a.extension_type?.toUpperCase() === "PDF" || a.url?.endsWith(".pdf")
+      ) || b.attachments?.[0];
+      const authorObj = b.prepared_by?.[0];
+      return {
+        id: b.id,
+        title: b.title,
+        author: authorObj?.title || "نخبة من العلماء",
+        description: b.description || b.full_description || "",
+        downloadUrl: pdfAttachment?.url,
+        fileSize: pdfAttachment?.size,
+      };
+    });
+    return {
+      books,
+      total: json.total_items || books.length,
+    };
+  } catch (err) {
+    console.error("Error fetching IslamHouse books:", err);
+    return { books: [], total: 0 };
+  }
 }

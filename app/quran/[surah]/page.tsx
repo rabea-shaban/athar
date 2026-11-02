@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import {
   Copy, Share2, Bookmark, Play, Pause, ChevronRight, ChevronLeft,
   BookOpen, AlignJustify, BookMarked, Minus, Plus, Volume2, BookmarkCheck,
-  Headphones, ChevronDown, User,
+  Headphones, ChevronDown, User, Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,16 @@ import {
   getSurah,
   getSurahList,
   getTafsir,
+  getAyahTafsir,
+  getAyahWords,
   getAyahAudioUrl,
   QURAN_RECITERS,
+  AVAILABLE_TAFSIRS,
   type QuranReciter,
   type SurahDetail,
   type TafsirAyah,
+  type QuranWord,
+  type TafsirInfo,
 } from "@/lib/api/islamic";
 import { useAudioStore } from "@/store/audioStore";
 import { useReadingStore } from "@/store/readingStore";
@@ -59,6 +64,15 @@ export default function SurahPage() {
   const [nextSurah, setNextSurah] = useState<{ name: string } | null>(null);
   const [tafsir, setTafsir] = useState<TafsirAyah[]>([]);
   const [openTafsir, setOpenTafsir] = useState<number | null>(null);
+  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(16);
+  const [customAyahTafsir, setCustomAyahTafsir] = useState<Record<string, string>>({});
+  const [loadingAyahTafsir, setLoadingAyahTafsir] = useState(false);
+
+  // Word-by-Word Morphology state
+  const [openWbwAyah, setOpenWbwAyah] = useState<number | null>(null);
+  const [ayahWordsCache, setAyahWordsCache] = useState<Record<number, QuranWord[]>>({});
+  const [loadingWords, setLoadingWords] = useState(false);
+  const [playingWordId, setPlayingWordId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePageInfo, setActivePageInfo] = useState<PageChangeInfo | null>(null);
 
@@ -216,9 +230,64 @@ export default function SurahPage() {
   }, [loading, surah, readingMarker]);
 
   function handleTafsir(ayahNum: number) {
-    if (openTafsir === ayahNum) { setOpenTafsir(null); return; }
+    if (openTafsir === ayahNum) {
+      setOpenTafsir(null);
+      return;
+    }
     setOpenTafsir(ayahNum);
     if (tafsir.length === 0) getTafsir(surahNum).then(setTafsir).catch(() => {});
+    if (selectedTafsirId !== 16) {
+      handleSwitchTafsir(ayahNum, selectedTafsirId);
+    }
+  }
+
+  async function handleSwitchTafsir(ayahNum: number, newTafsirId: number) {
+    setSelectedTafsirId(newTafsirId);
+    if (newTafsirId === 16) return;
+    const cacheKey = `${newTafsirId}_${ayahNum}`;
+    if (!customAyahTafsir[cacheKey]) {
+      setLoadingAyahTafsir(true);
+      try {
+        const res = await getAyahTafsir(surahNum, ayahNum, newTafsirId);
+        const clean = res.text.replace(/<[^>]*>?/gm, "").trim();
+        setCustomAyahTafsir((prev) => ({
+          ...prev,
+          [cacheKey]: clean || "التفسير غير متوفر لهذه الآية في هذه الطبعة.",
+        }));
+      } catch {
+        // Ignored
+      } finally {
+        setLoadingAyahTafsir(false);
+      }
+    }
+  }
+
+  async function handleToggleWbw(ayahNum: number) {
+    if (openWbwAyah === ayahNum) {
+      setOpenWbwAyah(null);
+      return;
+    }
+    setOpenWbwAyah(ayahNum);
+    if (!ayahWordsCache[ayahNum]) {
+      setLoadingWords(true);
+      try {
+        const words = await getAyahWords(surahNum, ayahNum);
+        setAyahWordsCache((prev) => ({ ...prev, [ayahNum]: words }));
+      } catch {
+        // Ignored
+      } finally {
+        setLoadingWords(false);
+      }
+    }
+  }
+
+  function handlePlayWordAudio(word: QuranWord) {
+    if (!word.audioUrl) return;
+    setPlayingWordId(word.id);
+    const audio = new Audio(word.audioUrl);
+    audio.onended = () => setPlayingWordId(null);
+    audio.onerror = () => setPlayingWordId(null);
+    audio.play().catch(() => setPlayingWordId(null));
   }
 
   function handlePlayAyah(audioUrl: string, ayahNum: number) {
@@ -634,14 +703,38 @@ export default function SurahPage() {
                             )}
                           </Button>
                         )}
+                        {/* Word-by-Word Analysis Button */}
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-[var(--athar-green)]"
+                          size="sm"
+                          className={cn(
+                            "h-8 px-2 text-xs gap-1 transition-colors",
+                            openWbwAyah === ayah.numberInSurah
+                              ? "text-emerald-700 bg-emerald-500/10 font-bold"
+                              : "text-muted-foreground hover:text-[var(--athar-green)]"
+                          )}
+                          onClick={() => handleToggleWbw(ayah.numberInSurah)}
+                          title="تحليل ونطق مفردات الآية"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span className="text-[11px] hidden sm:inline">المفردات</span>
+                        </Button>
+
+                        {/* Tafsir Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-8 px-2 text-xs gap-1 transition-colors",
+                            openTafsir === ayah.numberInSurah
+                              ? "text-emerald-700 bg-emerald-500/10 font-bold"
+                              : "text-muted-foreground hover:text-[var(--athar-green)]"
+                          )}
                           onClick={() => handleTafsir(ayah.numberInSurah)}
                           title="التفسير"
                         >
                           <BookOpen className="h-3.5 w-3.5" />
+                          <span className="text-[11px] hidden sm:inline">التفسير</span>
                         </Button>
                         <Button
                           variant="ghost"
@@ -688,16 +781,136 @@ export default function SurahPage() {
                         </Button>
                       </div>
 
+                      {/* Word-by-Word Breakdown */}
+                      {openWbwAyah === ayah.numberInSurah && (
+                        <div className="mt-3 p-4 rounded-xl bg-card border border-border/80 text-sm text-right leading-relaxed animate-in fade-in space-y-3">
+                          <div className="flex items-center justify-between border-b border-border/60 pb-2 flex-wrap gap-2">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--athar-green)] font-arabic">
+                              <Sparkles className="h-3.5 w-3.5" />
+                              <span>تحليل مفردات الآية ونطقها الصوتي:</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground font-arabic">
+                              انقر على أي كلمة للاستماع لنطقها المفرد
+                            </span>
+                          </div>
+
+                          {loadingWords && !ayahWordsCache[ayah.numberInSurah] ? (
+                            <div className="p-4 text-center text-xs text-muted-foreground font-arabic">
+                              جاري تحميل التحليل الصرفي ونطق الكلمات...
+                            </div>
+                          ) : (
+                            <div className="flex items-stretch gap-2 flex-wrap">
+                              {(ayahWordsCache[ayah.numberInSurah] || [])
+                                .filter((w) => w.charType === "word")
+                                .map((w) => {
+                                  const isPlayingThisWord = playingWordId === w.id;
+                                  return (
+                                    <div
+                                      key={w.id}
+                                      onClick={() => handlePlayWordAudio(w)}
+                                      className={cn(
+                                        "p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col items-center justify-between min-w-[70px] max-w-[110px] text-center gap-1 select-none",
+                                        isPlayingThisWord
+                                          ? "bg-amber-500/15 border-amber-400 text-amber-900 dark:text-amber-300 ring-2 ring-amber-400/30 scale-105"
+                                          : "bg-muted/40 hover:bg-muted border-border/60 hover:border-[var(--athar-green)]/40"
+                                      )}
+                                      title="اضغط للاستماع لنطق هذه الكلمة"
+                                    >
+                                      {/* Word Arabic Text */}
+                                      <span className="font-quran text-base md:text-lg text-foreground font-bold leading-normal">
+                                        {w.textUthmani}
+                                      </span>
+
+                                      {/* Transliteration */}
+                                      {w.transliteration && (
+                                        <span className="text-[10px] font-mono text-muted-foreground/90 dir-ltr truncate max-w-full">
+                                          {w.transliteration}
+                                        </span>
+                                      )}
+
+                                      {/* Translation */}
+                                      {w.translation && (
+                                        <span className="text-[11px] font-arabic text-foreground/80 line-clamp-2">
+                                          {w.translation}
+                                        </span>
+                                      )}
+
+                                      {/* Audio icon */}
+                                      {w.audioUrl && (
+                                        <span
+                                          className={cn(
+                                            "mt-0.5 p-1 rounded-full",
+                                            isPlayingThisWord
+                                              ? "bg-amber-400 text-slate-950"
+                                              : "text-muted-foreground hover:text-foreground"
+                                          )}
+                                        >
+                                          <Volume2 className="h-3 w-3" />
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Tafsir */}
                       {openTafsir === ayah.numberInSurah && (
-                        <div className="mt-3 p-4 rounded-xl bg-[var(--athar-green)]/5 border border-[var(--athar-green)]/15 text-sm text-right leading-relaxed animate-in fade-in">
-                          {tafsirAyah ? (
-                            <>
-                              <p className="text-foreground/90 leading-loose">{tafsirAyah.translation}</p>
-                              <p className="text-xs text-muted-foreground mt-2">المصدر: التفسير الميسر</p>
-                            </>
+                        <div className="mt-3 p-4 rounded-xl bg-[var(--athar-green)]/5 border border-[var(--athar-green)]/15 text-sm text-right leading-relaxed animate-in fade-in space-y-3">
+                          {/* Tafsir Source Picker */}
+                          <div className="flex items-center justify-between gap-2 border-b border-[var(--athar-green)]/15 pb-2 flex-wrap">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--athar-green)] font-arabic">
+                              <BookOpen className="h-3.5 w-3.5" />
+                              <span>كتاب التفسير:</span>
+                            </div>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {AVAILABLE_TAFSIRS.map((t) => (
+                                <button
+                                  key={t.id}
+                                  onClick={() => handleSwitchTafsir(ayah.numberInSurah, t.id)}
+                                  className={cn(
+                                    "text-[10px] px-2 py-0.5 rounded-lg border font-arabic transition-all cursor-pointer",
+                                    selectedTafsirId === t.id
+                                      ? "bg-[var(--athar-green)] text-white border-transparent font-bold shadow-xs"
+                                      : "bg-background text-muted-foreground hover:text-foreground border-border/70"
+                                  )}
+                                >
+                                  {t.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Tafsir Content */}
+                          {selectedTafsirId === 16 ? (
+                            tafsirAyah ? (
+                              <>
+                                <p className="text-foreground/90 leading-loose whitespace-pre-line font-arabic text-xs md:text-sm">
+                                  {tafsirAyah.translation}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground font-arabic">
+                                  المصدر: التفسير الميسر (مجمع الملك فهد)
+                                </p>
+                              </>
+                            ) : (
+                              <div className="h-12 animate-pulse bg-muted rounded" />
+                            )
+                          ) : loadingAyahTafsir && !customAyahTafsir[`${selectedTafsirId}_${ayah.numberInSurah}`] ? (
+                            <div className="p-4 text-center text-xs text-muted-foreground font-arabic">
+                              جاري جلب نص التفسير من المصدر المعتمد...
+                            </div>
                           ) : (
-                            <div className="h-12 animate-pulse bg-muted rounded" />
+                            <>
+                              <p className="text-foreground/90 leading-loose whitespace-pre-line font-arabic text-xs md:text-sm">
+                                {customAyahTafsir[`${selectedTafsirId}_${ayah.numberInSurah}`] || "جاري تجهيز نص التفسير..."}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground font-arabic">
+                                المصدر: {AVAILABLE_TAFSIRS.find((t) => t.id === selectedTafsirId)?.name} (
+                                {AVAILABLE_TAFSIRS.find((t) => t.id === selectedTafsirId)?.author})
+                              </p>
+                            </>
                           )}
                         </div>
                       )}
