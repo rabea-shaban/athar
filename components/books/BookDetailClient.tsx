@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -55,6 +55,17 @@ export default function BookDetailClient({ book }: BookDetailClientProps) {
       // Ignore
     }
   }, [book.slug]);
+
+  // Support inApp=1 parameter to automatically launch reader modal and hide website chrome
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("inApp=1")) {
+      setIsReaderOpen(true);
+      const style = document.createElement("style");
+      style.id = "in-app-style";
+      style.innerHTML = "header, nav, footer, .breadcrumb { display: none !important; }";
+      document.head.appendChild(style);
+    }
+  }, []);
 
   // Toggle bookmark
   const toggleBookmark = () => {
