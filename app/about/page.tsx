@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/layout/Container";
+import { Button } from "@/components/ui/button";
+import { APP_DOWNLOAD_CONFIG } from "@/lib/app-download";
 import {
   ShieldCheck,
   Heart,
@@ -10,37 +11,69 @@ import {
   GitBranch,
   BookOpen,
   Compass,
+  Clock,
   Library,
   CheckCircle2,
+  Download,
+  Smartphone,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "عن المنصة وحقوق الملكية | أَثَر — ATHAR",
+  title: "عن منصة ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " | أَثَر",
   description:
-    "تعرّف على رسالة منصة أَثَر الإسلامية، الأهداف، وبنية التراث العلمي، مع توثيق حقوق الملكية والتطوير.",
+    "تعرّف على منصة أَثَر الإسلامية ومزايا تطبيق ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للأندرويد، من القرآن والتلاوات إلى مواقيت الصلاة والأذكار والمحتوى دون اتصال.",
+  alternates: {
+    canonical: "https://athar-library.vercel.app/about",
+  },
+  openGraph: {
+    title: "عن منصة ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " | أَثَر",
+    description:
+      "منصة إسلامية رقمية بتجربة هادئة، وتطبيق Android ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للقرآن والصلاة والمحتوى الإسلامي.",
+    url: "https://athar-library.vercel.app/about",
+    siteName: "أَثَر — ATHAR",
+    locale: "ar_EG",
+    type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "منصة أَثَر" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "عن منصة ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " | أَثَر",
+    description: "اكتشف منصة أَثَر وتطبيق ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للأندرويد.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function AboutPage() {
   const platformFeatures = [
     {
-      title: "المصحف الشريف والتفسير",
-      desc: "تلاوات عذبة بصوت كبار القراء مع التفسير الميسر لكل آية.",
+      title: "القرآن الكريم والتلاوات",
+      desc: "تصفّح المصحف واستمع إلى التلاوات القرآنية المتاحة داخل التطبيق.",
       icon: BookOpen,
     },
     {
-      title: "مواقيت الصلاة والقبلة",
-      desc: "حساب دقيق لمواقيت الصلاة حسب الهيئات الإسلامية وتحديد القبلة.",
+      title: "مواقيت الصلاة والأذان",
+      desc: "تابع مواقيت الصلاة وإعدادات الأذان والإشعارات المرتبطة به.",
+      icon: Clock,
+    },
+    {
+      title: "اتجاه القبلة",
+      desc: "استخدم شاشة القبلة واتجاه الجهاز لتحديد وجهة الصلاة.",
       icon: Compass,
     },
     {
-      title: "الأذكار والسبحة الذكية",
-      desc: "حصن المسلم اليومي مع سبحة إلكترونية متطورة للاستغفار والتسبيح.",
+      title: "الأذكار والتسابيح",
+      desc: "افتح أقسام الأذكار اليومية والتسبيح المتوفرة في ATHAR.",
       icon: Heart,
     },
     {
-      title: "المكتبة والدروس العلمية",
-      desc: "أمهات كتب التراث والسلاسل الصوتية العلمية لكبار العلماء.",
+      title: "المكتبة والمحتوى الإسلامي",
+      desc: "تصفّح الكتب والبرامج والمحاضرات والمقالات المتاحة في المنصة.",
       icon: Library,
+    },
+    {
+      title: "تنزيلات ومحتوى دون اتصال",
+      desc: "أدر التنزيلات واقرأ أو استمع إلى المحتوى المحفوظ محليًا حين يكون متاحًا.",
+      icon: CheckCircle2,
     },
   ];
 
@@ -87,6 +120,51 @@ export default function AboutPage() {
         })}
       </div>
 
+      <section id="mobile-app" className="max-w-4xl mx-auto p-6 sm:p-8 rounded-3xl bg-card border border-border/80 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-xs text-[var(--athar-green)] font-bold font-arabic">Latest Version</p>
+            <h2 className="text-xl sm:text-2xl font-bold font-arabic mt-1">
+              ATHAR Mobile App – Version {APP_DOWNLOAD_CONFIG.latestVersion}
+            </h2>
+            <p className="text-sm text-muted-foreground font-arabic mt-2">
+              تطبيق أندرويد الرسمي من أَثَر، بتجربة عربية هادئة وهوية أخضر داكن وذهبي.
+            </p>
+          </div>
+          <div className="shrink-0 w-12 h-12 rounded-2xl bg-[var(--athar-green)]/15 text-[var(--athar-green)] flex items-center justify-center">
+            <Smartphone className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center" dir="ltr">
+          {[
+            ["Version", APP_DOWNLOAD_CONFIG.latestVersion],
+            ["Version Code", String(APP_DOWNLOAD_CONFIG.versionCode)],
+            ["Platform", APP_DOWNLOAD_CONFIG.platform],
+            ["Package", APP_DOWNLOAD_CONFIG.packageName],
+            ["Architecture", APP_DOWNLOAD_CONFIG.architecture],
+            ["File", APP_DOWNLOAD_CONFIG.fileName],
+          ].map(([label, value]) => (
+            <div key={label} className="p-3 rounded-xl bg-muted/30 border border-border/50 min-w-0">
+              <span className="text-[10px] text-muted-foreground block">{label}</span>
+              <span className="text-xs font-bold text-foreground block mt-1 break-all">{value}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground font-arabic text-center">
+          حجم الملف {APP_DOWNLOAD_CONFIG.fileSize} · تحديث {APP_DOWNLOAD_CONFIG.releaseDateLabel}
+        </p>
+
+        <div className="flex justify-center">
+          <a href={APP_DOWNLOAD_CONFIG.downloadActionUrl}>
+            <Button className="font-arabic font-bold gap-2 px-6">
+              <Download className="w-4 h-4" />
+              <span>Download Latest Version</span>
+            </Button>
+          </a>
+        </div>
+      </section>
       {/* Developer & Ownership Card */}
       <div className="p-8 rounded-3xl bg-card border border-border/80 shadow-xs space-y-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between border-b border-border/60 pb-4">

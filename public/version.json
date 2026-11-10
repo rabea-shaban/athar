@@ -1,14 +1,23 @@
 {
-  "latestVersion": "2.0.4",
+  "latestVersion": "3.0",
+  "versionCode": 7,
+  "packageName": "com.athar.islamic",
+  "platform": "Android",
+  "architecture": "ARM64 (arm64-v8a)",
   "minimumVersion": "1.0.0",
+  "releaseDate": "2026-11-07",
+  "releaseDateLabel": "7 نوفمبر 2026",
   "storeUrl": "https://athar-library.vercel.app/download",
   "forceUpdate": false,
-  "releaseNotes": "تحديث v2.0.4: إضافة ٦٧ كتاباً من أمهات كتب التراث مع قارئ PDF رقمي مدمج وتنزيل مباشر، وقسم المقالات والتزكية الإسلامية، وتطهير الواجهة بالكامل.",
+  "releaseNotes": "ATHAR 3.0: إصدار رئيسي يضم تحسينات الأذان والتلاوات واتجاه القبلة، مع إدارة تنزيلات الكتب والمحتوى المتاح للعمل دون اتصال.",
   "downloads": {
     "directApk": {
       "available": true,
-      "url": "https://athar-library.vercel.app/downloads/ATHAR.apk",
-      "size": "~51 ميجابايت"
+      "url": "https://athar-library.vercel.app/downloads/Athar.apk",
+      "fileName": "Athar.apk",
+      "sizeBytes": 93738455,
+      "size": "93.7 MB",
+      "sha256": "F79FB7C5558A8B0BB87A2109F52CF36D0F0C1096C943ABFF163EABFD284B357C"
     },
     "googlePlay": {
       "available": false,

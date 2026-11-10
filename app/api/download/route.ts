@@ -16,7 +16,7 @@ async function getLivePersistentCount(): Promise<number> {
     const count = Number(data?.data?.totalDownloads) || 0;
     cachedCount = count;
     return count;
-  } catch (e) {
+  } catch {
     return cachedCount;
   }
 }
@@ -41,7 +41,7 @@ async function incrementPersistentCount(): Promise<number> {
     });
 
     return newCount;
-  } catch (e) {
+  } catch {
     cachedCount += 1;
     return cachedCount;
   }
@@ -65,6 +65,6 @@ export async function GET(request: Request) {
   await incrementPersistentCount();
 
   // Redirect directly to the clean official ATHAR.apk file
-  const apkUrl = new URL("/downloads/ATHAR.apk", request.url);
+  const apkUrl = new URL("/downloads/Athar.apk", request.url);
   return NextResponse.redirect(apkUrl.toString(), 307);
 }

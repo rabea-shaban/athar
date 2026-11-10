@@ -6,12 +6,10 @@ import {
   Download,
   Smartphone,
   Zap,
-  ShieldCheck,
   Globe,
   Clock,
   BookOpen,
   Heart,
-  CheckCircle2,
   AlertCircle,
   ExternalLink,
   ChevronLeft,
@@ -20,9 +18,9 @@ import { Button } from "@/components/ui/button";
 import { APP_DOWNLOAD_CONFIG } from "@/lib/app-download";
 
 export const metadata: Metadata = {
-  title: "تحميل تطبيق أَثَر للأندرويد (APK / Stores) — ATHAR",
+  title: "تحميل ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للأندرويد — ATHAR",
   description:
-    "حمّل تطبيق أَثَر للأندرويد لمتابعة مواقيت الصلاة والأذان المحلي والقراءة والاستماع للقرآن الكريم والأذكار بدون إنترنت.",
+    "حمّل ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للأندرويد: قرآن وتلاوات، مواقيت الصلاة، الأذان، الأذكار، ومحتوى متاح دون اتصال.",
   keywords: [
     "تحميل تطبيق أثر",
     "تطبيق أثر أندرويد",
@@ -35,7 +33,7 @@ export const metadata: Metadata = {
     canonical: "https://athar-library.vercel.app/download",
   },
   openGraph: {
-    title: "تحميل تطبيق أَثَر للأندرويد — ATHAR",
+    title: "تحميل ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للأندرويد — ATHAR",
     description:
       "منصة المعرفة الإسلامية على هاتفك: قرآن، أذان محلي بدون إنترنت، أذكار، ومكتبة إسلامية شمولية.",
     url: "https://athar-library.vercel.app/download",
@@ -51,8 +49,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "تحميل تطبيق أَثَر للأندرويد — ATHAR",
-    description: "منصة المعرفة الإسلامية على هاتفك بدون إنترنت.",
+    title: "تحميل ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " للأندرويد — ATHAR",
+    description: "ATHAR " + APP_DOWNLOAD_CONFIG.latestVersion + " — تطبيق Android للمحتوى الإسلامي.",
     images: ["/og-image.png"],
   },
 };
@@ -109,7 +107,7 @@ export default function DownloadPage() {
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold font-arabic text-foreground">
-          حمّل تطبيق <span className="text-[var(--athar-green)]">أَثَر</span> للأندرويد
+          حمّل <span className="text-[var(--athar-green)]">ATHAR {cfg.latestVersion}</span> للأندرويد
         </h1>
 
         <p className="text-muted-foreground font-arabic text-sm sm:text-base leading-relaxed">
@@ -144,6 +142,20 @@ export default function DownloadPage() {
         </div>
       </div>
 
+      <div className="max-w-3xl mx-auto grid grid-cols-2 sm:grid-cols-3 gap-3 text-center" aria-label="معلومات ملف ATHAR">
+        {[
+          ["رمز الإصدار", String(cfg.versionCode)],
+          ["النظام", cfg.platform],
+          ["المعمارية", cfg.architecture],
+          ["اسم الملف", cfg.fileName],
+          ["حجم الملف", cfg.fileSize],
+        ].map(([label, value]) => (
+          <div key={label} className="p-4 rounded-2xl bg-card border border-border/70">
+            <span className="text-[11px] text-muted-foreground font-arabic block">{label}</span>
+            <span className="text-sm font-bold text-foreground dir-ltr block mt-1">{value}</span>
+          </div>
+        ))}
+      </div>
       {/* Download Sources Section */}
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="text-center space-y-1">
@@ -193,15 +205,15 @@ export default function DownloadPage() {
               </div>
               <h3 className="font-bold text-sm font-arabic">ملف APK مباشر</h3>
               <p className="text-xs text-muted-foreground font-arabic">
-                تثبيت مباشر للأندرويد ({cfg.downloads.directApk.size || "~28 ميجابايت"})
+                {cfg.fileName} · {cfg.fileSize}
               </p>
             </div>
 
             {cfg.downloads.directApk.available ? (
-              <a href="/api/download" target="_blank" rel="noopener noreferrer">
+              <a href={cfg.downloadActionUrl} target="_blank" rel="noopener noreferrer">
                 <Button className="w-full font-arabic text-xs font-bold gap-2 py-5 bg-[var(--athar-green)] hover:bg-[var(--athar-green-dark)] text-white shadow-xs">
                   <Download className="w-4 h-4" />
-                  <span>تنزيل APK مباشر</span>
+                  <span>Download ATHAR {cfg.latestVersion}</span>
                 </Button>
               </a>
             ) : (
@@ -283,6 +295,9 @@ export default function DownloadPage() {
         </div>
       </div>
 
+      <p className="max-w-3xl mx-auto text-center text-xs text-muted-foreground font-arabic leading-relaxed">
+        تم توقيع الإصدار بالمفتاح الأصلي نفسه للحفاظ على توافق التحديث مع نسخ ATHAR السابقة.
+      </p>
       {/* Release Notes Card */}
       <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-xs max-w-3xl mx-auto space-y-3">
         <div className="flex items-center justify-between border-b border-border/50 pb-3">

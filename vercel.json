@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/downloads/ATHAR.apk",
+      "destination": "/downloads/Athar.apk",
+      "permanent": true,
+      "caseSensitive": true
+    }
+  ]
+}

@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Large Universal APK files (>100MB)
 public/downloads/ATHAR-v2.apk
+# Android signing secrets
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+*.dpapi
